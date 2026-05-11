@@ -1,18 +1,12 @@
 import Link from 'next/link';
 
 import { ActivityCard } from '@/components/activity-card';
-import { ShowcaseCard } from '@/components/showcase-card';
-import { listVisibleShowcases } from '@/domain/showcase';
 import { seedActivities } from '@/features/activities/seed-activities';
-import { seedShowcases } from '@/features/showcases/seed-showcases';
+import { PublicShowcaseSection } from '@/features/showcases/public-showcase-section';
 
 export default function PublicHomePage() {
   const publicActivities = seedActivities.filter(
     (activity) => activity.visibility === 'public' && activity.status === 'published',
-  );
-  const publicShowcases = listVisibleShowcases(seedShowcases, 'visitor').slice(
-    0,
-    3,
   );
 
   return (
@@ -49,23 +43,7 @@ export default function PublicHomePage() {
         </div>
       </section>
 
-      <section className="section">
-        <div className="container">
-          <div className="section-header">
-            <div>
-              <h2>Showcase</h2>
-              <p>
-                GDGoC CNU가 Build with AI와 챕터 활동에서 남긴 결과와 기록입니다.
-              </p>
-            </div>
-          </div>
-          <div className="grid grid-3">
-            {publicShowcases.map((showcase) => (
-              <ShowcaseCard key={showcase.id} showcase={showcase} />
-            ))}
-          </div>
-        </div>
-      </section>
+      <PublicShowcaseSection />
 
       <section className="section">
         <div className="container">

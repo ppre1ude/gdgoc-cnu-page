@@ -46,5 +46,11 @@ export function getAdminNavigationItems(): AdminNavigationItem[] {
       href: '/admin/notices',
       label: 'Notice Admin',
     },
+    {
+      description:
+        '성과, 회고, 갤러리, 프로젝트 결과를 등록하고 공개 범위를 관리합니다.',
+      href: '/admin/showcases',
+      label: 'Showcase Admin',
+    },
   ];
 }

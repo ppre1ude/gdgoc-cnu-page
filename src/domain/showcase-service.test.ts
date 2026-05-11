@@ -91,6 +91,41 @@ describe('showcase authoring flow', () => {
 
     assert.equal(showcase.href, undefined);
   });
+
+  it('trims tags and drops blank tags before storage', async () => {
+    const store = createInMemoryShowcaseStore();
+
+    const showcase = await createShowcase(store, {
+      actorRole: 'team_member',
+      title: 'Tag Cleanup',
+      summary: 'Showcase tags should be safe for display and filtering.',
+      kind: 'gallery',
+      tags: [' gemini ', '', '  ', ' firebase'],
+      visibility: 'public',
+      status: 'published',
+      now: '2026-05-11T09:00:00.000Z',
+    });
+
+    assert.deepEqual(showcase.tags, ['gemini', 'firebase']);
+  });
+
+  it('cleans up blank hrefs before storage', async () => {
+    const store = createInMemoryShowcaseStore();
+
+    const showcase = await createShowcase(store, {
+      actorRole: 'team_member',
+      title: 'Blank Link',
+      summary: 'Blank links should not be exposed on public cards.',
+      kind: 'gallery',
+      href: '   ',
+      tags: ['links'],
+      visibility: 'public',
+      status: 'published',
+      now: '2026-05-11T09:00:00.000Z',
+    });
+
+    assert.equal(showcase.href, undefined);
+  });
 });
 
 describe('home showcase visibility', () => {
