@@ -12,6 +12,9 @@ import { describeMemberHomeAccess } from '@/domain/member-access';
 import type { Notice } from '@/domain/notice';
 import { listVisibleNotices } from '@/domain/notice';
 import { listHomeNotices } from '@/domain/notice-service';
+import type { Showcase } from '@/domain/showcase';
+import { listVisibleShowcases } from '@/domain/showcase';
+import { listHomeShowcases } from '@/domain/showcase-service';
 import {
   applyForActivity,
   cancelApplicationForActivity,
@@ -19,12 +22,15 @@ import {
 } from '@/domain/activity-participation-service';
 import { ActivityCard } from '@/components/activity-card';
 import { NoticeBoard } from '@/components/notice-board';
+import { ShowcaseCard } from '@/components/showcase-card';
 import { createBrowserActivityApplicationStore } from './browser-activity-application-store';
 import { createBrowserActivityStore } from './browser-activity-store';
 import { createBrowserNoticeStore } from '../notices/browser-notice-store';
+import { createBrowserShowcaseStore } from '../showcases/browser-showcase-store';
 import { createBrowserChapterUserStore } from '../users/browser-chapter-user-store';
 import { seedActivities } from './seed-activities';
 import { seedNotices } from '../notices/seed-notices';
+import { seedShowcases } from '../showcases/seed-showcases';
 
 const demoMemberId = 'demo-member';
 const demoGuestId = 'demo-guest';
@@ -63,6 +69,7 @@ export function MemberHome() {
   const store = useMemo(() => createBrowserActivityStore(), []);
   const applicationStore = useMemo(() => createBrowserActivityApplicationStore(), []);
   const noticeStore = useMemo(() => createBrowserNoticeStore(), []);
+  const showcaseStore = useMemo(() => createBrowserShowcaseStore(), []);
   const userStore = useMemo(() => createBrowserChapterUserStore(), []);
   const [demoRole, setDemoRole] = useState<UserRole | null>(null);
   const [activities, setActivities] = useState<Activity[]>(
@@ -70,6 +77,9 @@ export function MemberHome() {
   );
   const [notices, setNotices] = useState<Notice[]>(
     listVisibleNotices(seedNotices, 'visitor'),
+  );
+  const [showcases, setShowcases] = useState<Showcase[]>(
+    listVisibleShowcases(seedShowcases, 'visitor'),
   );
   const [applicationStates, setApplicationStates] = useState<
     Record<string, ActivityApplicationState>
@@ -93,17 +103,24 @@ export function MemberHome() {
   async function refreshMemberHome(role: UserRole = demoRole ?? 'visitor') {
     const access = describeMemberHomeAccess(role);
     const contentRole = getMemberHomeContentRole(role);
-    const [nextActivities, nextApplicationStates, nextNotices] = await Promise.all([
+    const [
+      nextActivities,
+      nextApplicationStates,
+      nextNotices,
+      nextShowcases,
+    ] = await Promise.all([
       listHomeActivities(store, contentRole),
       access.canApplyToActivities
         ? getApplicationStateByActivity(applicationStore, demoMemberId)
         : Promise.resolve({}),
       listHomeNotices(noticeStore, contentRole),
+      listHomeShowcases(showcaseStore, contentRole),
     ]);
 
     setActivities(nextActivities);
     setApplicationStates(nextApplicationStates);
     setNotices(nextNotices);
+    setShowcases(nextShowcases);
   }
 
   async function changeDemoRole(nextRole: UserRole) {
@@ -253,6 +270,8 @@ export function MemberHome() {
           </div>
           <NoticeBoard notices={notices.slice(0, 6)} />
         </section>
+
+        <ShowcasePreviewSection showcases={showcases.slice(0, 3)} />
 
         <div className="grid grid-3" style={{ marginTop: 28 }}>
           <div className="card">
@@ -425,6 +444,31 @@ function toGuestProfileForm(user: ChapterUser): GuestProfileFormState {
     motivation: user.motivation ?? '',
     studentId: user.studentId ?? '',
   };
+}
+
+function ShowcasePreviewSection({ showcases }: { showcases: Showcase[] }) {
+  return (
+    <section className="section section-compact">
+      <div className="section-header">
+        <div>
+          <h2>쇼케이스</h2>
+          <p>
+            최근 활동 성과, 회고, 프로젝트 결과를 activity와 분리된 아카이브로
+            모아 보여줍니다.
+          </p>
+        </div>
+      </div>
+      {showcases.length > 0 ? (
+        <div className="grid grid-3">
+          {showcases.map((showcase) => (
+            <ShowcaseCard key={showcase.id} showcase={showcase} />
+          ))}
+        </div>
+      ) : (
+        <div className="empty">아직 표시할 쇼케이스가 없습니다.</div>
+      )}
+    </section>
+  );
 }
 
 function ActivitySection({

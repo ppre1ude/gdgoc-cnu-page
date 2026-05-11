@@ -326,6 +326,48 @@ textarea {
   overflow-wrap: anywhere;
 }
 
+.showcase-card {
+  display: block;
+  overflow: hidden;
+  padding: 0;
+}
+
+.showcase-card-body {
+  padding: 18px;
+}
+
+.showcase-card-media {
+  aspect-ratio: 16 / 9;
+  background:
+    linear-gradient(135deg, rgb(66 133 244 / 0.16), transparent 52%),
+    var(--surface-muted);
+  border-bottom: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.showcase-card-media img {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.showcase-card-media-empty {
+  align-items: end;
+  display: flex;
+  padding: 18px;
+}
+
+.showcase-card-media-empty span {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 7px 9px;
+}
+
 .admin-tool-card {
   display: block;
   transition:
