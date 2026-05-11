@@ -414,6 +414,37 @@ textarea {
   overflow-wrap: anywhere;
 }
 
+.member-approval-list {
+  display: grid;
+  gap: 10px;
+}
+
+.member-approval-row {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  padding: 16px;
+}
+
+.member-approval-row strong {
+  color: var(--text-strong);
+  display: block;
+  font-size: 17px;
+  line-height: 1.35;
+  margin-top: 12px;
+}
+
+.member-approval-row p {
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+
 .page {
   padding: 44px 0 72px;
 }
@@ -655,5 +686,10 @@ textarea {
     align-items: center;
     display: flex;
     justify-content: space-between;
+  }
+
+  .member-approval-row {
+    align-items: start;
+    flex-direction: column;
   }
 }
