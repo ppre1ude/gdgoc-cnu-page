@@ -19,11 +19,19 @@ import {
   approveApplicationForActivity,
   listApplicationsForActivity,
 } from '@/domain/activity-participation-service';
+import {
+  type ActivitySession,
+  type SessionAttendance,
+  createActivitySession,
+  markAttendanceForSession,
+  summarizeSessionAttendance,
+} from '@/domain/activity-session';
 import { createActivity, listHomeActivities } from '@/domain/activity-service';
 import { listVisibleActivities } from '@/domain/activity';
 import { ActivityCard } from '@/components/activity-card';
 import { createBrowserActivityApplicationStore } from './browser-activity-application-store';
 import { createBrowserActivityStore } from './browser-activity-store';
+import { createBrowserSessionAttendanceStore } from './browser-session-attendance-store';
 import { seedActivities } from './seed-activities';
 
 type AiResponse = {
@@ -34,7 +42,8 @@ type AiResponse = {
 
 const initialDraft = {
   title: 'Build with AI Prototype Sprint',
-  body: 'Firebase Auth, Firestore Activity CRUD, Gemini 작성 보조를 연결해서 실제 작동하는 챕터 홈페이지 데모를 만든다.',
+  body:
+    'Firebase Auth, Firestore Activity CRUD, Gemini 작성 보조를 연결해서 실제 작동하는 챕터 홈페이지 데모를 만듭니다.',
   type: 'event' as ActivityType,
   visibility: 'member' as ActivityVisibility,
   status: 'published' as ActivityStatus,
@@ -47,6 +56,7 @@ const initialDraft = {
 export function ActivityAdmin() {
   const store = useMemo(() => createBrowserActivityStore(), []);
   const applicationStore = useMemo(() => createBrowserActivityApplicationStore(), []);
+  const attendanceStore = useMemo(() => createBrowserSessionAttendanceStore(), []);
   const [draft, setDraft] = useState(initialDraft);
   const [activities, setActivities] = useState<Activity[]>(
     listVisibleActivities(seedActivities, 'team_member'),
@@ -54,8 +64,13 @@ export function ActivityAdmin() {
   const [applicationsByActivity, setApplicationsByActivity] = useState<
     Record<string, ActivityApplication[]>
   >({});
+  const [attendancesBySession, setAttendancesBySession] = useState<
+    Record<string, SessionAttendance[]>
+  >({});
   const [suggestion, setSuggestion] = useState<ActivityDraftSuggestion | null>(null);
-  const [message, setMessage] = useState('Firebase 설정이 없으면 브라우저 localStorage로 데모가 동작합니다.');
+  const [message, setMessage] = useState(
+    'Firebase 설정이 없으면 브라우저 localStorage bridge로 데모가 동작합니다.',
+  );
   const [isSuggesting, setIsSuggesting] = useState(false);
 
   useEffect(() => {
@@ -72,9 +87,21 @@ export function ActivityAdmin() {
         ]),
       ),
     );
+    const nextAttendancesBySession = Object.fromEntries(
+      await Promise.all(
+        nextActivities
+          .map((activity) => getDefaultSessionForActivity(activity))
+          .filter((session): session is ActivitySession => Boolean(session))
+          .map(async (session) => [
+            session.id,
+            await attendanceStore.listBySession(session.id),
+          ]),
+      ),
+    );
 
     setActivities(nextActivities);
     setApplicationsByActivity(nextApplicationsByActivity);
+    setAttendancesBySession(nextAttendancesBySession);
   }
 
   async function requestSuggestion() {
@@ -97,7 +124,7 @@ export function ActivityAdmin() {
     setMessage(
       payload.provider === 'gemini'
         ? 'Gemini 제안을 불러왔습니다.'
-        : 'Gemini 키가 없어 로컬 fallback 제안을 사용했습니다.',
+        : 'Gemini 키가 없어 local fallback 제안을 사용했습니다.',
     );
     setIsSuggesting(false);
   }
@@ -130,7 +157,7 @@ export function ActivityAdmin() {
       ...current,
       body: updated.memberCopy ?? current.body,
     }));
-    setMessage('AI 제안을 본문에 적용했습니다. 저장 전 직접 수정할 수 있습니다.');
+    setMessage('AI 제안을 본문에 적용했습니다. 저장 전에 직접 수정할 수 있습니다.');
   }
 
   async function saveActivity(event: FormEvent<HTMLFormElement>) {
@@ -164,13 +191,36 @@ export function ActivityAdmin() {
     await refreshDashboard();
   }
 
+  async function markAttended(
+    activity: Activity,
+    application: ActivityApplication,
+  ) {
+    const session = getDefaultSessionForActivity(activity);
+
+    if (!session) {
+      setMessage('일정이 있는 activity만 출석 처리할 수 있습니다.');
+      return;
+    }
+
+    await markAttendanceForSession(attendanceStore, {
+      activityType: activity.type,
+      application,
+      now: new Date().toISOString(),
+      roleSnapshot: 'member',
+      session,
+    });
+    setMessage(`${application.userId} 출석을 기록했습니다.`);
+    await refreshDashboard();
+  }
+
   return (
     <main className="page">
       <div className="container">
         <p className="eyebrow">Operator Dashboard</p>
         <h1 className="page-title">Activity Admin</h1>
         <p className="page-lead">
-          운영진이 활동 초안을 쓰고, Gemini 보조를 확인한 뒤 Firebase 또는 demo bridge에 저장합니다.
+          운영진이 활동 초안을 쓰고, Gemini 보조를 확인하고, Firebase 또는 demo
+          bridge에 저장합니다.
         </p>
 
         <div className="dashboard-grid" style={{ marginTop: 28 }}>
@@ -350,7 +400,8 @@ export function ActivityAdmin() {
                 </div>
               ) : (
                 <p className="helper-text" style={{ marginTop: 14 }}>
-                  초안을 입력한 뒤 AI 보조를 실행하면 요약과 문구 제안이 여기에 표시됩니다.
+                  초안을 입력하고 AI 보조를 실행하면 요약과 문구 제안이 여기에
+                  표시됩니다.
                 </p>
               )}
             </section>
@@ -362,15 +413,25 @@ export function ActivityAdmin() {
                   <p>운영진 관점에서 볼 수 있는 activity입니다.</p>
                 </div>
               </div>
-              {activities.map((activity) => (
-                <div className="stack" key={activity.id}>
-                  <ActivityCard activity={activity} />
-                  <ApplicationQueue
-                    applications={applicationsByActivity[activity.id] ?? []}
-                    onApprove={approveApplication}
-                  />
-                </div>
-              ))}
+              {activities.map((activity) => {
+                const session = getDefaultSessionForActivity(activity);
+
+                return (
+                  <div className="stack" key={activity.id}>
+                    <ActivityCard activity={activity} />
+                    <ApplicationQueue
+                      activity={activity}
+                      applications={applicationsByActivity[activity.id] ?? []}
+                      attendances={
+                        session ? attendancesBySession[session.id] ?? [] : []
+                      }
+                      onApprove={approveApplication}
+                      onMarkAttended={markAttended}
+                      session={session}
+                    />
+                  </div>
+                );
+              })}
             </section>
           </aside>
         </div>
@@ -380,12 +441,33 @@ export function ActivityAdmin() {
 }
 
 function ApplicationQueue({
+  activity,
   applications,
+  attendances,
   onApprove,
+  onMarkAttended,
+  session,
 }: {
+  activity: Activity;
   applications: ActivityApplication[];
+  attendances: SessionAttendance[];
   onApprove: (application: ActivityApplication) => void;
+  onMarkAttended: (
+    activity: Activity,
+    application: ActivityApplication,
+  ) => void;
+  session: ActivitySession | null;
 }) {
+  const summary = session
+    ? summarizeSessionAttendance({
+        applications,
+        attendances,
+        now: new Date().toISOString(),
+        session,
+      })
+    : null;
+  const attendedUserIds = new Set(attendances.map((attendance) => attendance.userId));
+
   if (applications.length === 0) {
     return (
       <div className="application-queue application-queue-empty">
@@ -396,27 +478,77 @@ function ApplicationQueue({
 
   return (
     <div className="application-queue">
-      {applications.map((application) => (
-        <div className="application-row" key={application.id}>
-          <div>
-            <strong>{application.userId}</strong>
-            <div className="helper-text">
-              {application.state === 'applied' ? '운영진 승인 대기 중' : '승인됨'}
+      {summary ? <AttendanceSummary summary={summary} /> : null}
+      {applications.map((application) => {
+        const isAttended = attendedUserIds.has(application.userId);
+
+        return (
+          <div className="application-row" key={application.id}>
+            <div>
+              <strong>{application.userId}</strong>
+              <div className="helper-text">
+                {application.state === 'applied'
+                  ? '운영진 승인 대기 중'
+                  : isAttended
+                    ? '출석 완료'
+                    : '승인됨'}
+              </div>
             </div>
+            {application.state === 'applied' ? (
+              <button
+                className="button button-primary button-small"
+                onClick={() => onApprove(application)}
+                type="button"
+              >
+                승인
+              </button>
+            ) : isAttended ? (
+              <span className="badge badge-green">출석 완료</span>
+            ) : (
+              <button
+                className="button button-secondary button-small"
+                disabled={!session}
+                onClick={() => onMarkAttended(activity, application)}
+                type="button"
+              >
+                출석 처리
+              </button>
+            )}
           </div>
-          {application.state === 'applied' ? (
-            <button
-              className="button button-primary button-small"
-              onClick={() => onApprove(application)}
-              type="button"
-            >
-              승인
-            </button>
-          ) : (
-            <span className="badge badge-green">승인됨</span>
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
+}
+
+function AttendanceSummary({
+  summary,
+}: {
+  summary: ReturnType<typeof summarizeSessionAttendance>;
+}) {
+  return (
+    <div className="attendance-summary">
+      <span className="badge">신청 {summary.appliedCount}</span>
+      <span className="badge badge-blue">승인 {summary.approvedCount}</span>
+      <span className="badge badge-green">참석 {summary.attendedCount}</span>
+      <span className="badge">파생 미참석 {summary.derivedAbsentCount}</span>
+    </div>
+  );
+}
+
+function getDefaultSessionForActivity(activity: Activity): ActivitySession | null {
+  if (!activity.startsAt) {
+    return null;
+  }
+
+  const startsAt = new Date(activity.startsAt);
+  const endsAt = new Date(startsAt.getTime() + 2 * 60 * 60 * 1000);
+
+  return createActivitySession({
+    activityId: activity.id,
+    endsAt: endsAt.toISOString(),
+    now: activity.createdAt,
+    startsAt: activity.startsAt,
+    title: activity.title,
+  });
 }

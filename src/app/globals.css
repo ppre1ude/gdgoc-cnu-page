@@ -414,6 +414,15 @@ textarea {
   overflow-wrap: anywhere;
 }
 
+.attendance-summary {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 0 10px;
+}
+
 .member-approval-list {
   display: grid;
   gap: 10px;
