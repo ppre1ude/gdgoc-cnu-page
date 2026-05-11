@@ -5,19 +5,61 @@ import { useEffect, useMemo, useState } from 'react';
 import type { Activity } from '@/domain/activity';
 import { listHomeActivities } from '@/domain/activity-service';
 import { listVisibleActivities } from '@/domain/activity';
+import type { ActivityApplicationState } from '@/domain/activity-application';
+import {
+  applyForActivity,
+  cancelApplicationForActivity,
+  getApplicationStateByActivity,
+} from '@/domain/activity-participation-service';
 import { ActivityCard } from '@/components/activity-card';
+import { createBrowserActivityApplicationStore } from './browser-activity-application-store';
 import { createBrowserActivityStore } from './browser-activity-store';
 import { seedActivities } from './seed-activities';
 
+const demoMemberId = 'demo-member';
+
 export function MemberHome() {
   const store = useMemo(() => createBrowserActivityStore(), []);
+  const applicationStore = useMemo(() => createBrowserActivityApplicationStore(), []);
   const [activities, setActivities] = useState<Activity[]>(
     listVisibleActivities(seedActivities, 'member'),
   );
+  const [applicationStates, setApplicationStates] = useState<
+    Record<string, ActivityApplicationState>
+  >({});
 
   useEffect(() => {
-    void listHomeActivities(store, 'member').then(setActivities);
-  }, [store]);
+    void refreshMemberHome();
+  }, []);
+
+  async function refreshMemberHome() {
+    const [nextActivities, nextApplicationStates] = await Promise.all([
+      listHomeActivities(store, 'member'),
+      getApplicationStateByActivity(applicationStore, demoMemberId),
+    ]);
+
+    setActivities(nextActivities);
+    setApplicationStates(nextApplicationStates);
+  }
+
+  async function handleApply(activity: Activity) {
+    await applyForActivity(applicationStore, {
+      activityId: activity.id,
+      now: new Date().toISOString(),
+      userId: demoMemberId,
+    });
+    await refreshMemberHome();
+  }
+
+  async function handleCancel(activity: Activity) {
+    await cancelApplicationForActivity(applicationStore, {
+      activityId: activity.id,
+      cancellationAllowed: true,
+      now: new Date().toISOString(),
+      userId: demoMemberId,
+    });
+    await refreshMemberHome();
+  }
 
   const upcoming = activities.filter((activity) => activity.startsAt);
   const studiesAndProjects = activities.filter((activity) =>
@@ -26,6 +68,9 @@ export function MemberHome() {
   const challenges = activities.filter((activity) =>
     ['challenge', 'social'].includes(activity.type),
   );
+  const activeApplicationCount = Object.values(applicationStates).filter(
+    (state) => state === 'applied' || state === 'approved',
+  ).length;
 
   return (
     <main className="page">
@@ -46,29 +91,38 @@ export function MemberHome() {
           </div>
           <div className="card">
             <span className="badge badge-green">Participation</span>
-            <h3>{activities.length}개 활동 열람 가능</h3>
-            <p>운영진이 등록한 공개/멤버 활동을 기준으로 표시합니다.</p>
+            <h3>{activeApplicationCount}개 활동 참여 중</h3>
+            <p>참여 신청을 누르면 이 숫자와 카드 상태가 바로 바뀝니다.</p>
           </div>
           <div className="card">
             <span className="badge badge-blue">Next Action</span>
-            <h3>관심 활동 확인</h3>
-            <p>참여 신청과 승인 흐름은 다음 vertical slice에서 연결합니다.</p>
+            <h3>{activities.length}개 활동 열람 가능</h3>
+            <p>Firebase 설정 전에는 localStorage bridge로 같은 흐름을 검증합니다.</p>
           </div>
         </div>
 
         <ActivitySection
           activities={upcoming}
+          applicationStates={applicationStates}
           description="오프라인 이벤트와 일정이 있는 활동을 우선 표시합니다."
+          onApply={handleApply}
+          onCancel={handleCancel}
           title="다가오는 활동"
         />
         <ActivitySection
           activities={studiesAndProjects}
+          applicationStates={applicationStates}
           description="장기적으로 이어지는 학습과 제작 활동입니다."
+          onApply={handleApply}
+          onCancel={handleCancel}
           title="스터디 / 프로젝트"
         />
         <ActivitySection
           activities={challenges}
+          applicationStates={applicationStates}
           description="챕터 참여를 높이기 위한 챌린지와 친목 활동입니다."
+          onApply={handleApply}
+          onCancel={handleCancel}
           title="챌린지 / 친목"
         />
       </div>
@@ -78,11 +132,17 @@ export function MemberHome() {
 
 function ActivitySection({
   activities,
+  applicationStates,
   description,
+  onApply,
+  onCancel,
   title,
 }: {
   activities: Activity[];
+  applicationStates: Record<string, ActivityApplicationState>;
   description: string;
+  onApply: (activity: Activity) => void;
+  onCancel: (activity: Activity) => void;
   title: string;
 }) {
   return (
@@ -96,7 +156,13 @@ function ActivitySection({
       {activities.length > 0 ? (
         <div className="grid grid-3">
           {activities.map((activity) => (
-            <ActivityCard activity={activity} key={activity.id} />
+            <ActivityCard
+              activity={activity}
+              applicationState={applicationStates[activity.id]}
+              key={activity.id}
+              onApply={onApply}
+              onCancel={onCancel}
+            />
           ))}
         </div>
       ) : (

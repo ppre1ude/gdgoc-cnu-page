@@ -197,6 +197,12 @@ textarea {
   padding: 10px 14px;
 }
 
+.button-small {
+  font-size: 14px;
+  min-height: 36px;
+  padding: 8px 11px;
+}
+
 .button-primary {
   background: var(--primary);
   color: white;
@@ -348,6 +354,13 @@ textarea {
   background: rgb(52 168 83 / 0.12);
   border-color: rgb(52 168 83 / 0.24);
   color: #137333;
+}
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
 }
 
 .page {
