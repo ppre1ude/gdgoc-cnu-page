@@ -86,10 +86,20 @@ export function MemberApprovalPanel() {
               <div>
                 <div className="badge-row">
                   <span className="badge">Guest</span>
-                  <span className="badge">{formatKoreanDate(user.createdAt)} 가입</span>
+                  <span className="badge">
+                    {formatKoreanDate(user.createdAt)} 가입
+                  </span>
+                  {user.profileSubmittedAt ? (
+                    <span className="badge badge-blue">
+                      {formatKoreanDate(user.profileSubmittedAt)} 제출
+                    </span>
+                  ) : (
+                    <span className="badge">프로필 미제출</span>
+                  )}
                 </div>
                 <strong>{user.displayName}</strong>
                 <p>{user.email}</p>
+                <GuestProfileSummary user={user} />
               </div>
               <button
                 className="button button-primary button-small"
@@ -105,5 +115,30 @@ export function MemberApprovalPanel() {
         )}
       </div>
     </section>
+  );
+}
+
+function GuestProfileSummary({ user }: { user: ChapterUser }) {
+  const profileItems = [
+    ['학과', user.department],
+    ['기수', user.cohort],
+    ['학번', user.studentId],
+    ['관심 분야', user.interests],
+    ['참여 동기', user.motivation],
+  ].filter(([, value]) => Boolean(value));
+
+  if (profileItems.length === 0) {
+    return <p className="helper-text">아직 제출된 승인 요청 정보가 없습니다.</p>;
+  }
+
+  return (
+    <dl className="profile-summary-list">
+      {profileItems.map(([label, value]) => (
+        <div key={label}>
+          <dt>{label}</dt>
+          <dd>{value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }

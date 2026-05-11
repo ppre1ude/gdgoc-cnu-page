@@ -5,6 +5,12 @@ export type ChapterUser = {
   displayName: string;
   email: string;
   role: UserRole;
+  department?: string;
+  cohort?: string;
+  studentId?: string;
+  interests?: string;
+  motivation?: string;
+  profileSubmittedAt?: string;
   createdAt: string;
   updatedAt: string;
 };

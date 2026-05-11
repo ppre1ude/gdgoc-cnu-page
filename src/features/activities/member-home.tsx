@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
 
 import type { Activity, UserRole } from '@/domain/activity';
 import { listHomeActivities } from '@/domain/activity-service';
 import { listVisibleActivities } from '@/domain/activity';
 import type { ActivityApplicationState } from '@/domain/activity-application';
+import type { ChapterUser } from '@/domain/chapter-user';
+import { submitGuestProfile } from '@/domain/chapter-user-service';
 import { describeMemberHomeAccess } from '@/domain/member-access';
 import type { Notice } from '@/domain/notice';
 import { listVisibleNotices } from '@/domain/notice';
@@ -20,10 +22,12 @@ import { NoticeBoard } from '@/components/notice-board';
 import { createBrowserActivityApplicationStore } from './browser-activity-application-store';
 import { createBrowserActivityStore } from './browser-activity-store';
 import { createBrowserNoticeStore } from '../notices/browser-notice-store';
+import { createBrowserChapterUserStore } from '../users/browser-chapter-user-store';
 import { seedActivities } from './seed-activities';
 import { seedNotices } from '../notices/seed-notices';
 
 const demoMemberId = 'demo-member';
+const demoGuestId = 'demo-guest';
 const demoRoleStorageKey = 'gdgoc-cnu.demoRole';
 const demoRoleOptions: UserRole[] = [
   'visitor',
@@ -35,10 +39,31 @@ const demoRoleOptions: UserRole[] = [
   'admin',
 ];
 
+type GuestProfileFormState = {
+  displayName: string;
+  email: string;
+  department: string;
+  cohort: string;
+  studentId: string;
+  interests: string;
+  motivation: string;
+};
+
+const defaultGuestProfile: GuestProfileFormState = {
+  displayName: 'Build with AI Guest',
+  email: 'guest.demo@example.com',
+  department: '',
+  cohort: '',
+  studentId: '',
+  interests: '',
+  motivation: '',
+};
+
 export function MemberHome() {
   const store = useMemo(() => createBrowserActivityStore(), []);
   const applicationStore = useMemo(() => createBrowserActivityApplicationStore(), []);
   const noticeStore = useMemo(() => createBrowserNoticeStore(), []);
+  const userStore = useMemo(() => createBrowserChapterUserStore(), []);
   const [demoRole, setDemoRole] = useState<UserRole | null>(null);
   const [activities, setActivities] = useState<Activity[]>(
     listVisibleActivities(seedActivities, 'visitor'),
@@ -49,12 +74,20 @@ export function MemberHome() {
   const [applicationStates, setApplicationStates] = useState<
     Record<string, ActivityApplicationState>
   >({});
+  const [guestProfile, setGuestProfile] =
+    useState<GuestProfileFormState>(defaultGuestProfile);
+  const [guestProfileMessage, setGuestProfileMessage] = useState(
+    '승인에 필요한 정보를 제출하면 운영진 승인 큐에서 바로 확인할 수 있습니다.',
+  );
 
   useEffect(() => {
     const savedRole = window.localStorage.getItem(demoRoleStorageKey);
     const initialRole = isUserRole(savedRole) ? savedRole : 'member';
     setDemoRole(initialRole);
     void refreshMemberHome(initialRole);
+    if (initialRole === 'guest') {
+      void loadGuestProfile();
+    }
   }, []);
 
   async function refreshMemberHome(role: UserRole = demoRole ?? 'visitor') {
@@ -77,6 +110,20 @@ export function MemberHome() {
     setDemoRole(nextRole);
     window.localStorage.setItem(demoRoleStorageKey, nextRole);
     await refreshMemberHome(nextRole);
+    if (nextRole === 'guest') {
+      await loadGuestProfile();
+    }
+  }
+
+  async function loadGuestProfile() {
+    const savedGuest = await userStore.findUser(demoGuestId);
+
+    if (!savedGuest) {
+      setGuestProfile(defaultGuestProfile);
+      return;
+    }
+
+    setGuestProfile(toGuestProfileForm(savedGuest));
   }
 
   async function handleApply(activity: Activity) {
@@ -112,6 +159,29 @@ export function MemberHome() {
       userId: demoMemberId,
     });
     await refreshMemberHome();
+  }
+
+  async function handleGuestProfileSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    await submitGuestProfile(userStore, {
+      id: demoGuestId,
+      displayName: guestProfile.displayName.trim() || defaultGuestProfile.displayName,
+      email: guestProfile.email.trim() || defaultGuestProfile.email,
+      now: new Date().toISOString(),
+      profile: {
+        cohort: guestProfile.cohort.trim(),
+        department: guestProfile.department.trim(),
+        interests: guestProfile.interests.trim(),
+        motivation: guestProfile.motivation.trim(),
+        studentId: guestProfile.studentId.trim(),
+      },
+    });
+
+    setGuestProfileMessage(
+      '승인 요청 정보가 저장되었습니다. 운영진 승인 화면에서 바로 확인할 수 있습니다.',
+    );
+    await loadGuestProfile();
   }
 
   const upcoming = activities.filter((activity) => activity.startsAt);
@@ -164,6 +234,15 @@ export function MemberHome() {
             </label>
           </div>
         </section>
+
+        {demoRole === 'guest' ? (
+          <GuestProfileForm
+            message={guestProfileMessage}
+            onChange={setGuestProfile}
+            onSubmit={handleGuestProfileSubmit}
+            value={guestProfile}
+          />
+        ) : null}
 
         <section className="section section-compact">
           <div className="section-header">
@@ -223,6 +302,129 @@ export function MemberHome() {
       </div>
     </main>
   );
+}
+
+function GuestProfileForm({
+  message,
+  onChange,
+  onSubmit,
+  value,
+}: {
+  message: string;
+  onChange: (value: GuestProfileFormState) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  value: GuestProfileFormState;
+}) {
+  function updateField(
+    field: keyof GuestProfileFormState,
+    nextValue: string,
+  ) {
+    onChange({
+      ...value,
+      [field]: nextValue,
+    });
+  }
+
+  return (
+    <section className="section section-compact">
+      <form className="card guest-profile-form" onSubmit={onSubmit}>
+        <div>
+          <span className="badge badge-green">Guest Profile</span>
+          <h2>멤버 승인 요청 정보</h2>
+          <p>
+            운영진이 guest 계정을 member로 승인하기 전에 확인할 기본 정보를
+            제출합니다.
+          </p>
+        </div>
+
+        <div className="grid grid-2">
+          <label className="field">
+            <span>이름</span>
+            <input
+              className="input"
+              onChange={(event) => updateField('displayName', event.target.value)}
+              required
+              value={value.displayName}
+            />
+          </label>
+          <label className="field">
+            <span>이메일</span>
+            <input
+              className="input"
+              onChange={(event) => updateField('email', event.target.value)}
+              required
+              type="email"
+              value={value.email}
+            />
+          </label>
+          <label className="field">
+            <span>학과</span>
+            <input
+              className="input"
+              onChange={(event) => updateField('department', event.target.value)}
+              placeholder="예: 컴퓨터융합학부"
+              value={value.department}
+            />
+          </label>
+          <label className="field">
+            <span>기수 또는 학년</span>
+            <input
+              className="input"
+              onChange={(event) => updateField('cohort', event.target.value)}
+              placeholder="예: 3기, 2학년"
+              value={value.cohort}
+            />
+          </label>
+          <label className="field">
+            <span>학번</span>
+            <input
+              className="input"
+              onChange={(event) => updateField('studentId', event.target.value)}
+              value={value.studentId}
+            />
+          </label>
+          <label className="field">
+            <span>관심 분야</span>
+            <input
+              className="input"
+              onChange={(event) => updateField('interests', event.target.value)}
+              placeholder="예: Firebase, Gemini, 프론트엔드"
+              value={value.interests}
+            />
+          </label>
+        </div>
+
+        <label className="field">
+          <span>참여 동기</span>
+          <textarea
+            className="textarea"
+            onChange={(event) => updateField('motivation', event.target.value)}
+            placeholder="GDGoC CNU에서 하고 싶은 활동을 적어주세요."
+            value={value.motivation}
+          />
+        </label>
+
+        <div className="form-footer">
+          <p className="helper-text">{message}</p>
+          <button className="button button-primary" type="submit">
+            승인 요청 정보 저장
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
+function toGuestProfileForm(user: ChapterUser): GuestProfileFormState {
+  return {
+    cohort: user.cohort ?? '',
+    department: user.department ?? '',
+    displayName: user.displayName,
+    email: user.email,
+    interests: user.interests ?? '',
+    motivation: user.motivation ?? '',
+    studentId: user.studentId ?? '',
+  };
 }
 
 function ActivitySection({

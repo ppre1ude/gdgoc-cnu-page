@@ -16,6 +16,22 @@ export type ApproveGuestToMemberInput = {
   now: string;
 };
 
+export type GuestProfileInput = {
+  department?: string;
+  cohort?: string;
+  studentId?: string;
+  interests?: string;
+  motivation?: string;
+};
+
+export type SubmitGuestProfileInput = {
+  id: string;
+  displayName: string;
+  email: string;
+  profile: GuestProfileInput;
+  now: string;
+};
+
 const memberApprovalRoles = new Set<UserRole>([
   'team_member',
   'organizer',
@@ -60,6 +76,27 @@ export async function listPendingGuestUsers(
   return users
     .filter((user) => user.role === 'guest')
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+export async function submitGuestProfile(
+  store: ChapterUserStore,
+  input: SubmitGuestProfileInput,
+): Promise<ChapterUser> {
+  const existingUser = await store.findUser(input.id);
+  const submittedUser: ChapterUser = {
+    ...(existingUser ?? {
+      id: input.id,
+      role: 'guest' as const,
+      createdAt: input.now,
+    }),
+    displayName: input.displayName,
+    email: input.email,
+    ...input.profile,
+    profileSubmittedAt: input.now,
+    updatedAt: input.now,
+  };
+
+  return store.saveUser(submittedUser);
 }
 
 export async function approveGuestToMember(
