@@ -9,6 +9,14 @@ import { getFirestoreDb, hasFirebaseConfig } from '@/lib/firebase/client';
 
 const storageKey = 'gdgoc-cnu.activityApplications';
 
+type CancelledLegacyActivityApplication = Omit<ActivityApplication, 'state'> & {
+  state: 'cancelled';
+};
+
+type LegacyActivityApplication =
+  | ActivityApplication
+  | CancelledLegacyActivityApplication;
+
 export function createBrowserActivityApplicationStore(): ActivityApplicationStore {
   if (typeof window === 'undefined') {
     return createInMemoryActivityApplicationStore();
@@ -36,7 +44,8 @@ function createLocalStorageActivityApplicationStore(): ActivityApplicationStore 
     },
     async listByActivity(activityId) {
       return readApplications().filter(
-        (application) => application.activityId === activityId,
+        (application) =>
+          application.activityId === activityId && !application.cancelledAt,
       );
     },
     async findByActivityAndUser(activityId, userId) {
@@ -57,7 +66,7 @@ function readApplications(): ActivityApplication[] {
     return [];
   }
 
-  return JSON.parse(raw) as ActivityApplication[];
+  return (JSON.parse(raw) as LegacyActivityApplication[]).map(normalizeApplication);
 }
 
 function writeApplications(applications: ActivityApplication[]) {
@@ -83,7 +92,8 @@ function createFirestoreActivityApplicationStore(): ActivityApplicationStore {
         ),
       );
 
-      return snapshot.docs.map((item) => item.data() as ActivityApplication);
+      return snapshot.docs
+        .map((item) => normalizeApplication(item.data() as LegacyActivityApplication));
     },
     async listByActivity(activityId) {
       const { collection, getDocs, query, where } = await import('firebase/firestore');
@@ -94,7 +104,9 @@ function createFirestoreActivityApplicationStore(): ActivityApplicationStore {
         ),
       );
 
-      return snapshot.docs.map((item) => item.data() as ActivityApplication);
+      return snapshot.docs
+        .map((item) => normalizeApplication(item.data() as LegacyActivityApplication))
+        .filter((application) => !application.cancelledAt);
     },
     async findByActivityAndUser(activityId, userId) {
       const { doc, getDoc } = await import('firebase/firestore');
@@ -102,7 +114,23 @@ function createFirestoreActivityApplicationStore(): ActivityApplicationStore {
         doc(getFirestoreDb(), 'activityApplications', `${activityId}_${userId}`),
       );
 
-      return snapshot.exists() ? (snapshot.data() as ActivityApplication) : null;
+      return snapshot.exists()
+        ? normalizeApplication(snapshot.data() as LegacyActivityApplication)
+        : null;
     },
+  };
+}
+
+function normalizeApplication(
+  application: LegacyActivityApplication,
+): ActivityApplication {
+  if (application.state !== 'cancelled') {
+    return application;
+  }
+
+  return {
+    ...application,
+    cancelledAt: application.cancelledAt ?? application.updatedAt,
+    state: 'applied',
   };
 }

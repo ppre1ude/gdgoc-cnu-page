@@ -1,5 +1,6 @@
 import type { Activity } from '@/domain/activity';
 import type { ActivityApplicationState } from '@/domain/activity-application';
+import { formatKoreanDateTime } from '@/lib/format-korean-date-time';
 
 const activityTypeLabel: Record<Activity['type'], string> = {
   event: 'Event',
@@ -16,9 +17,8 @@ const visibilityLabel: Record<Activity['visibility'], string> = {
 };
 
 const applicationStateLabel: Record<ActivityApplicationState, string> = {
-  applied: '신청됨',
+  applied: '운영진 승인 대기 중',
   approved: '승인됨',
-  cancelled: '취소됨',
 };
 
 export function ActivityCard({
@@ -32,7 +32,7 @@ export function ActivityCard({
   onApply?: (activity: Activity) => void;
   onCancel?: (activity: Activity) => void;
 }) {
-  const canApply = onApply && (!applicationState || applicationState === 'cancelled');
+  const canApply = onApply && !applicationState;
   const canCancel =
     onCancel && (applicationState === 'applied' || applicationState === 'approved');
 
@@ -62,7 +62,7 @@ export function ActivityCard({
               onClick={() => onApply(activity)}
               type="button"
             >
-              {applicationState === 'cancelled' ? '다시 신청' : '참여 신청'}
+              참여 신청
             </button>
           ) : null}
           {canCancel ? (
@@ -81,9 +81,5 @@ export function ActivityCard({
 }
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat('ko-KR', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: 'Asia/Seoul',
-  }).format(new Date(value));
+  return formatKoreanDateTime(value);
 }

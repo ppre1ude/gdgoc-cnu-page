@@ -6,23 +6,32 @@ import type { Activity } from '@/domain/activity';
 import { listHomeActivities } from '@/domain/activity-service';
 import { listVisibleActivities } from '@/domain/activity';
 import type { ActivityApplicationState } from '@/domain/activity-application';
+import type { Notice } from '@/domain/notice';
+import { listHomeNotices } from '@/domain/notice-service';
 import {
   applyForActivity,
   cancelApplicationForActivity,
   getApplicationStateByActivity,
 } from '@/domain/activity-participation-service';
 import { ActivityCard } from '@/components/activity-card';
+import { NoticeBoard } from '@/components/notice-board';
 import { createBrowserActivityApplicationStore } from './browser-activity-application-store';
 import { createBrowserActivityStore } from './browser-activity-store';
+import { createBrowserNoticeStore } from '../notices/browser-notice-store';
 import { seedActivities } from './seed-activities';
+import { seedNotices } from '../notices/seed-notices';
 
 const demoMemberId = 'demo-member';
 
 export function MemberHome() {
   const store = useMemo(() => createBrowserActivityStore(), []);
   const applicationStore = useMemo(() => createBrowserActivityApplicationStore(), []);
+  const noticeStore = useMemo(() => createBrowserNoticeStore(), []);
   const [activities, setActivities] = useState<Activity[]>(
     listVisibleActivities(seedActivities, 'member'),
+  );
+  const [notices, setNotices] = useState<Notice[]>(
+    seedNotices.filter((notice) => notice.status === 'published'),
   );
   const [applicationStates, setApplicationStates] = useState<
     Record<string, ActivityApplicationState>
@@ -33,16 +42,26 @@ export function MemberHome() {
   }, []);
 
   async function refreshMemberHome() {
-    const [nextActivities, nextApplicationStates] = await Promise.all([
+    const [nextActivities, nextApplicationStates, nextNotices] = await Promise.all([
       listHomeActivities(store, 'member'),
       getApplicationStateByActivity(applicationStore, demoMemberId),
+      listHomeNotices(noticeStore, 'member'),
     ]);
 
     setActivities(nextActivities);
     setApplicationStates(nextApplicationStates);
+    setNotices(nextNotices);
   }
 
   async function handleApply(activity: Activity) {
+    const confirmed = window.confirm(
+      '이 활동에 참여 신청하시겠습니까? 운영진 승인 후 참여가 확정됩니다.',
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     await applyForActivity(applicationStore, {
       activityId: activity.id,
       now: new Date().toISOString(),
@@ -52,6 +71,14 @@ export function MemberHome() {
   }
 
   async function handleCancel(activity: Activity) {
+    const confirmed = window.confirm(
+      '정말 취소하시겠습니까? 이 결정은 되돌릴 수 없습니다.',
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     await cancelApplicationForActivity(applicationStore, {
       activityId: activity.id,
       cancellationAllowed: true,
@@ -82,13 +109,17 @@ export function MemberHome() {
           현재 데모는 activity 데이터를 Firebase 또는 localStorage bridge에서 읽습니다.
         </p>
 
-        <div className="grid grid-3" style={{ marginTop: 28 }}>
-          <div className="notice">
-            <strong>고정 공지</strong>
-            <p className="helper-text" style={{ color: '#7a4d00', marginTop: 8 }}>
-              Build with AI 데모를 위해 Activity CRUD를 먼저 연결했습니다.
-            </p>
+        <section className="section section-compact">
+          <div className="section-header">
+            <div>
+              <h2>공지사항</h2>
+              <p>운영진이 고정한 중요한 공지를 먼저 보여줍니다.</p>
+            </div>
           </div>
+          <NoticeBoard notices={notices.slice(0, 6)} />
+        </section>
+
+        <div className="grid grid-3" style={{ marginTop: 28 }}>
           <div className="card">
             <span className="badge badge-green">Participation</span>
             <h3>{activeApplicationCount}개 활동 참여 중</h3>

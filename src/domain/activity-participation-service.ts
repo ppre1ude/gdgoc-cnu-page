@@ -54,7 +54,8 @@ export function createInMemoryActivityApplicationStore(
     },
     async listByActivity(activityId) {
       return [...applications.values()].filter(
-        (application) => application.activityId === activityId,
+        (application) =>
+          application.activityId === activityId && !application.cancelledAt,
       );
     },
     async findByActivityAndUser(activityId, userId) {
@@ -67,6 +68,15 @@ export async function applyForActivity(
   store: ActivityApplicationStore,
   input: ApplyForActivityInput,
 ): Promise<ActivityApplication> {
+  const existingApplication = await store.findByActivityAndUser(
+    input.activityId,
+    input.userId,
+  );
+
+  if (existingApplication && !existingApplication.cancelledAt) {
+    return existingApplication;
+  }
+
   const application = applyToActivity(input);
 
   return store.save(application);
@@ -127,6 +137,19 @@ export async function getApplicationStateByActivity(
   const applications = await store.listByUser(userId);
 
   return Object.fromEntries(
-    applications.map((application) => [application.activityId, application.state]),
+    applications
+      .filter((application) => !application.cancelledAt)
+      .map((application) => [application.activityId, application.state]),
   );
+}
+
+export async function getCancelledActivityIdsByUser(
+  store: ActivityApplicationStore,
+  userId: string,
+): Promise<string[]> {
+  const applications = await store.listByUser(userId);
+
+  return applications
+    .filter((application) => Boolean(application.cancelledAt))
+    .map((application) => application.activityId);
 }

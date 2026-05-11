@@ -24,7 +24,7 @@ export default function PublicHomePage() {
               <Link className="button button-primary" href="/member">
                 멤버 홈 보기
               </Link>
-              <Link className="button button-secondary" href="/admin/activities">
+              <Link className="button button-secondary" href="/admin">
                 활동 등록 데모
               </Link>
             </div>

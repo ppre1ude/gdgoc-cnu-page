@@ -1,7 +1,6 @@
 export const ACTIVITY_APPLICATION_STATES = [
   'applied',
   'approved',
-  'cancelled',
 ] as const;
 
 export type ActivityApplicationState =
@@ -12,6 +11,7 @@ export type ActivityApplication = {
   activityId: string;
   userId: string;
   state: ActivityApplicationState;
+  cancelledAt?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -54,6 +54,10 @@ export function approveActivityApplication(
   application: ActivityApplication,
   input: ApproveActivityApplicationInput,
 ): ActivityApplication {
+  if (application.cancelledAt) {
+    throw new Error('Cannot approve a cancelled application.');
+  }
+
   if (application.state !== 'applied') {
     throw new Error(
       `Cannot approve application from ${application.state} state.`,
@@ -75,13 +79,13 @@ export function cancelActivityApplication(
     throw new Error('Cancellation is not allowed for this activity.');
   }
 
-  if (application.state === 'cancelled') {
-    throw new Error('Cannot cancel application from cancelled state.');
+  if (application.cancelledAt) {
+    throw new Error('Application is already cancelled.');
   }
 
   return {
     ...application,
-    state: 'cancelled',
+    cancelledAt: input.now,
     updatedAt: input.now,
   };
 }

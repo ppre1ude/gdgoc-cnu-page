@@ -341,7 +341,9 @@ function ApplicationQueue({
         <div className="application-row" key={application.id}>
           <div>
             <strong>{application.userId}</strong>
-            <div className="helper-text">{application.state}</div>
+            <div className="helper-text">
+              {application.state === 'applied' ? '운영진 승인 대기 중' : '승인됨'}
+            </div>
           </div>
           {application.state === 'applied' ? (
             <button

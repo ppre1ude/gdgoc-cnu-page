@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import { AuthPanel } from '@/components/auth-panel';
+import { getPrimaryNavigationItems } from '@/domain/navigation';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -11,6 +12,8 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const navigationItems = getPrimaryNavigationItems('team_member');
+
   return (
     <html lang="ko">
       <body>
@@ -26,15 +29,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               GDGoC CNU
             </Link>
             <nav className="nav-links" aria-label="주요 메뉴">
-              <Link className="nav-link" href="/">
-                Public
-              </Link>
-              <Link className="nav-link" href="/member">
-                Member Home
-              </Link>
-              <Link className="nav-link" href="/admin/activities">
-                Activity Admin
-              </Link>
+              {navigationItems.map((item) => (
+                <Link className="nav-link" href={item.href} key={item.href}>
+                  {item.label}
+                </Link>
+              ))}
               <AuthPanel />
             </nav>
           </header>

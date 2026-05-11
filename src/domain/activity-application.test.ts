@@ -27,7 +27,7 @@ describe('activity application state', () => {
     assert.equal(application.updatedAt, '2026-05-11T11:00:00.000Z');
   });
 
-  it('lets a member cancel an applied application when cancellation is allowed', () => {
+  it('marks an applied application as cancelled without adding a cancelled state', () => {
     const application = appliedApplication();
 
     const cancelled = cancelActivityApplication(application, {
@@ -35,11 +35,12 @@ describe('activity application state', () => {
       now: '2026-05-11T12:00:00.000Z',
     });
 
-    assert.equal(cancelled.state, 'cancelled');
+    assert.equal(cancelled.state, 'applied');
+    assert.equal(cancelled.cancelledAt, '2026-05-11T12:00:00.000Z');
     assert.equal(cancelled.updatedAt, '2026-05-11T12:00:00.000Z');
   });
 
-  it('lets a member cancel an approved application when cancellation is allowed', () => {
+  it('marks an approved application as cancelled without adding a cancelled state', () => {
     const application = appliedApplication();
     const approved = approveActivityApplication(application, {
       now: '2026-05-11T12:00:00.000Z',
@@ -50,7 +51,8 @@ describe('activity application state', () => {
       now: '2026-05-11T13:00:00.000Z',
     });
 
-    assert.equal(cancelled.state, 'cancelled');
+    assert.equal(cancelled.state, 'approved');
+    assert.equal(cancelled.cancelledAt, '2026-05-11T13:00:00.000Z');
     assert.equal(cancelled.updatedAt, '2026-05-11T13:00:00.000Z');
   });
 
@@ -80,11 +82,11 @@ describe('activity application state', () => {
           cancellationAllowed: true,
           now: '2026-05-11T13:00:00.000Z',
         }),
-      /Cannot cancel application from cancelled state/,
+      /Application is already cancelled/,
     );
   });
 
-  it('throws when approving an application that is already cancelled', () => {
+  it('throws when approving an application that was cancelled', () => {
     const application = appliedApplication();
     const cancelled = cancelActivityApplication(application, {
       cancellationAllowed: true,
@@ -96,19 +98,15 @@ describe('activity application state', () => {
         approveActivityApplication(cancelled, {
           now: '2026-05-11T13:00:00.000Z',
         }),
-      /Cannot approve application from cancelled state/,
+      /Cannot approve a cancelled application/,
     );
   });
 
-  it('defines only applied, approved, and cancelled as application states', () => {
-    assert.deepEqual(ACTIVITY_APPLICATION_STATES, [
-      'applied',
-      'approved',
-      'cancelled',
-    ]);
+  it('defines only applied and approved as application states', () => {
+    assert.deepEqual(ACTIVITY_APPLICATION_STATES, ['applied', 'approved']);
     assert.equal(isActivityApplicationState('applied'), true);
     assert.equal(isActivityApplicationState('approved'), true);
-    assert.equal(isActivityApplicationState('cancelled'), true);
+    assert.equal(isActivityApplicationState('cancelled'), false);
     assert.equal(isActivityApplicationState('rejected'), false);
     assert.equal(isActivityApplicationState('absent'), false);
   });
