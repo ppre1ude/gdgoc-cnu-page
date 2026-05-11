@@ -3,9 +3,11 @@ import { describe, it } from 'node:test';
 
 import {
   applyForActivity,
+  approveApplicationForActivity,
   cancelApplicationForActivity,
   createInMemoryActivityApplicationStore,
   getApplicationStateByActivity,
+  listApplicationsForActivity,
 } from './activity-participation-service.ts';
 
 describe('member activity participation flow', () => {
@@ -41,6 +43,33 @@ describe('member activity participation flow', () => {
 
     assert.deepEqual(await getApplicationStateByActivity(store, 'member-1'), {
       'activity-1': 'cancelled',
+    });
+  });
+
+  it('lets an operator list applications for an activity and approve one', async () => {
+    const store = createInMemoryActivityApplicationStore();
+
+    await applyForActivity(store, {
+      activityId: 'activity-1',
+      userId: 'member-1',
+      now: '2026-05-11T12:00:00.000Z',
+    });
+
+    assert.deepEqual(
+      (await listApplicationsForActivity(store, 'activity-1')).map(
+        (application) => application.state,
+      ),
+      ['applied'],
+    );
+
+    await approveApplicationForActivity(store, {
+      activityId: 'activity-1',
+      now: '2026-05-11T14:00:00.000Z',
+      userId: 'member-1',
+    });
+
+    assert.deepEqual(await getApplicationStateByActivity(store, 'member-1'), {
+      'activity-1': 'approved',
     });
   });
 });

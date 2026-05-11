@@ -1,5 +1,6 @@
 import {
   applyToActivity,
+  approveActivityApplication,
   cancelActivityApplication,
   type ActivityApplication,
   type ActivityApplicationState,
@@ -8,6 +9,7 @@ import {
 export type ActivityApplicationStore = {
   save(application: ActivityApplication): Promise<ActivityApplication>;
   listByUser(userId: string): Promise<ActivityApplication[]>;
+  listByActivity(activityId: string): Promise<ActivityApplication[]>;
   findByActivityAndUser(
     activityId: string,
     userId: string,
@@ -27,6 +29,12 @@ export type CancelApplicationForActivityInput = {
   now: string;
 };
 
+export type ApproveApplicationForActivityInput = {
+  activityId: string;
+  userId: string;
+  now: string;
+};
+
 export function createInMemoryActivityApplicationStore(
   initialApplications: ActivityApplication[] = [],
 ): ActivityApplicationStore {
@@ -42,6 +50,11 @@ export function createInMemoryActivityApplicationStore(
     async listByUser(userId) {
       return [...applications.values()].filter(
         (application) => application.userId === userId,
+      );
+    },
+    async listByActivity(activityId) {
+      return [...applications.values()].filter(
+        (application) => application.activityId === activityId,
       );
     },
     async findByActivityAndUser(activityId, userId) {
@@ -78,6 +91,33 @@ export async function cancelApplicationForActivity(
       now: input.now,
     }),
   );
+}
+
+export async function approveApplicationForActivity(
+  store: ActivityApplicationStore,
+  input: ApproveApplicationForActivityInput,
+): Promise<ActivityApplication> {
+  const application = await store.findByActivityAndUser(
+    input.activityId,
+    input.userId,
+  );
+
+  if (!application) {
+    throw new Error('Activity application does not exist.');
+  }
+
+  return store.save(
+    approveActivityApplication(application, {
+      now: input.now,
+    }),
+  );
+}
+
+export async function listApplicationsForActivity(
+  store: ActivityApplicationStore,
+  activityId: string,
+): Promise<ActivityApplication[]> {
+  return store.listByActivity(activityId);
 }
 
 export async function getApplicationStateByActivity(

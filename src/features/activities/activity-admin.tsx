@@ -13,9 +13,15 @@ import type {
   ActivityType,
   ActivityVisibility,
 } from '@/domain/activity';
+import type { ActivityApplication } from '@/domain/activity-application';
+import {
+  approveApplicationForActivity,
+  listApplicationsForActivity,
+} from '@/domain/activity-participation-service';
 import { createActivity, listHomeActivities } from '@/domain/activity-service';
 import { listVisibleActivities } from '@/domain/activity';
 import { ActivityCard } from '@/components/activity-card';
+import { createBrowserActivityApplicationStore } from './browser-activity-application-store';
 import { createBrowserActivityStore } from './browser-activity-store';
 import { seedActivities } from './seed-activities';
 
@@ -36,20 +42,35 @@ const initialDraft = {
 
 export function ActivityAdmin() {
   const store = useMemo(() => createBrowserActivityStore(), []);
+  const applicationStore = useMemo(() => createBrowserActivityApplicationStore(), []);
   const [draft, setDraft] = useState(initialDraft);
   const [activities, setActivities] = useState<Activity[]>(
     listVisibleActivities(seedActivities, 'team_member'),
   );
+  const [applicationsByActivity, setApplicationsByActivity] = useState<
+    Record<string, ActivityApplication[]>
+  >({});
   const [suggestion, setSuggestion] = useState<ActivityDraftSuggestion | null>(null);
   const [message, setMessage] = useState('Firebase 설정이 없으면 브라우저 localStorage로 데모가 동작합니다.');
   const [isSuggesting, setIsSuggesting] = useState(false);
 
   useEffect(() => {
-    void refreshActivities();
+    void refreshDashboard();
   }, []);
 
-  async function refreshActivities() {
-    setActivities(await listHomeActivities(store, 'team_member'));
+  async function refreshDashboard() {
+    const nextActivities = await listHomeActivities(store, 'team_member');
+    const nextApplicationsByActivity = Object.fromEntries(
+      await Promise.all(
+        nextActivities.map(async (activity) => [
+          activity.id,
+          await listApplicationsForActivity(applicationStore, activity.id),
+        ]),
+      ),
+    );
+
+    setActivities(nextActivities);
+    setApplicationsByActivity(nextApplicationsByActivity);
   }
 
   async function requestSuggestion() {
@@ -123,7 +144,17 @@ export function ActivityAdmin() {
     });
     setMessage('Activity가 저장되었습니다. Member Home에서 바로 확인할 수 있습니다.');
     setSuggestion(null);
-    await refreshActivities();
+    await refreshDashboard();
+  }
+
+  async function approveApplication(application: ActivityApplication) {
+    await approveApplicationForActivity(applicationStore, {
+      activityId: application.activityId,
+      now: new Date().toISOString(),
+      userId: application.userId,
+    });
+    setMessage(`${application.userId} 신청을 승인했습니다.`);
+    await refreshDashboard();
   }
 
   return (
@@ -273,12 +304,58 @@ export function ActivityAdmin() {
                 </div>
               </div>
               {activities.map((activity) => (
-                <ActivityCard activity={activity} key={activity.id} />
+                <div className="stack" key={activity.id}>
+                  <ActivityCard activity={activity} />
+                  <ApplicationQueue
+                    applications={applicationsByActivity[activity.id] ?? []}
+                    onApprove={approveApplication}
+                  />
+                </div>
               ))}
             </section>
           </aside>
         </div>
       </div>
     </main>
+  );
+}
+
+function ApplicationQueue({
+  applications,
+  onApprove,
+}: {
+  applications: ActivityApplication[];
+  onApprove: (application: ActivityApplication) => void;
+}) {
+  if (applications.length === 0) {
+    return (
+      <div className="application-queue application-queue-empty">
+        아직 신청자가 없습니다.
+      </div>
+    );
+  }
+
+  return (
+    <div className="application-queue">
+      {applications.map((application) => (
+        <div className="application-row" key={application.id}>
+          <div>
+            <strong>{application.userId}</strong>
+            <div className="helper-text">{application.state}</div>
+          </div>
+          {application.state === 'applied' ? (
+            <button
+              className="button button-primary button-small"
+              onClick={() => onApprove(application)}
+              type="button"
+            >
+              승인
+            </button>
+          ) : (
+            <span className="badge badge-green">승인됨</span>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }

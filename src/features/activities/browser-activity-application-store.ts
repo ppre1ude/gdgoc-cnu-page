@@ -34,6 +34,11 @@ function createLocalStorageActivityApplicationStore(): ActivityApplicationStore 
     async listByUser(userId) {
       return readApplications().filter((application) => application.userId === userId);
     },
+    async listByActivity(activityId) {
+      return readApplications().filter(
+        (application) => application.activityId === activityId,
+      );
+    },
     async findByActivityAndUser(activityId, userId) {
       return (
         readApplications().find(
@@ -75,6 +80,17 @@ function createFirestoreActivityApplicationStore(): ActivityApplicationStore {
         query(
           collection(getFirestoreDb(), 'activityApplications'),
           where('userId', '==', userId),
+        ),
+      );
+
+      return snapshot.docs.map((item) => item.data() as ActivityApplication);
+    },
+    async listByActivity(activityId) {
+      const { collection, getDocs, query, where } = await import('firebase/firestore');
+      const snapshot = await getDocs(
+        query(
+          collection(getFirestoreDb(), 'activityApplications'),
+          where('activityId', '==', activityId),
         ),
       );
 

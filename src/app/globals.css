@@ -363,6 +363,35 @@ textarea {
   margin-top: 16px;
 }
 
+.application-queue {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.application-queue-empty {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.application-row {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.application-row strong {
+  color: var(--text-strong);
+  display: block;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
 .page {
   padding: 44px 0 72px;
 }
