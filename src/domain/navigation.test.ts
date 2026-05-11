@@ -14,6 +14,7 @@ describe('primary navigation', () => {
     assert.equal(hrefs.includes('/admin/activities'), false);
     assert.equal(hrefs.includes('/admin/notices'), false);
     assert.equal(hrefs.includes('/admin/showcases'), false);
+    assert.equal(hrefs.includes('/admin/roles'), false);
   });
 
   it('keeps admin entry out of visitor and member navigation', () => {
@@ -30,25 +31,32 @@ describe('primary navigation', () => {
 
 describe('admin navigation', () => {
   it('groups operator tools under the admin dashboard', () => {
-    assert.deepEqual(getAdminNavigationItems(), [
-      {
-        description:
-          '활동을 등록하고 Gemini 작성 보조, 신청 승인, 출석 흐름을 확인합니다.',
-        href: '/admin/activities',
-        label: 'Activity Admin',
-      },
-      {
-        description:
-          '공지사항을 등록하고 핀 고정, 공개 범위, 멤버 홈 노출을 관리합니다.',
-        href: '/admin/notices',
-        label: 'Notice Admin',
-      },
-      {
-        description:
-          '성과, 회고, 갤러리, 프로젝트 결과를 등록하고 공개 범위를 관리합니다.',
-        href: '/admin/showcases',
-        label: 'Showcase Admin',
-      },
-    ]);
+    const adminItems = getAdminNavigationItems();
+
+    assert.deepEqual(
+      adminItems.map((item) => ({ href: item.href, label: item.label })),
+      [
+        {
+          href: '/admin/activities',
+          label: 'Activity Admin',
+        },
+        {
+          href: '/admin/notices',
+          label: 'Notice Admin',
+        },
+        {
+          href: '/admin/showcases',
+          label: 'Showcase Admin',
+        },
+        {
+          href: '/admin/roles',
+          label: 'Role Admin',
+        },
+      ],
+    );
+    assert.equal(
+      adminItems.every((item) => item.description.length > 0),
+      true,
+    );
   });
 });

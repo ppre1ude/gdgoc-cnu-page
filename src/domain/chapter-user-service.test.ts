@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 
 import {
   approveGuestToMember,
+  changeUserRole,
   createInMemoryChapterUserStore,
   listPendingGuestUsers,
   submitGuestProfile,
@@ -24,6 +25,22 @@ const guestProfileInput = {
   interests: 'Building Gemini-powered campus service prototypes',
   motivation: 'I want to turn a workshop idea into a usable demo.',
   studentId: '20261234',
+};
+
+const memberUser: ChapterUser = {
+  ...guestUser,
+  id: 'user-member-1',
+  displayName: 'Member User',
+  email: 'member@example.com',
+  role: 'member',
+};
+
+const adminUser: ChapterUser = {
+  ...guestUser,
+  id: 'user-admin-1',
+  displayName: 'Admin User',
+  email: 'admin@example.com',
+  role: 'admin',
 };
 
 describe('chapter user guest profile submission flow', () => {
@@ -208,5 +225,113 @@ describe('chapter user approval flow', () => {
         }),
       /Only guest users can be approved into member/,
     );
+  });
+});
+
+describe('chapter user role admin flow', () => {
+  it('lets an admin change a persisted user role and records a role change log', async () => {
+    const store = createInMemoryChapterUserStore([adminUser, memberUser]);
+
+    const changed = await changeUserRole(store, {
+      actorId: 'user-admin-1',
+      actorRole: 'admin',
+      now: '2026-05-11T10:00:00.000Z',
+      targetUserId: 'user-member-1',
+      nextRole: 'organizer',
+    });
+
+    assert.equal(changed.role, 'organizer');
+    assert.equal(changed.updatedAt, '2026-05-11T10:00:00.000Z');
+    assert.deepEqual(await store.findUser('user-member-1'), changed);
+    assert.deepEqual(await store.listRoleChangeLogs(), [
+      {
+        id: 'role-change-user-member-1-2026-05-11T10:00:00.000Z',
+        actorId: 'user-admin-1',
+        actorRole: 'admin',
+        createdAt: '2026-05-11T10:00:00.000Z',
+        nextRole: 'organizer',
+        previousRole: 'member',
+        targetUserId: 'user-member-1',
+      },
+    ]);
+  });
+
+  it('does not let non-admin actors use the general role-change API', async () => {
+    const store = createInMemoryChapterUserStore([adminUser, memberUser]);
+
+    await assert.rejects(
+      () =>
+        changeUserRole(store, {
+          actorId: 'user-organizer-1',
+          actorRole: 'organizer',
+          now: '2026-05-11T10:00:00.000Z',
+          targetUserId: 'user-member-1',
+          nextRole: 'team_member',
+        }),
+      /Only admins can change user roles/,
+    );
+    assert.equal((await store.findUser('user-member-1'))?.role, 'member');
+    assert.deepEqual(await store.listRoleChangeLogs(), []);
+  });
+
+  it('does not change persisted users to visitor', async () => {
+    const store = createInMemoryChapterUserStore([adminUser, memberUser]);
+
+    await assert.rejects(
+      () =>
+        changeUserRole(store, {
+          actorId: 'user-admin-1',
+          actorRole: 'admin',
+          now: '2026-05-11T10:00:00.000Z',
+          targetUserId: 'user-member-1',
+          nextRole: 'visitor',
+        }),
+      /Persisted users cannot be changed to visitor/,
+    );
+    assert.equal((await store.findUser('user-member-1'))?.role, 'member');
+    assert.deepEqual(await store.listRoleChangeLogs(), []);
+  });
+
+  it('does not let an admin remove their own admin role', async () => {
+    const store = createInMemoryChapterUserStore([
+      adminUser,
+      {
+        ...adminUser,
+        id: 'user-admin-2',
+        email: 'admin2@example.com',
+      },
+    ]);
+
+    await assert.rejects(
+      () =>
+        changeUserRole(store, {
+          actorId: 'user-admin-1',
+          actorRole: 'admin',
+          now: '2026-05-11T10:00:00.000Z',
+          targetUserId: 'user-admin-1',
+          nextRole: 'organizer',
+        }),
+      /Admins cannot remove their own admin role/,
+    );
+    assert.equal((await store.findUser('user-admin-1'))?.role, 'admin');
+    assert.deepEqual(await store.listRoleChangeLogs(), []);
+  });
+
+  it('does not demote the last admin', async () => {
+    const store = createInMemoryChapterUserStore([adminUser, memberUser]);
+
+    await assert.rejects(
+      () =>
+        changeUserRole(store, {
+          actorId: 'external-admin-1',
+          actorRole: 'admin',
+          now: '2026-05-11T10:00:00.000Z',
+          targetUserId: 'user-admin-1',
+          nextRole: 'organizer',
+        }),
+      /The last admin cannot be demoted/,
+    );
+    assert.equal((await store.findUser('user-admin-1'))?.role, 'admin');
+    assert.deepEqual(await store.listRoleChangeLogs(), []);
   });
 });

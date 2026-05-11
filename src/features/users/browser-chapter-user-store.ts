@@ -52,6 +52,14 @@ function createLocalStorageChapterUserStore(): ChapterUserStore {
 function ensureSeededLocalStorage() {
   if (!window.localStorage.getItem(usersStorageKey)) {
     writeUsers(seedChapterUsers);
+  } else {
+    const users = readUsers();
+    const userIds = new Set(users.map((user) => user.id));
+    const missingSeedUsers = seedChapterUsers.filter((user) => !userIds.has(user.id));
+
+    if (missingSeedUsers.length > 0) {
+      writeUsers([...users, ...missingSeedUsers]);
+    }
   }
 
   if (!window.localStorage.getItem(roleChangeLogsStorageKey)) {

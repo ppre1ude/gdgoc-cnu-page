@@ -52,5 +52,11 @@ export function getAdminNavigationItems(): AdminNavigationItem[] {
       href: '/admin/showcases',
       label: 'Showcase Admin',
     },
+    {
+      description:
+        '가입한 사용자의 역할을 조정하고 변경 이력을 확인합니다.',
+      href: '/admin/roles',
+      label: 'Role Admin',
+    },
   ];
 }

@@ -16,6 +16,14 @@ export type ApproveGuestToMemberInput = {
   now: string;
 };
 
+export type ChangeUserRoleInput = {
+  actorId: string;
+  actorRole: UserRole;
+  targetUserId: string;
+  nextRole: UserRole;
+  now: string;
+};
+
 export type GuestProfileInput = {
   department?: string;
   cohort?: string;
@@ -135,4 +143,58 @@ export async function approveGuestToMember(
   });
 
   return approvedUser;
+}
+
+export async function changeUserRole(
+  store: ChapterUserStore,
+  input: ChangeUserRoleInput,
+): Promise<ChapterUser> {
+  if (input.actorRole !== 'admin') {
+    throw new Error('Only admins can change user roles.');
+  }
+
+  const user = await store.findUser(input.targetUserId);
+
+  if (!user) {
+    throw new Error('Chapter user does not exist.');
+  }
+
+  if (input.nextRole === 'visitor') {
+    throw new Error('Persisted users cannot be changed to visitor.');
+  }
+
+  const removesAdminRole = user.role === 'admin' && input.nextRole !== 'admin';
+
+  if (removesAdminRole && input.actorId === user.id) {
+    throw new Error('Admins cannot remove their own admin role.');
+  }
+
+  if (removesAdminRole) {
+    const users = await store.listUsers();
+    const adminCount = users.filter((candidate) => candidate.role === 'admin')
+      .length;
+
+    if (adminCount <= 1) {
+      throw new Error('The last admin cannot be demoted.');
+    }
+  }
+
+  const changedUser: ChapterUser = {
+    ...user,
+    role: input.nextRole,
+    updatedAt: input.now,
+  };
+
+  await store.saveUser(changedUser);
+  await store.saveRoleChangeLog({
+    id: `role-change-${user.id}-${input.now}`,
+    actorId: input.actorId,
+    actorRole: input.actorRole,
+    createdAt: input.now,
+    nextRole: input.nextRole,
+    previousRole: user.role,
+    targetUserId: user.id,
+  });
+
+  return changedUser;
 }
