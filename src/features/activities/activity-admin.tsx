@@ -9,6 +9,7 @@ import {
 } from '@/domain/ai-draft';
 import type {
   Activity,
+  ActivityRegistrationMode,
   ActivityStatus,
   ActivityType,
   ActivityVisibility,
@@ -38,6 +39,9 @@ const initialDraft = {
   visibility: 'member' as ActivityVisibility,
   status: 'published' as ActivityStatus,
   startsAt: '2026-05-16T04:00',
+  registrationMode: 'hybrid' as ActivityRegistrationMode,
+  externalRegistrationUrl: 'https://gdg.community.dev/',
+  externalRegistrationLabel: 'gdg.community.dev 등록',
 };
 
 export function ActivityAdmin() {
@@ -140,6 +144,9 @@ export function ActivityAdmin() {
       visibility: draft.visibility,
       status: draft.status,
       startsAt: draft.startsAt ? new Date(draft.startsAt).toISOString() : undefined,
+      registrationMode: draft.registrationMode,
+      externalRegistrationUrl: draft.externalRegistrationUrl.trim() || undefined,
+      externalRegistrationLabel: draft.externalRegistrationLabel.trim() || undefined,
       now: new Date().toISOString(),
     });
     setMessage('Activity가 저장되었습니다. Member Home에서 바로 확인할 수 있습니다.');
@@ -229,6 +236,58 @@ export function ActivityAdmin() {
                   }
                   type="datetime-local"
                   value={draft.startsAt}
+                />
+              </label>
+
+              <div className="grid grid-2">
+                <label className="field">
+                  <span>등록 방식</span>
+                  <select
+                    className="select"
+                    onChange={(event) =>
+                      setDraft((current) => ({
+                        ...current,
+                        registrationMode: event.target.value as ActivityRegistrationMode,
+                      }))
+                    }
+                    value={draft.registrationMode}
+                  >
+                    <option value="internal">내부 신청</option>
+                    <option value="external">외부 등록</option>
+                    <option value="hybrid">내부 신청 + 외부 등록</option>
+                    <option value="none">정보 안내만</option>
+                  </select>
+                </label>
+
+                <label className="field">
+                  <span>외부 등록 버튼</span>
+                  <input
+                    className="input"
+                    onChange={(event) =>
+                      setDraft((current) => ({
+                        ...current,
+                        externalRegistrationLabel: event.target.value,
+                      }))
+                    }
+                    placeholder="예: gdg.community.dev 등록"
+                    value={draft.externalRegistrationLabel}
+                  />
+                </label>
+              </div>
+
+              <label className="field">
+                <span>외부 등록 URL</span>
+                <input
+                  className="input"
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      externalRegistrationUrl: event.target.value,
+                    }))
+                  }
+                  placeholder="https://gdg.community.dev/..."
+                  type="url"
+                  value={draft.externalRegistrationUrl}
                 />
               </label>
 

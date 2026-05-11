@@ -40,7 +40,10 @@ function createLocalStorageActivityStore(): ActivityStore {
 function ensureSeededLocalStorage() {
   if (!window.localStorage.getItem(storageKey)) {
     writeActivities(seedActivities);
+    return;
   }
+
+  writeActivities(mergeSeedActivities(readActivities()));
 }
 
 function readActivities(): Activity[] {
@@ -55,6 +58,33 @@ function readActivities(): Activity[] {
 
 function writeActivities(activities: Activity[]) {
   window.localStorage.setItem(storageKey, JSON.stringify(activities));
+}
+
+function mergeSeedActivities(activities: Activity[]): Activity[] {
+  const seedById = new Map(seedActivities.map((activity) => [activity.id, activity]));
+  const activityIds = new Set(activities.map((activity) => activity.id));
+  const mergedActivities = activities.map((activity) => {
+    const seedActivity = seedById.get(activity.id);
+
+    if (!seedActivity) {
+      return activity;
+    }
+
+    return {
+      ...seedActivity,
+      ...activity,
+      registrationMode: seedActivity.registrationMode ?? activity.registrationMode,
+      externalRegistrationUrl:
+        seedActivity.externalRegistrationUrl ?? activity.externalRegistrationUrl,
+      externalRegistrationLabel:
+        seedActivity.externalRegistrationLabel ?? activity.externalRegistrationLabel,
+    };
+  });
+  const missingSeedActivities = seedActivities.filter(
+    (activity) => !activityIds.has(activity.id),
+  );
+
+  return [...mergedActivities, ...missingSeedActivities];
 }
 
 function createFirestoreActivityStore(): ActivityStore {

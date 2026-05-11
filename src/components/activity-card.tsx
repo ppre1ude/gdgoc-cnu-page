@@ -1,4 +1,7 @@
-import type { Activity } from '@/domain/activity';
+import {
+  type Activity,
+  getActivityRegistrationPolicy,
+} from '@/domain/activity';
 import type { ActivityApplicationState } from '@/domain/activity-application';
 import { formatKoreanDateTime } from '@/lib/format-korean-date-time';
 
@@ -14,6 +17,16 @@ const visibilityLabel: Record<Activity['visibility'], string> = {
   public: 'Public',
   member: 'Member',
   operator: 'Operator',
+};
+
+const registrationModeLabel: Record<
+  NonNullable<Activity['registrationMode']>,
+  string
+> = {
+  internal: 'Internal',
+  external: 'External',
+  hybrid: 'Hybrid',
+  none: 'Info',
 };
 
 const applicationStateLabel: Record<ActivityApplicationState, string> = {
@@ -32,7 +45,9 @@ export function ActivityCard({
   onApply?: (activity: Activity) => void;
   onCancel?: (activity: Activity) => void;
 }) {
-  const canApply = onApply && !applicationState;
+  const registrationPolicy = getActivityRegistrationPolicy(activity);
+  const canApply =
+    registrationPolicy.canApplyInternally && onApply && !applicationState;
   const canCancel =
     onCancel && (applicationState === 'applied' || applicationState === 'approved');
 
@@ -41,6 +56,11 @@ export function ActivityCard({
       <div className="badge-row">
         <span className="badge badge-blue">{activityTypeLabel[activity.type]}</span>
         <span className="badge">{visibilityLabel[activity.visibility]}</span>
+        {registrationPolicy.registrationMode !== 'internal' ? (
+          <span className="badge">
+            {registrationModeLabel[registrationPolicy.registrationMode]}
+          </span>
+        ) : null}
         {applicationState ? (
           <span className="badge badge-green">
             {applicationStateLabel[applicationState]}
@@ -54,8 +74,18 @@ export function ActivityCard({
           {formatDate(activity.startsAt)}
         </p>
       ) : null}
-      {canApply || canCancel ? (
+      {canApply || canCancel || registrationPolicy.externalRegistrationUrl ? (
         <div className="card-actions">
+          {registrationPolicy.externalRegistrationUrl ? (
+            <a
+              className="button button-secondary button-small"
+              href={registrationPolicy.externalRegistrationUrl}
+              rel="noreferrer"
+              target="_blank"
+            >
+              {registrationPolicy.externalRegistrationLabel}
+            </a>
+          ) : null}
           {canApply ? (
             <button
               className="button button-primary button-small"

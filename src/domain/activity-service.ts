@@ -1,5 +1,6 @@
 import {
   type Activity,
+  type ActivityRegistrationMode,
   type ActivityStatus,
   type ActivityType,
   type ActivityVisibility,
@@ -20,6 +21,9 @@ export type CreateActivityInput = {
   visibility: ActivityVisibility;
   status: ActivityStatus;
   startsAt?: string;
+  registrationMode?: ActivityRegistrationMode;
+  externalRegistrationUrl?: string;
+  externalRegistrationLabel?: string;
   now: string;
 };
 
@@ -57,6 +61,9 @@ export async function createActivity(
     visibility: input.visibility,
     status: input.status,
     startsAt: input.startsAt,
+    registrationMode: input.registrationMode,
+    externalRegistrationUrl: input.externalRegistrationUrl,
+    externalRegistrationLabel: input.externalRegistrationLabel,
     createdAt: input.now,
     updatedAt: input.now,
   });

@@ -19,6 +19,9 @@ describe('activity authoring flow', () => {
       visibility: 'member',
       status: 'published',
       startsAt: '2026-05-16T04:00:00.000Z',
+      registrationMode: 'hybrid',
+      externalRegistrationUrl: 'https://gdg.community.dev/events/example',
+      externalRegistrationLabel: 'gdg.community.dev 등록',
       now: '2026-05-11T09:00:00.000Z',
     });
 
@@ -27,5 +30,10 @@ describe('activity authoring flow', () => {
     assert.equal(memberHomeActivities.length, 1);
     assert.equal(memberHomeActivities[0]?.id, activity.id);
     assert.equal(memberHomeActivities[0]?.title, 'Build with AI Prototype Sprint');
+    assert.equal(memberHomeActivities[0]?.registrationMode, 'hybrid');
+    assert.equal(
+      memberHomeActivities[0]?.externalRegistrationUrl,
+      'https://gdg.community.dev/events/example',
+    );
   });
 });

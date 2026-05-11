@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import {
+  getActivityRegistrationPolicy,
   listVisibleActivities,
   type Activity,
   type UserRole,
@@ -37,5 +38,71 @@ describe('listVisibleActivities', () => {
 
     assert.deepEqual(idsFor('visitor'), ['public']);
     assert.deepEqual(idsFor('member'), ['public', 'member']);
+  });
+});
+
+describe('getActivityRegistrationPolicy', () => {
+  it('defaults missing registration mode to internal application', () => {
+    const activity: Activity = {
+      ...baseActivity,
+      visibility: 'public',
+    };
+
+    assert.deepEqual(getActivityRegistrationPolicy(activity), {
+      registrationMode: 'internal',
+      canApplyInternally: true,
+      externalRegistrationUrl: undefined,
+      externalRegistrationLabel: '공식 등록 페이지',
+    });
+  });
+
+  it('uses external registration only for external mode', () => {
+    const activity: Activity = {
+      ...baseActivity,
+      visibility: 'public',
+      registrationMode: 'external',
+      externalRegistrationUrl: 'https://gdg.community.dev/events/example',
+      externalRegistrationLabel: 'GDG 이벤트 등록',
+    };
+
+    assert.deepEqual(getActivityRegistrationPolicy(activity), {
+      registrationMode: 'external',
+      canApplyInternally: false,
+      externalRegistrationUrl: 'https://gdg.community.dev/events/example',
+      externalRegistrationLabel: 'GDG 이벤트 등록',
+    });
+  });
+
+  it('allows both internal and external registration for hybrid mode', () => {
+    const activity: Activity = {
+      ...baseActivity,
+      visibility: 'public',
+      registrationMode: 'hybrid',
+      externalRegistrationUrl: 'https://forms.gle/example',
+    };
+
+    assert.deepEqual(getActivityRegistrationPolicy(activity), {
+      registrationMode: 'hybrid',
+      canApplyInternally: true,
+      externalRegistrationUrl: 'https://forms.gle/example',
+      externalRegistrationLabel: '공식 등록 페이지',
+    });
+  });
+
+  it('disables internal and external registration for none mode', () => {
+    const activity: Activity = {
+      ...baseActivity,
+      visibility: 'public',
+      registrationMode: 'none',
+      externalRegistrationUrl: 'https://forms.gle/example',
+      externalRegistrationLabel: 'Ignored link',
+    };
+
+    assert.deepEqual(getActivityRegistrationPolicy(activity), {
+      registrationMode: 'none',
+      canApplyInternally: false,
+      externalRegistrationUrl: undefined,
+      externalRegistrationLabel: '공식 등록 페이지',
+    });
   });
 });
