@@ -94,7 +94,19 @@ export default function RootLayout(props: { children: React.ReactNode }) {
 - **Mood:** Precise, useful, optimistic, and workshop-ready. The page should feel like a chapter that can help students actually build AI prototypes.
 - **Decoration level:** Intentional. Use real event/chapter content, tool logos, screenshots, and prototype output. Avoid generic abstract decoration.
 - **Layout approach:** Hybrid. Keep section structure grid-disciplined, but allow the hero and event recap areas to feel more editorial.
-- **Color approach:** Montage semantic tokens first, Google AI accent cues second.
+- **Color approach:** Montage semantic tokens first for product UI; GDGoC / Google four-color accents second for campaign identity.
+
+## Experience Layers
+
+The site can use different visual intensity by surface. Keep the product UI stable while allowing seasonal campaign expression.
+
+- **Core UI layer:** Use Montage / WDS for navigation, buttons, forms, cards, member utilities, and everyday interaction surfaces.
+- **Brand accent layer:** Use the GDGoC / Google four-color palette for logos, ribbons, badges, category marks, activity labels, and small identity moments.
+- **Onboarding campaign layer:** The onboarding first screen may use a stronger Build with AI poster style: off-white or black grounds, thick black strokes, rounded line illustrations, grain texture, brackets, arrows, circles, stickers, and animated four-color ribbons.
+
+The onboarding campaign layer is intentionally seasonal. Its key visual, decorative motifs, motion timing, and hero composition may change by campaign, but it must preserve readability, responsive layout, accessibility, and a clear path into the site.
+
+Member home and logged-in dashboards should not inherit the full poster treatment. They should stay operational and scan-friendly: top routing, personal summaries, quick links, notices, schedules, projects, and board entry points. PoolC is a useful reference for community warmth on public pages; Semicolon-style dashboard flow is a better reference for member home utility.
 
 ## Typography
 
@@ -143,6 +155,19 @@ Use semantic tokens instead of hard-coded hex values in app code.
 
 Do not make the whole site a Google-blue page. The dominant read should be Montage neutral surfaces with selective accent moments.
 
+### Brand Palette
+
+Use the GDGoC / Google-inspired four-color palette as the core campaign accent system:
+
+| Color | Hex | Primary use |
+| --- | --- | --- |
+| Blue | `#4285F4` | GDGoC mark, AI/tool accents, onboarding ribbon |
+| Red | `#EA4335` | Event urgency, highlight ribbon, poster stickers |
+| Yellow | `#FBBC04` | Date/year badges, callouts, warm campaign accents |
+| Green | `#34A853` | Community/activity accents, progress, onboarding ribbon |
+
+These colors are approved for onboarding visuals, motion graphics, badges, ribbons, event poster-inspired elements, and category accents. Do not use them as the default text, surface, or border system for everyday UI; use WDS semantic tokens there.
+
 ## Spacing
 
 - **Base unit:** 4px.
@@ -174,6 +199,7 @@ Do not make the whole site a Google-blue page. The dominant read should be Monta
 - **Duration:** 120ms to 180ms for hover/focus; 180ms to 260ms for disclosure or filtering.
 - **Use motion for:** hover affordance, section reveal, tab/filter changes, schedule expansion.
 - **Avoid:** scroll-heavy choreography, decorative looping animations, and motion that hides event information.
+- **Onboarding exception:** The onboarding campaign layer may use one-shot line or ribbon reveal motion inspired by Build with AI poster graphics. Prefer SVG path animation or Framer Motion over WebGL unless real 3D depth is required. Always support `prefers-reduced-motion` with a static poster state.
 
 ## Content Tone
 
@@ -189,6 +215,7 @@ Do not make the whole site a Google-blue page. The dominant read should be Monta
 - [ ] Wrap the app in `ThemeProvider`.
 - [ ] Build with WDS components before custom components.
 - [ ] Keep custom styling token-based through `theme.semantic`, `theme.opacity`, and WDS utilities.
+- [ ] For onboarding, use the Brand Palette and Onboarding Campaign Layer rules without weakening text readability or CTA clarity.
 - [ ] Run visual QA on desktop and mobile before considering the homepage ready.
 
 ## Decisions Log
@@ -198,3 +225,5 @@ Do not make the whole site a Google-blue page. The dominant read should be Monta
 | 2026-05-11 | Adopt Wanted Montage Web Design System as the primary UI foundation | The user requested Montage; it gives a Korean product-grade component and token baseline. |
 | 2026-05-11 | Use semantic WDS tokens instead of copying color hex values into the project | This keeps the site aligned with Montage and avoids token drift when WDS updates. |
 | 2026-05-11 | Use Korean-first event copy with preserved English tool names | The audience is local CNU students, while the event and tools are global Google AI programs. |
+| 2026-05-11 | Add GDGoC / Google four-color palette as the campaign accent system | The official mark uses blue, red, yellow, and green; these should anchor onboarding and event identity without replacing WDS UI semantics. |
+| 2026-05-11 | Separate onboarding campaign art from member home utility | Onboarding can carry seasonal Build with AI poster texture and motion, while member home should remain an efficient dashboard for routing, notices, schedules, and board access. |
