@@ -50,6 +50,8 @@ const activityVisibilityRank: Record<ActivityVisibility, number> = {
   operator: 2,
 };
 
+const defaultExternalRegistrationLabel = '공식 등록 페이지';
+
 export function listVisibleActivities(
   activities: Activity[],
   role: UserRole,
@@ -64,8 +66,6 @@ export function listVisibleActivities(
     return activityVisibilityRank[activity.visibility] <= allowedRank;
   });
 }
-
-const defaultExternalRegistrationLabel = '공식 등록 페이지';
 
 export function getActivityRegistrationPolicy(
   activity: Activity,

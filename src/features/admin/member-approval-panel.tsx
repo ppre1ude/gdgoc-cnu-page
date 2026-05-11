@@ -62,7 +62,9 @@ export function MemberApprovalPanel() {
       <div className="section-header">
         <div>
           <h2>멤버 승인</h2>
-          <p>운영진이 guest 계정을 member로 승격하는 기본 권한 흐름입니다.</p>
+          <p>
+            운영진이 guest 계정을 member로 승격하는 기본 권한 흐름입니다.
+          </p>
         </div>
       </div>
 
@@ -75,7 +77,9 @@ export function MemberApprovalPanel() {
         <div className="card">
           <span className="badge badge-blue">Role Logs</span>
           <h3>{roleChangeLogs.length}건 기록됨</h3>
-          <p>승인 작업은 actor, target, 이전 role, 다음 role과 함께 저장됩니다.</p>
+          <p>
+            승인 작업은 actor, target, 이전 role, 다음 role과 함께 저장됩니다.
+          </p>
         </div>
       </div>
 
@@ -128,7 +132,11 @@ function GuestProfileSummary({ user }: { user: ChapterUser }) {
   ].filter(([, value]) => Boolean(value));
 
   if (profileItems.length === 0) {
-    return <p className="helper-text">아직 제출된 승인 요청 정보가 없습니다.</p>;
+    return (
+      <p className="helper-text">
+        아직 제출된 승인 요청 프로필 정보가 없습니다.
+      </p>
+    );
   }
 
   return (

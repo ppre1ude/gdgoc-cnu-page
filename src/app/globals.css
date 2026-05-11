@@ -423,6 +423,91 @@ textarea {
   padding: 0 0 10px;
 }
 
+.analytics-dashboard-grid {
+  align-items: start;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+  margin-top: 16px;
+}
+
+.analytics-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.analytics-row,
+.analytics-rate-row {
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.analytics-row strong,
+.analytics-rate-row strong {
+  color: var(--text-strong);
+  display: block;
+  font-size: 14px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.analytics-row p,
+.analytics-rate-row p {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 4px 0 0;
+}
+
+.analytics-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+  min-width: 180px;
+}
+
+.analytics-metrics span {
+  background: var(--surface-muted);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 8px;
+}
+
+.analytics-rate {
+  display: grid;
+  gap: 6px;
+  min-width: 132px;
+}
+
+.analytics-rate span {
+  color: var(--text-strong);
+  font-size: 13px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.analytics-meter {
+  background: var(--surface-muted);
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.analytics-meter-fill {
+  background: var(--google-green);
+  border-radius: inherit;
+  height: 100%;
+}
+
 .member-approval-list {
   display: grid;
   gap: 10px;
@@ -782,6 +867,7 @@ textarea {
 @media (max-width: 860px) {
   .hero-grid,
   .activity-detail,
+  .analytics-dashboard-grid,
   .dashboard-grid,
   .grid-2,
   .grid-3 {
@@ -847,6 +933,23 @@ textarea {
   .member-approval-row {
     align-items: start;
     flex-direction: column;
+  }
+
+  .analytics-row,
+  .analytics-rate-row {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .analytics-metrics,
+  .analytics-rate {
+    justify-content: flex-start;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .analytics-rate span {
+    text-align: left;
   }
 
   .access-panel {

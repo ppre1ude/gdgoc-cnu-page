@@ -31,12 +31,14 @@ describe('admin navigation', () => {
   it('groups operator tools under the admin dashboard', () => {
     assert.deepEqual(getAdminNavigationItems(), [
       {
-        description: '활동을 등록하고 Gemini 작성 보조, 신청자 승인 흐름을 확인합니다.',
+        description:
+          '활동을 등록하고 Gemini 작성 보조, 신청 승인, 출석 흐름을 확인합니다.',
         href: '/admin/activities',
         label: 'Activity Admin',
       },
       {
-        description: '공지사항을 등록하고 핀 고정, 공개 범위, 멤버 홈 노출을 관리합니다.',
+        description:
+          '공지사항을 등록하고 핀 고정, 공개 범위, 멤버 홈 노출을 관리합니다.',
         href: '/admin/notices',
         label: 'Notice Admin',
       },

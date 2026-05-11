@@ -1,4 +1,4 @@
-import type { ActivityType, UserRole } from './activity.ts';
+import type { Activity, ActivityType, UserRole } from './activity.ts';
 import type { ActivityApplication } from './activity-application.ts';
 
 export type ActivitySession = {
@@ -80,6 +80,25 @@ export function createActivitySession(
     createdAt: input.now,
     updatedAt: input.now,
   };
+}
+
+export function createDefaultActivitySession(
+  activity: Activity,
+): ActivitySession | null {
+  if (!activity.startsAt) {
+    return null;
+  }
+
+  const startsAt = new Date(activity.startsAt);
+  const endsAt = new Date(startsAt.getTime() + 2 * 60 * 60 * 1000);
+
+  return createActivitySession({
+    activityId: activity.id,
+    endsAt: endsAt.toISOString(),
+    now: activity.createdAt,
+    startsAt: activity.startsAt,
+    title: activity.title,
+  });
 }
 
 export function recordSessionAttendance(

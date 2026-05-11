@@ -13,15 +13,19 @@ export function AdminDashboard() {
         <p className="eyebrow">Operator Dashboard</p>
         <h1 className="page-title">Admin</h1>
         <p className="page-lead">
-          운영진이 활동과 공지사항을 등록하고, 멤버 홈에 반영되는 흐름을 확인하는
-          데모 대시보드입니다. 최종 버전에서는 권한이 있는 운영진에게만 노출됩니다.
+          운영진이 활동과 공지사항을 등록하고, 멤버 홈에 반영되는 흐름을
+          확인하는 데모 대시보드입니다. 최종 버전에서는 권한이 있는 운영진에게만
+          노출됩니다.
         </p>
 
         <section className="section section-compact">
           <div className="section-header">
             <div>
               <h2>운영 도구</h2>
-              <p>상단바에서는 Admin 하나만 노출하고, 세부 도구는 이 화면에서 선택합니다.</p>
+              <p>
+                상단바에는 Admin 하나만 노출하고, 세부 운영 도구는 이 화면에서
+                선택합니다.
+              </p>
             </div>
           </div>
           <div className="grid grid-2">
@@ -44,8 +48,9 @@ export function AdminDashboard() {
           <div className="notice">
             <strong>Demo mode</strong>
             <p className="helper-text" style={{ color: '#7a4d00', marginTop: 8 }}>
-              현재는 발표용 접근성을 위해 Admin 진입점을 노출합니다. Firebase Auth와
-              역할 승격 흐름이 붙으면 team_member, organizer, admin 권한으로 보호합니다.
+              현재는 발표 접근성을 위해 Admin 진입점을 노출합니다. Firebase Auth와
+              역할 판별 흐름이 붙으면 team_member, organizer, admin 권한으로
+              보호합니다.
             </p>
           </div>
         </section>

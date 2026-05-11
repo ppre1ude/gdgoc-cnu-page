@@ -11,7 +11,7 @@ import {
 const baseActivity = {
   id: 'activity-1',
   title: 'Build with AI Prototype Sprint',
-  summary: 'Gemini와 Firebase로 프로토타입을 만든다.',
+  summary: 'Gemini와 Firebase로 초기 프로토타입을 만드는 활동입니다.',
   type: 'event',
   status: 'published',
   startsAt: '2026-05-16T04:00:00.000Z',

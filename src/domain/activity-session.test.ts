@@ -2,8 +2,10 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import type { ActivityApplication } from './activity-application.ts';
+import type { Activity } from './activity.ts';
 import {
   createActivitySession,
+  createDefaultActivitySession,
   createInMemorySessionAttendanceStore,
   markAttendanceForSession,
   recordSessionAttendance,
@@ -42,6 +44,45 @@ const session = createActivitySession({
 });
 
 describe('activity session attendance', () => {
+  it('creates a default two-hour session for a scheduled activity', () => {
+    const activity: Activity = {
+      id: 'activity-1',
+      title: 'Scheduled Activity',
+      summary: 'Scheduled activity summary.',
+      type: 'event',
+      visibility: 'member',
+      status: 'published',
+      startsAt: '2026-05-16T04:00:00.000Z',
+      createdAt: '2026-05-11T09:00:00.000Z',
+      updatedAt: '2026-05-11T09:00:00.000Z',
+    };
+
+    assert.deepEqual(createDefaultActivitySession(activity), {
+      id: 'activity-1_default-session',
+      activityId: 'activity-1',
+      title: 'Scheduled Activity',
+      startsAt: '2026-05-16T04:00:00.000Z',
+      endsAt: '2026-05-16T06:00:00.000Z',
+      createdAt: '2026-05-11T09:00:00.000Z',
+      updatedAt: '2026-05-11T09:00:00.000Z',
+    });
+  });
+
+  it('does not create a default session for an unscheduled activity', () => {
+    const activity: Activity = {
+      id: 'activity-1',
+      title: 'Notice-like Activity',
+      summary: 'No schedule yet.',
+      type: 'project',
+      visibility: 'member',
+      status: 'published',
+      createdAt: '2026-05-11T09:00:00.000Z',
+      updatedAt: '2026-05-11T09:00:00.000Z',
+    };
+
+    assert.equal(createDefaultActivitySession(activity), null);
+  });
+
   it('records attended state only for an approved active application', () => {
     const attendance = recordSessionAttendance(approvedApplication, session, {
       activityType: 'event',
