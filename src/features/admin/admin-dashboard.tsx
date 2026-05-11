@@ -2,6 +2,7 @@ import Link from 'next/link';
 
 import { getAdminNavigationItems } from '@/domain/navigation';
 import { MemberApprovalPanel } from './member-approval-panel';
+import { OperatorAnalyticsPanel } from './operator-analytics-panel';
 
 export function AdminDashboard() {
   const adminItems = getAdminNavigationItems();
@@ -34,6 +35,8 @@ export function AdminDashboard() {
             ))}
           </div>
         </section>
+
+        <OperatorAnalyticsPanel />
 
         <MemberApprovalPanel />
 
