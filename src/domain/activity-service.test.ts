@@ -4,8 +4,10 @@ import { describe, it } from 'node:test';
 import {
   createActivity,
   createInMemoryActivityStore,
+  getVisibleActivityById,
   listHomeActivities,
 } from './activity-service.ts';
+import type { Activity } from './activity.ts';
 
 describe('activity authoring flow', () => {
   it('lets an operator create an activity that appears in the member home list', async () => {
@@ -35,5 +37,67 @@ describe('activity authoring flow', () => {
       memberHomeActivities[0]?.externalRegistrationUrl,
       'https://gdg.community.dev/events/example',
     );
+  });
+});
+
+describe('activity detail lookup', () => {
+  const publishedActivity: Activity = {
+    id: 'activity-public',
+    title: 'Build with AI Prototype Sprint',
+    summary: 'Firebase and Gemini demo activity.',
+    type: 'event',
+    visibility: 'public',
+    status: 'published',
+    startsAt: '2026-05-16T04:00:00.000Z',
+    createdAt: '2026-05-11T09:00:00.000Z',
+    updatedAt: '2026-05-11T09:00:00.000Z',
+  };
+
+  it('returns a visible activity detail for the current role', async () => {
+    const store = createInMemoryActivityStore([publishedActivity]);
+
+    const activity = await getVisibleActivityById(
+      store,
+      'activity-public',
+      'visitor',
+    );
+
+    assert.equal(activity?.id, 'activity-public');
+  });
+
+  it('hides member-only activity detail from visitors', async () => {
+    const store = createInMemoryActivityStore([
+      {
+        ...publishedActivity,
+        id: 'activity-member',
+        visibility: 'member',
+      },
+    ]);
+
+    const activity = await getVisibleActivityById(
+      store,
+      'activity-member',
+      'visitor',
+    );
+
+    assert.equal(activity, null);
+  });
+
+  it('does not return draft activity detail', async () => {
+    const store = createInMemoryActivityStore([
+      {
+        ...publishedActivity,
+        id: 'activity-draft',
+        status: 'draft',
+      },
+    ]);
+
+    const activity = await getVisibleActivityById(
+      store,
+      'activity-draft',
+      'admin',
+    );
+
+    assert.equal(activity, null);
   });
 });

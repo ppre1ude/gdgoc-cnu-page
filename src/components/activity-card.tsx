@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import {
   type Activity,
   getActivityRegistrationPolicy,
@@ -71,45 +73,45 @@ export function ActivityCard({
       <p>{activity.summary}</p>
       {activity.startsAt ? (
         <p className="helper-text" style={{ marginTop: 14 }}>
-          {formatDate(activity.startsAt)}
+          {formatKoreanDateTime(activity.startsAt)}
         </p>
       ) : null}
-      {canApply || canCancel || registrationPolicy.externalRegistrationUrl ? (
-        <div className="card-actions">
-          {registrationPolicy.externalRegistrationUrl ? (
-            <a
-              className="button button-secondary button-small"
-              href={registrationPolicy.externalRegistrationUrl}
-              rel="noreferrer"
-              target="_blank"
-            >
-              {registrationPolicy.externalRegistrationLabel}
-            </a>
-          ) : null}
-          {canApply ? (
-            <button
-              className="button button-primary button-small"
-              onClick={() => onApply(activity)}
-              type="button"
-            >
-              참여 신청
-            </button>
-          ) : null}
-          {canCancel ? (
-            <button
-              className="button button-secondary button-small"
-              onClick={() => onCancel(activity)}
-              type="button"
-            >
-              신청 취소
-            </button>
-          ) : null}
-        </div>
-      ) : null}
+      <div className="card-actions">
+        <Link
+          className="button button-ghost button-small"
+          href={`/activities/${encodeURIComponent(activity.id)}`}
+        >
+          자세히
+        </Link>
+        {registrationPolicy.externalRegistrationUrl ? (
+          <a
+            className="button button-secondary button-small"
+            href={registrationPolicy.externalRegistrationUrl}
+            rel="noreferrer"
+            target="_blank"
+          >
+            {registrationPolicy.externalRegistrationLabel}
+          </a>
+        ) : null}
+        {canApply ? (
+          <button
+            className="button button-primary button-small"
+            onClick={() => onApply(activity)}
+            type="button"
+          >
+            참여 신청
+          </button>
+        ) : null}
+        {canCancel ? (
+          <button
+            className="button button-secondary button-small"
+            onClick={() => onCancel(activity)}
+            type="button"
+          >
+            신청 취소
+          </button>
+        ) : null}
+      </div>
     </article>
   );
-}
-
-function formatDate(value: string) {
-  return formatKoreanDateTime(value);
 }

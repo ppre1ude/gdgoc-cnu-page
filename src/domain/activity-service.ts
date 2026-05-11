@@ -83,3 +83,17 @@ export async function listHomeActivities(
     return a.startsAt.localeCompare(b.startsAt);
   });
 }
+
+export async function getVisibleActivityById(
+  store: ActivityStore,
+  activityId: string,
+  role: UserRole,
+): Promise<Activity | null> {
+  const activities = await store.list();
+
+  return (
+    listVisibleActivities(activities, role).find(
+      (activity) => activity.id === activityId,
+    ) ?? null
+  );
+}
