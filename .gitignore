@@ -1,1 +1,10 @@
 .scratch/reference/
+.scratch/run/
+node_modules/
+.next/
+out/
+coverage/
+tsconfig.tsbuildinfo
+.env
+.env.local
+.env.*.local
