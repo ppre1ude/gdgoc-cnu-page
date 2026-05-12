@@ -1,60 +1,62 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import type { User } from 'firebase/auth';
-
-import { getFirebaseAuth, hasFirebaseConfig } from '@/lib/firebase/client';
+import type { UserRole } from '@/domain/activity';
+import {
+  demoRoleOptions,
+  useAuthSession,
+} from '@/features/auth/auth-session-provider';
 
 export function AuthPanel() {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(hasFirebaseConfig());
+  const {
+    displayName,
+    email,
+    errorMessage,
+    isFirebaseConfigured,
+    role,
+    setDemoRole,
+    signInWithGoogle,
+    signOutCurrentUser,
+    status,
+  } = useAuthSession();
 
-  useEffect(() => {
-    if (!hasFirebaseConfig()) {
-      return;
-    }
-
-    let unsubscribe = () => {};
-
-    void import('firebase/auth').then(({ onAuthStateChanged }) => {
-      unsubscribe = onAuthStateChanged(getFirebaseAuth(), (nextUser) => {
-        setUser(nextUser);
-        setIsLoading(false);
-      });
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  async function signIn() {
-    const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
-    await signInWithPopup(getFirebaseAuth(), new GoogleAuthProvider());
+  if (!isFirebaseConfigured) {
+    return (
+      <label className="auth-role-control">
+        <span className="auth-pill">Demo role</span>
+        <select
+          className="auth-role-select"
+          onChange={(event) => setDemoRole(event.target.value as UserRole)}
+          value={role}
+        >
+          {demoRoleOptions.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </label>
+    );
   }
 
-  async function signOutUser() {
-    const { signOut } = await import('firebase/auth');
-    await signOut(getFirebaseAuth());
-  }
-
-  if (!hasFirebaseConfig()) {
-    return <span className="auth-pill">Demo mode</span>;
-  }
-
-  if (isLoading) {
+  if (status === 'loading') {
     return <span className="auth-pill">Auth 확인 중</span>;
   }
 
-  if (user) {
+  if (status === 'signed_in') {
     return (
-      <button className="auth-pill auth-button" onClick={signOutUser} type="button">
-        {user.displayName ?? user.email ?? '로그아웃'}
+      <button
+        className="auth-pill auth-button"
+        onClick={signOutCurrentUser}
+        type="button"
+      >
+        {displayName ?? email ?? '로그아웃'}
       </button>
     );
   }
 
   return (
-    <button className="auth-pill auth-button" onClick={signIn} type="button">
-      Google 로그인
+    <button className="auth-pill auth-button" onClick={signInWithGoogle} type="button">
+      {errorMessage ? 'Auth 재시도' : 'Google 로그인'}
     </button>
   );
 }

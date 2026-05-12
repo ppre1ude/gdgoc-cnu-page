@@ -6,6 +6,7 @@ import type { ActivityStatus, ActivityVisibility } from '@/domain/activity';
 import type { Showcase, ShowcaseKind } from '@/domain/showcase';
 import { createShowcase, listHomeShowcases } from '@/domain/showcase-service';
 import { ShowcaseCard } from '@/components/showcase-card';
+import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserShowcaseStore } from './browser-showcase-store';
 import { seedShowcases } from './seed-showcases';
 
@@ -39,6 +40,7 @@ const initialDraft: ShowcaseDraft = {
 };
 
 export function ShowcaseAdmin() {
+  const { role } = useAuthSession();
   const store = useMemo(() => createBrowserShowcaseStore(), []);
   const [draft, setDraft] = useState<ShowcaseDraft>(initialDraft);
   const [showcases, setShowcases] = useState<Showcase[]>(seedShowcases);
@@ -48,10 +50,10 @@ export function ShowcaseAdmin() {
 
   useEffect(() => {
     void refreshShowcases();
-  }, []);
+  }, [role]);
 
   async function refreshShowcases() {
-    setShowcases(await listHomeShowcases(store, 'team_member'));
+    setShowcases(await listHomeShowcases(store, role));
   }
 
   async function saveShowcase(event: FormEvent<HTMLFormElement>) {
@@ -59,7 +61,7 @@ export function ShowcaseAdmin() {
 
     const now = new Date().toISOString();
     const showcase = await createShowcase(store, {
-      actorRole: 'team_member',
+      actorRole: role,
       body: draft.body.trim() || undefined,
       href: draft.href.trim() || undefined,
       imageUrl: draft.imageUrl.trim() || undefined,

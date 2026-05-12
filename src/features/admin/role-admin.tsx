@@ -9,12 +9,11 @@ import {
   formatKoreanDate,
   formatKoreanDateTime,
 } from '@/lib/format-korean-date-time';
+import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserChapterUserStore } from '../users/browser-chapter-user-store';
 import { seedChapterUsers } from '../users/seed-chapter-users';
 
 type AccountRole = Exclude<UserRole, 'visitor'>;
-
-const demoAdminId = 'seed-user-admin-1';
 
 const accountRoles: Array<{
   description: string;
@@ -69,6 +68,7 @@ const roleSortWeight: Record<UserRole, number> = {
 };
 
 export function RoleAdmin() {
+  const { role, userId } = useAuthSession();
   const store = useMemo(() => createBrowserChapterUserStore(), []);
   const [users, setUsers] = useState<ChapterUser[]>(seedChapterUsers);
   const [roleChangeLogs, setRoleChangeLogs] = useState<RoleChangeLog[]>([]);
@@ -130,8 +130,8 @@ export function RoleAdmin() {
 
     try {
       const changed = await changeUserRole(store, {
-        actorId: demoAdminId,
-        actorRole: 'admin',
+        actorId: userId,
+        actorRole: role,
         nextRole,
         now: new Date().toISOString(),
         targetUserId: user.id,

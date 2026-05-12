@@ -15,22 +15,14 @@ import {
   getApplicationStateByActivity,
 } from '@/domain/activity-participation-service';
 import { getVisibleActivityById } from '@/domain/activity-service';
+import {
+  demoRoleOptions,
+  useAuthSession,
+} from '@/features/auth/auth-session-provider';
 import { describeMemberHomeAccess } from '@/domain/member-access';
 import { formatKoreanDateTime } from '@/lib/format-korean-date-time';
 import { createBrowserActivityApplicationStore } from './browser-activity-application-store';
 import { createBrowserActivityStore } from './browser-activity-store';
-
-const demoMemberId = 'demo-member';
-const demoRoleStorageKey = 'gdgoc-cnu.demoRole';
-const demoRoleOptions: UserRole[] = [
-  'visitor',
-  'guest',
-  'member',
-  'alumni',
-  'team_member',
-  'organizer',
-  'admin',
-];
 
 const activityTypeLabel: Record<Activity['type'], string> = {
   event: 'Event',
@@ -54,7 +46,13 @@ const applicationStateLabel: Record<ActivityApplicationState, string> = {
 export function ActivityDetail({ activityId }: { activityId: string }) {
   const store = useMemo(() => createBrowserActivityStore(), []);
   const applicationStore = useMemo(() => createBrowserActivityApplicationStore(), []);
-  const [demoRole, setDemoRole] = useState<UserRole>('visitor');
+  const {
+    isFirebaseConfigured,
+    role,
+    setDemoRole,
+    status,
+    userId,
+  } = useAuthSession();
   const [activity, setActivity] = useState<Activity | null>(null);
   const [applicationState, setApplicationState] =
     useState<ActivityApplicationState>();
@@ -62,15 +60,19 @@ export function ActivityDetail({ activityId }: { activityId: string }) {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const savedRole = window.localStorage.getItem(demoRoleStorageKey);
-    const initialRole = isUserRole(savedRole) ? savedRole : 'visitor';
-    setDemoRole(initialRole);
-    void refreshDetail(initialRole);
-  }, [activityId]);
+    void refreshDetail(role, userId);
+  }, [activityId, role, userId]);
 
-  async function refreshDetail(role: UserRole = demoRole) {
-    const nextActivity = await getVisibleActivityById(store, activityId, role);
-    const access = describeMemberHomeAccess(role);
+  async function refreshDetail(
+    currentRole: UserRole = role,
+    currentUserId: string | null | undefined = userId,
+  ) {
+    const nextActivity = await getVisibleActivityById(
+      store,
+      activityId,
+      currentRole,
+    );
+    const access = describeMemberHomeAccess(currentRole);
 
     setActivity(nextActivity);
     setIsLoaded(true);
@@ -81,10 +83,10 @@ export function ActivityDetail({ activityId }: { activityId: string }) {
       return;
     }
 
-    if (access.canApplyToActivities) {
+    if (access.canApplyToActivities && currentUserId) {
       const states = await getApplicationStateByActivity(
         applicationStore,
-        demoMemberId,
+        currentUserId,
       );
       setApplicationState(states[nextActivity.id]);
     } else {
@@ -95,13 +97,16 @@ export function ActivityDetail({ activityId }: { activityId: string }) {
   }
 
   async function changeDemoRole(nextRole: UserRole) {
+    if (isFirebaseConfigured) {
+      return;
+    }
+
     setDemoRole(nextRole);
-    window.localStorage.setItem(demoRoleStorageKey, nextRole);
-    await refreshDetail(nextRole);
+    await refreshDetail(nextRole, userId);
   }
 
   async function handleApply() {
-    if (!activity) {
+    if (!activity || !userId) {
       return;
     }
 
@@ -116,13 +121,13 @@ export function ActivityDetail({ activityId }: { activityId: string }) {
     await applyForActivity(applicationStore, {
       activityId: activity.id,
       now: new Date().toISOString(),
-      userId: demoMemberId,
+      userId,
     });
     await refreshDetail();
   }
 
   async function handleCancel() {
-    if (!activity) {
+    if (!activity || !userId) {
       return;
     }
 
@@ -138,21 +143,24 @@ export function ActivityDetail({ activityId }: { activityId: string }) {
       activityId: activity.id,
       cancellationAllowed: true,
       now: new Date().toISOString(),
-      userId: demoMemberId,
+      userId,
     });
     await refreshDetail();
   }
 
-  const access = describeMemberHomeAccess(demoRole);
+  const access = describeMemberHomeAccess(role);
   const registrationPolicy = activity
     ? getActivityRegistrationPolicy(activity)
     : null;
   const canApply =
     Boolean(activity) &&
     access.canApplyToActivities &&
+    Boolean(userId) &&
     Boolean(registrationPolicy?.canApplyInternally) &&
     !applicationState;
-  const canCancel = applicationState === 'applied' || applicationState === 'approved';
+  const canCancel =
+    Boolean(userId) &&
+    (applicationState === 'applied' || applicationState === 'approved');
 
   return (
     <main className="page">
@@ -171,7 +179,7 @@ export function ActivityDetail({ activityId }: { activityId: string }) {
             <div>
               <div className="badge-row">
                 <span className="badge badge-blue">Activity Detail</span>
-                <span className="badge">{access.status}</span>
+                <span className="badge">{status}</span>
               </div>
               <h2>{activity ? activity.title : '활동 상세'}</h2>
               <p>{message}</p>
@@ -180,8 +188,9 @@ export function ActivityDetail({ activityId }: { activityId: string }) {
               <span>현재 역할</span>
               <select
                 className="select"
+                disabled={isFirebaseConfigured}
                 onChange={(event) => void changeDemoRole(event.target.value as UserRole)}
-                value={demoRole}
+                value={role}
               >
                 {demoRoleOptions.map((role) => (
                   <option key={role} value={role}>
@@ -296,8 +305,4 @@ function getRegistrationDescription(
     case 'internal':
       return '홈페이지에서 참여 신청합니다.';
   }
-}
-
-function isUserRole(value: string | null): value is UserRole {
-  return demoRoleOptions.includes(value as UserRole);
 }

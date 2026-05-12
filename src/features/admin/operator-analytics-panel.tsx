@@ -15,6 +15,7 @@ import {
   type LowParticipationMember,
   type OperatorAnalytics,
 } from '@/domain/operator-analytics';
+import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserActivityApplicationStore } from '../activities/browser-activity-application-store';
 import { createBrowserActivityStore } from '../activities/browser-activity-store';
 import { createBrowserSessionAttendanceStore } from '../activities/browser-session-attendance-store';
@@ -36,6 +37,7 @@ const activityTypeLabel: Record<ActivityType, string> = {
 };
 
 export function OperatorAnalyticsPanel() {
+  const { role } = useAuthSession();
   const activityStore = useMemo(() => createBrowserActivityStore(), []);
   const applicationStore = useMemo(() => createBrowserActivityApplicationStore(), []);
   const attendanceStore = useMemo(() => createBrowserSessionAttendanceStore(), []);
@@ -44,11 +46,11 @@ export function OperatorAnalyticsPanel() {
 
   useEffect(() => {
     void refreshAnalytics();
-  }, []);
+  }, [role]);
 
   async function refreshAnalytics() {
     const [activities, users, roleChangeLogs] = await Promise.all([
-      listHomeActivities(activityStore, 'team_member'),
+      listHomeActivities(activityStore, role),
       userStore.listUsers(),
       userStore.listRoleChangeLogs(),
     ]);

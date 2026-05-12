@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import type { Notice, NoticeStatus, NoticeVisibility } from '@/domain/notice';
 import { createNotice, listHomeNotices } from '@/domain/notice-service';
 import { NoticeBoard } from '@/components/notice-board';
+import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserNoticeStore } from './browser-notice-store';
 import { seedNotices } from './seed-notices';
 
@@ -17,6 +18,7 @@ const initialDraft = {
 };
 
 export function NoticeAdmin() {
+  const { role } = useAuthSession();
   const store = useMemo(() => createBrowserNoticeStore(), []);
   const [draft, setDraft] = useState(initialDraft);
   const [notices, setNotices] = useState<Notice[]>(seedNotices);
@@ -24,17 +26,17 @@ export function NoticeAdmin() {
 
   useEffect(() => {
     void refreshNotices();
-  }, []);
+  }, [role]);
 
   async function refreshNotices() {
-    setNotices(await listHomeNotices(store, 'team_member'));
+    setNotices(await listHomeNotices(store, role));
   }
 
   async function saveNotice(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     await createNotice(store, {
-      actorRole: 'team_member',
+      actorRole: role,
       body: draft.body,
       now: new Date().toISOString(),
       pinned: draft.pinned,

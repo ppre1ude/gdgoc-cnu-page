@@ -1,11 +1,15 @@
+'use client';
+
 import Link from 'next/link';
 
 import { getAdminNavigationItems } from '@/domain/navigation';
+import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { MemberApprovalPanel } from './member-approval-panel';
 import { OperatorAnalyticsPanel } from './operator-analytics-panel';
 
 export function AdminDashboard() {
-  const adminItems = getAdminNavigationItems();
+  const { role } = useAuthSession();
+  const adminItems = getAdminNavigationItems(role);
 
   return (
     <main className="page">

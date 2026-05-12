@@ -7,13 +7,13 @@ import {
   approveGuestToMember,
   listPendingGuestUsers,
 } from '@/domain/chapter-user-service';
+import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { formatKoreanDate } from '@/lib/format-korean-date-time';
 import { createBrowserChapterUserStore } from '../users/browser-chapter-user-store';
 import { seedChapterUsers } from '../users/seed-chapter-users';
 
-const demoOperatorId = 'demo-team-member';
-
 export function MemberApprovalPanel() {
+  const { role, userId } = useAuthSession();
   const store = useMemo(() => createBrowserChapterUserStore(), []);
   const [pendingUsers, setPendingUsers] = useState<ChapterUser[]>(
     seedChapterUsers.filter((user) => user.role === 'guest'),
@@ -47,8 +47,8 @@ export function MemberApprovalPanel() {
     }
 
     await approveGuestToMember(store, {
-      actorId: demoOperatorId,
-      actorRole: 'team_member',
+      actorId: userId,
+      actorRole: role,
       now: new Date().toISOString(),
       targetUserId: user.id,
     });

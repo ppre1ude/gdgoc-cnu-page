@@ -23,6 +23,10 @@ import {
 import { ActivityCard } from '@/components/activity-card';
 import { NoticeBoard } from '@/components/notice-board';
 import { ShowcaseCard } from '@/components/showcase-card';
+import {
+  demoRoleOptions,
+  useAuthSession,
+} from '@/features/auth/auth-session-provider';
 import { createBrowserActivityApplicationStore } from './browser-activity-application-store';
 import { createBrowserActivityStore } from './browser-activity-store';
 import { createBrowserNoticeStore } from '../notices/browser-notice-store';
@@ -31,19 +35,6 @@ import { createBrowserChapterUserStore } from '../users/browser-chapter-user-sto
 import { seedActivities } from './seed-activities';
 import { seedNotices } from '../notices/seed-notices';
 import { seedShowcases } from '../showcases/seed-showcases';
-
-const demoMemberId = 'demo-member';
-const demoGuestId = 'demo-guest';
-const demoRoleStorageKey = 'gdgoc-cnu.demoRole';
-const demoRoleOptions: UserRole[] = [
-  'visitor',
-  'guest',
-  'member',
-  'alumni',
-  'team_member',
-  'organizer',
-  'admin',
-];
 
 type GuestProfileFormState = {
   displayName: string;
@@ -66,12 +57,18 @@ const defaultGuestProfile: GuestProfileFormState = {
 };
 
 export function MemberHome() {
+  const {
+    isFirebaseConfigured,
+    role,
+    setDemoRole,
+    status: authStatus,
+    userId,
+  } = useAuthSession();
   const store = useMemo(() => createBrowserActivityStore(), []);
   const applicationStore = useMemo(() => createBrowserActivityApplicationStore(), []);
   const noticeStore = useMemo(() => createBrowserNoticeStore(), []);
   const showcaseStore = useMemo(() => createBrowserShowcaseStore(), []);
   const userStore = useMemo(() => createBrowserChapterUserStore(), []);
-  const [demoRole, setDemoRole] = useState<UserRole | null>(null);
   const [activities, setActivities] = useState<Activity[]>(
     listVisibleActivities(seedActivities, 'visitor'),
   );
@@ -91,18 +88,19 @@ export function MemberHome() {
   );
 
   useEffect(() => {
-    const savedRole = window.localStorage.getItem(demoRoleStorageKey);
-    const initialRole = isUserRole(savedRole) ? savedRole : 'member';
-    setDemoRole(initialRole);
-    void refreshMemberHome(initialRole);
-    if (initialRole === 'guest') {
-      void loadGuestProfile();
+    if (authStatus === 'loading') {
+      return;
     }
-  }, []);
 
-  async function refreshMemberHome(role: UserRole = demoRole ?? 'visitor') {
-    const access = describeMemberHomeAccess(role);
-    const contentRole = getMemberHomeContentRole(role);
+    void refreshMemberHome(role, userId);
+    if (role === 'guest') {
+      void loadGuestProfile(userId);
+    }
+  }, [authStatus, role, userId]);
+
+  async function refreshMemberHome(currentRole: UserRole, currentUserId: string) {
+    const access = describeMemberHomeAccess(currentRole);
+    const contentRole = getMemberHomeContentRole(currentRole);
     const [
       nextActivities,
       nextApplicationStates,
@@ -111,7 +109,7 @@ export function MemberHome() {
     ] = await Promise.all([
       listHomeActivities(store, contentRole),
       access.canApplyToActivities
-        ? getApplicationStateByActivity(applicationStore, demoMemberId)
+        ? getApplicationStateByActivity(applicationStore, currentUserId)
         : Promise.resolve({}),
       listHomeNotices(noticeStore, contentRole),
       listHomeShowcases(showcaseStore, contentRole),
@@ -123,17 +121,12 @@ export function MemberHome() {
     setShowcases(nextShowcases);
   }
 
-  async function changeDemoRole(nextRole: UserRole) {
+  function changeDemoRole(nextRole: UserRole) {
     setDemoRole(nextRole);
-    window.localStorage.setItem(demoRoleStorageKey, nextRole);
-    await refreshMemberHome(nextRole);
-    if (nextRole === 'guest') {
-      await loadGuestProfile();
-    }
   }
 
-  async function loadGuestProfile() {
-    const savedGuest = await userStore.findUser(demoGuestId);
+  async function loadGuestProfile(currentUserId: string) {
+    const savedGuest = await userStore.findUser(currentUserId);
 
     if (!savedGuest) {
       setGuestProfile(defaultGuestProfile);
@@ -155,9 +148,9 @@ export function MemberHome() {
     await applyForActivity(applicationStore, {
       activityId: activity.id,
       now: new Date().toISOString(),
-      userId: demoMemberId,
+      userId,
     });
-    await refreshMemberHome();
+    await refreshMemberHome(role, userId);
   }
 
   async function handleCancel(activity: Activity) {
@@ -173,16 +166,16 @@ export function MemberHome() {
       activityId: activity.id,
       cancellationAllowed: true,
       now: new Date().toISOString(),
-      userId: demoMemberId,
+      userId,
     });
-    await refreshMemberHome();
+    await refreshMemberHome(role, userId);
   }
 
   async function handleGuestProfileSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     await submitGuestProfile(userStore, {
-      id: demoGuestId,
+      id: userId,
       displayName: guestProfile.displayName.trim() || defaultGuestProfile.displayName,
       email: guestProfile.email.trim() || defaultGuestProfile.email,
       now: new Date().toISOString(),
@@ -198,7 +191,7 @@ export function MemberHome() {
     setGuestProfileMessage(
       '승인 요청 정보가 저장되었습니다. 운영진 승인 화면에서 바로 확인할 수 있습니다.',
     );
-    await loadGuestProfile();
+    await loadGuestProfile(userId);
   }
 
   const upcoming = activities.filter((activity) => activity.startsAt);
@@ -211,7 +204,7 @@ export function MemberHome() {
   const activeApplicationCount = Object.values(applicationStates).filter(
     (state) => state === 'applied' || state === 'approved',
   ).length;
-  const access = demoRole ? describeMemberHomeAccess(demoRole) : null;
+  const access = describeMemberHomeAccess(role);
   const canApplyToActivities = Boolean(access?.canApplyToActivities);
 
   return (
@@ -229,18 +222,18 @@ export function MemberHome() {
             <div>
               <div className="badge-row">
                 <span className="badge badge-blue">Demo Role</span>
-                {access ? <span className="badge">{access.status}</span> : null}
+                <span className="badge">{access.status}</span>
               </div>
               <h2>{getAccessPanelTitle(access?.status)}</h2>
-              <p>{access?.message ?? '역할 정보를 확인하는 중입니다.'}</p>
+              <p>{access.message}</p>
             </div>
             <label className="field demo-role-field">
-              <span>현재 역할</span>
+              <span>{isFirebaseConfigured ? '현재 역할' : 'Demo 역할'}</span>
               <select
                 className="select"
-                disabled={!demoRole}
-                onChange={(event) => void changeDemoRole(event.target.value as UserRole)}
-                value={demoRole ?? 'visitor'}
+                disabled={authStatus !== 'demo'}
+                onChange={(event) => changeDemoRole(event.target.value as UserRole)}
+                value={role}
               >
                 {demoRoleOptions.map((role) => (
                   <option key={role} value={role}>
@@ -252,7 +245,7 @@ export function MemberHome() {
           </div>
         </section>
 
-        {demoRole === 'guest' ? (
+        {role === 'guest' ? (
           <GuestProfileForm
             message={guestProfileMessage}
             onChange={setGuestProfile}
@@ -534,8 +527,4 @@ function getAccessPanelTitle(status?: string) {
     default:
       return '역할 확인 중';
   }
-}
-
-function isUserRole(value: string | null): value is UserRole {
-  return demoRoleOptions.includes(value as UserRole);
 }

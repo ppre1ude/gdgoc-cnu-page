@@ -29,6 +29,7 @@ import {
 import { createActivity, listHomeActivities } from '@/domain/activity-service';
 import { listVisibleActivities } from '@/domain/activity';
 import { ActivityCard } from '@/components/activity-card';
+import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserActivityApplicationStore } from './browser-activity-application-store';
 import { createBrowserActivityStore } from './browser-activity-store';
 import { createBrowserSessionAttendanceStore } from './browser-session-attendance-store';
@@ -54,12 +55,13 @@ const initialDraft = {
 };
 
 export function ActivityAdmin() {
+  const { role } = useAuthSession();
   const store = useMemo(() => createBrowserActivityStore(), []);
   const applicationStore = useMemo(() => createBrowserActivityApplicationStore(), []);
   const attendanceStore = useMemo(() => createBrowserSessionAttendanceStore(), []);
   const [draft, setDraft] = useState(initialDraft);
   const [activities, setActivities] = useState<Activity[]>(
-    listVisibleActivities(seedActivities, 'team_member'),
+    listVisibleActivities(seedActivities, role),
   );
   const [applicationsByActivity, setApplicationsByActivity] = useState<
     Record<string, ActivityApplication[]>
@@ -75,10 +77,10 @@ export function ActivityAdmin() {
 
   useEffect(() => {
     void refreshDashboard();
-  }, []);
+  }, [role]);
 
   async function refreshDashboard() {
-    const nextActivities = await listHomeActivities(store, 'team_member');
+    const nextActivities = await listHomeActivities(store, role);
     const nextApplicationsByActivity = Object.fromEntries(
       await Promise.all(
         nextActivities.map(async (activity) => [
@@ -164,7 +166,7 @@ export function ActivityAdmin() {
     event.preventDefault();
 
     await createActivity(store, {
-      actorRole: 'team_member',
+      actorRole: role,
       title: draft.title,
       summary: draft.body,
       type: draft.type,

@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-import { AuthPanel } from '@/components/auth-panel';
-import { getPrimaryNavigationItems } from '@/domain/navigation';
+import { AppNavigation } from '@/components/app-navigation';
+import { AuthSessionProvider } from '@/features/auth/auth-session-provider';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -12,33 +11,15 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  const navigationItems = getPrimaryNavigationItems('team_member');
-
   return (
     <html lang="ko">
       <body>
-        <div className="app-shell">
-          <header className="top-nav">
-            <Link className="brand-lockup" href="/">
-              <span className="brand-mark" aria-hidden="true">
-                <span style={{ background: 'var(--google-blue)' }} />
-                <span style={{ background: 'var(--google-red)' }} />
-                <span style={{ background: 'var(--google-yellow)' }} />
-                <span style={{ background: 'var(--google-green)' }} />
-              </span>
-              GDGoC CNU
-            </Link>
-            <nav className="nav-links" aria-label="주요 메뉴">
-              {navigationItems.map((item) => (
-                <Link className="nav-link" href={item.href} key={item.href}>
-                  {item.label}
-                </Link>
-              ))}
-              <AuthPanel />
-            </nav>
-          </header>
-          {children}
-        </div>
+        <AuthSessionProvider>
+          <div className="app-shell">
+            <AppNavigation />
+            {children}
+          </div>
+        </AuthSessionProvider>
       </body>
     </html>
   );
