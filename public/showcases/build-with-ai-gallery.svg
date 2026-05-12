@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-label="Build with AI prototype gallery poster">
+  <rect width="960" height="540" fill="#111827"/>
+  <rect x="48" y="48" width="864" height="444" rx="24" fill="#ffffff"/>
+  <circle cx="128" cy="128" r="38" fill="#4285F4"/>
+  <circle cx="214" cy="128" r="38" fill="#EA4335"/>
+  <circle cx="300" cy="128" r="38" fill="#FBBC04"/>
+  <circle cx="386" cy="128" r="38" fill="#34A853"/>
+  <rect x="120" y="224" width="320" height="24" rx="12" fill="#111827"/>
+  <rect x="120" y="278" width="460" height="18" rx="9" fill="#667085"/>
+  <rect x="120" y="318" width="380" height="18" rx="9" fill="#667085"/>
+  <rect x="650" y="206" width="126" height="126" rx="28" fill="#4285F4"/>
+  <path d="M680 270h66M713 237v66" stroke="#fff" stroke-width="18" stroke-linecap="round"/>
+  <rect x="644" y="360" width="172" height="28" rx="14" fill="#34A853"/>
+  <rect x="120" y="402" width="700" height="26" rx="13" fill="#F1F3F5"/>
+</svg>
