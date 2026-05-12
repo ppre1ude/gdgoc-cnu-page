@@ -31,6 +31,20 @@ function createLocalStorageActivityStore(): ActivityStore {
       writeActivities([activity, ...activities]);
       return activity;
     },
+    async save(activity) {
+      const activities = readActivities();
+      const index = activities.findIndex((current) => current.id === activity.id);
+
+      if (index === -1) {
+        writeActivities([activity, ...activities]);
+        return activity;
+      }
+
+      const nextActivities = [...activities];
+      nextActivities[index] = activity;
+      writeActivities(nextActivities);
+      return activity;
+    },
     async list() {
       return readActivities();
     },
@@ -90,6 +104,11 @@ function mergeSeedActivities(activities: Activity[]): Activity[] {
 function createFirestoreActivityStore(): ActivityStore {
   return {
     async create(activity) {
+      const { doc, setDoc } = await import('firebase/firestore');
+      await setDoc(doc(getFirestoreDb(), 'activities', activity.id), activity);
+      return activity;
+    },
+    async save(activity) {
       const { doc, setDoc } = await import('firebase/firestore');
       await setDoc(doc(getFirestoreDb(), 'activities', activity.id), activity);
       return activity;

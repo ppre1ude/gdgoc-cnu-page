@@ -2,10 +2,13 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import {
+  acceptActivityProposal,
   createActivity,
   createInMemoryActivityStore,
   getVisibleActivityById,
+  listPendingActivityProposals,
   listHomeActivities,
+  proposeMemberActivity,
 } from './activity-service.ts';
 import type { Activity } from './activity.ts';
 
@@ -36,6 +39,125 @@ describe('activity authoring flow', () => {
     assert.equal(
       memberHomeActivities[0]?.externalRegistrationUrl,
       'https://gdg.community.dev/events/example',
+    );
+  });
+
+  it('lets an active member propose a study that appears in member home immediately', async () => {
+    const store = createInMemoryActivityStore();
+
+    const proposal = await proposeMemberActivity(store, {
+      actorRole: 'member',
+      actorUserId: 'member-1',
+      title: 'Gemini API Deep Dive',
+      summary: 'Weekly study for Gemini API examples.',
+      type: 'study',
+      now: '2026-05-12T09:00:00.000Z',
+    });
+
+    const memberHomeActivities = await listHomeActivities(store, 'member');
+
+    assert.equal(proposal.status, 'published');
+    assert.equal(proposal.visibility, 'member');
+    assert.equal(proposal.proposalStatus, 'accepted');
+    assert.equal(proposal.proposedByUserId, 'member-1');
+    assert.equal(memberHomeActivities[0]?.id, proposal.id);
+  });
+
+  it('keeps a member project proposal in the operator review queue until approval', async () => {
+    const store = createInMemoryActivityStore();
+
+    const proposal = await proposeMemberActivity(store, {
+      actorRole: 'member',
+      actorUserId: 'member-1',
+      title: 'Campus Map Assistant',
+      summary: 'Prototype a Gemini powered campus navigation helper.',
+      type: 'project',
+      now: '2026-05-12T09:00:00.000Z',
+    });
+
+    const memberHomeActivities = await listHomeActivities(store, 'member');
+    const pendingProposals = await listPendingActivityProposals(store, 'team_member');
+
+    assert.equal(proposal.status, 'draft');
+    assert.equal(proposal.visibility, 'operator');
+    assert.equal(proposal.proposalStatus, 'pending_review');
+    assert.equal(memberHomeActivities.length, 0);
+    assert.equal(pendingProposals[0]?.id, proposal.id);
+  });
+
+  it('lets an operator approve a pending project proposal for member home', async () => {
+    const store = createInMemoryActivityStore();
+    const proposal = await proposeMemberActivity(store, {
+      actorRole: 'member',
+      actorUserId: 'member-1',
+      title: 'Campus Map Assistant',
+      summary: 'Prototype a Gemini powered campus navigation helper.',
+      type: 'project',
+      now: '2026-05-12T09:00:00.000Z',
+    });
+
+    const accepted = await acceptActivityProposal(store, {
+      actorRole: 'team_member',
+      actorUserId: 'operator-1',
+      activityId: proposal.id,
+      now: '2026-05-13T09:00:00.000Z',
+    });
+    const memberHomeActivities = await listHomeActivities(store, 'member');
+
+    assert.equal(accepted.status, 'published');
+    assert.equal(accepted.visibility, 'member');
+    assert.equal(accepted.proposalStatus, 'accepted');
+    assert.equal(accepted.proposalReviewedByUserId, 'operator-1');
+    assert.equal(memberHomeActivities[0]?.id, proposal.id);
+  });
+
+  it('blocks guests and alumni from proposing member activities', async () => {
+    const store = createInMemoryActivityStore();
+
+    await assert.rejects(
+      proposeMemberActivity(store, {
+        actorRole: 'guest',
+        actorUserId: 'guest-1',
+        title: 'Guest Study',
+        summary: 'This should not be created.',
+        type: 'study',
+        now: '2026-05-12T09:00:00.000Z',
+      }),
+      /Only active members can propose activities/,
+    );
+
+    await assert.rejects(
+      proposeMemberActivity(store, {
+        actorRole: 'alumni',
+        actorUserId: 'alumni-1',
+        title: 'Alumni Project',
+        summary: 'This should not be created.',
+        type: 'project',
+        now: '2026-05-12T09:00:00.000Z',
+      }),
+      /Only active members can propose activities/,
+    );
+  });
+
+  it('blocks non-operators from approving project proposals', async () => {
+    const store = createInMemoryActivityStore();
+    const proposal = await proposeMemberActivity(store, {
+      actorRole: 'member',
+      actorUserId: 'member-1',
+      title: 'Campus Map Assistant',
+      summary: 'Prototype a Gemini powered campus navigation helper.',
+      type: 'project',
+      now: '2026-05-12T09:00:00.000Z',
+    });
+
+    await assert.rejects(
+      acceptActivityProposal(store, {
+        actorRole: 'member',
+        actorUserId: 'member-2',
+        activityId: proposal.id,
+        now: '2026-05-13T09:00:00.000Z',
+      }),
+      /Only operators can approve activity proposals/,
     );
   });
 });

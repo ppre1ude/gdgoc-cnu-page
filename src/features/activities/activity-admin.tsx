@@ -26,7 +26,12 @@ import {
   markAttendanceForSession,
   summarizeSessionAttendance,
 } from '@/domain/activity-session';
-import { createActivity, listHomeActivities } from '@/domain/activity-service';
+import {
+  acceptActivityProposal,
+  createActivity,
+  listHomeActivities,
+  listPendingActivityProposals,
+} from '@/domain/activity-service';
 import { listVisibleActivities } from '@/domain/activity';
 import { ActivityCard } from '@/components/activity-card';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
@@ -54,8 +59,10 @@ const initialDraft = {
   externalRegistrationLabel: 'gdg.community.dev 등록',
 };
 
+const operatorRoles = new Set(['team_member', 'organizer', 'admin']);
+
 export function ActivityAdmin() {
-  const { role } = useAuthSession();
+  const { role, userId } = useAuthSession();
   const store = useMemo(() => createBrowserActivityStore(), []);
   const applicationStore = useMemo(() => createBrowserActivityApplicationStore(), []);
   const attendanceStore = useMemo(() => createBrowserSessionAttendanceStore(), []);
@@ -63,6 +70,7 @@ export function ActivityAdmin() {
   const [activities, setActivities] = useState<Activity[]>(
     listVisibleActivities(seedActivities, role),
   );
+  const [pendingProposals, setPendingProposals] = useState<Activity[]>([]);
   const [applicationsByActivity, setApplicationsByActivity] = useState<
     Record<string, ActivityApplication[]>
   >({});
@@ -101,7 +109,12 @@ export function ActivityAdmin() {
       ),
     );
 
+    const nextPendingProposals = operatorRoles.has(role)
+      ? await listPendingActivityProposals(store, role)
+      : [];
+
     setActivities(nextActivities);
+    setPendingProposals(nextPendingProposals);
     setApplicationsByActivity(nextApplicationsByActivity);
     setAttendancesBySession(nextAttendancesBySession);
   }
@@ -212,6 +225,17 @@ export function ActivityAdmin() {
       session,
     });
     setMessage(`${application.userId} 출석을 기록했습니다.`);
+    await refreshDashboard();
+  }
+
+  async function approveProposal(activity: Activity) {
+    await acceptActivityProposal(store, {
+      actorRole: role,
+      actorUserId: userId,
+      activityId: activity.id,
+      now: new Date().toISOString(),
+    });
+    setMessage(`${activity.title} 제안을 승인해 멤버 홈에 공개했습니다.`);
     await refreshDashboard();
   }
 
@@ -408,6 +432,11 @@ export function ActivityAdmin() {
               )}
             </section>
 
+            <ProposalReviewQueue
+              onApprove={approveProposal}
+              proposals={pendingProposals}
+            />
+
             <section className="stack">
               <div className="section-header" style={{ marginBottom: 0 }}>
                 <div>
@@ -439,6 +468,52 @@ export function ActivityAdmin() {
         </div>
       </div>
     </main>
+  );
+}
+
+function ProposalReviewQueue({
+  onApprove,
+  proposals,
+}: {
+  onApprove: (activity: Activity) => void;
+  proposals: Activity[];
+}) {
+  return (
+    <section className="stack">
+      <div className="section-header" style={{ marginBottom: 0 }}>
+        <div>
+          <h2>Member Proposals</h2>
+          <p>멤버가 제출한 프로젝트 제안을 검토하고 공개 여부를 확정합니다.</p>
+        </div>
+      </div>
+
+      {proposals.length > 0 ? (
+        <div className="application-queue">
+          {proposals.map((proposal) => (
+            <div className="application-row" key={proposal.id}>
+              <div>
+                <strong>{proposal.title}</strong>
+                <div className="helper-text">
+                  {proposal.proposedByUserId ?? 'unknown member'} · {proposal.type}
+                </div>
+                <p className="helper-text">{proposal.summary}</p>
+              </div>
+              <button
+                className="button button-primary button-small"
+                onClick={() => onApprove(proposal)}
+                type="button"
+              >
+                승인
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="application-queue application-queue-empty">
+          검토 대기 중인 프로젝트 제안이 없습니다.
+        </div>
+      )}
+    </section>
   );
 }
 

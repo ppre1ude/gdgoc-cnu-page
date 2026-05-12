@@ -11,6 +11,7 @@ export type ActivityType = 'event' | 'study' | 'project' | 'challenge' | 'social
 export type ActivityVisibility = 'public' | 'member' | 'operator';
 export type ActivityStatus = 'draft' | 'published' | 'archived';
 export type ActivityRegistrationMode = 'internal' | 'external' | 'hybrid' | 'none';
+export type ActivityProposalStatus = 'pending_review' | 'accepted';
 
 export type ActivityRegistrationPolicy = {
   registrationMode: ActivityRegistrationMode;
@@ -30,6 +31,11 @@ export type Activity = {
   registrationMode?: ActivityRegistrationMode;
   externalRegistrationUrl?: string;
   externalRegistrationLabel?: string;
+  proposalStatus?: ActivityProposalStatus;
+  proposedByUserId?: string;
+  proposalSubmittedAt?: string;
+  proposalReviewedAt?: string;
+  proposalReviewedByUserId?: string;
   createdAt: string;
   updatedAt: string;
 };

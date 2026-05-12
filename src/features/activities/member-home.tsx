@@ -3,7 +3,11 @@
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 
 import type { Activity, UserRole } from '@/domain/activity';
-import { listHomeActivities } from '@/domain/activity-service';
+import {
+  type ActivityProposalType,
+  listHomeActivities,
+  proposeMemberActivity,
+} from '@/domain/activity-service';
 import { listVisibleActivities } from '@/domain/activity';
 import type { ActivityApplicationState } from '@/domain/activity-application';
 import type { ChapterUser } from '@/domain/chapter-user';
@@ -46,6 +50,13 @@ type GuestProfileFormState = {
   motivation: string;
 };
 
+type MemberProposalFormState = {
+  title: string;
+  summary: string;
+  type: ActivityProposalType;
+  startsAt: string;
+};
+
 const defaultGuestProfile: GuestProfileFormState = {
   displayName: 'Build with AI Guest',
   email: 'guest.demo@example.com',
@@ -54,6 +65,13 @@ const defaultGuestProfile: GuestProfileFormState = {
   studentId: '',
   interests: '',
   motivation: '',
+};
+
+const defaultMemberProposal: MemberProposalFormState = {
+  title: '',
+  summary: '',
+  type: 'study',
+  startsAt: '',
 };
 
 export function MemberHome() {
@@ -85,6 +103,13 @@ export function MemberHome() {
     useState<GuestProfileFormState>(defaultGuestProfile);
   const [guestProfileMessage, setGuestProfileMessage] = useState(
     '승인에 필요한 정보를 제출하면 운영진 승인 큐에서 바로 확인할 수 있습니다.',
+  );
+
+  const [proposal, setProposal] = useState<MemberProposalFormState>(
+    defaultMemberProposal,
+  );
+  const [proposalMessage, setProposalMessage] = useState(
+    '스터디는 바로 멤버 홈에 공개되고, 프로젝트는 운영진 검토 후 공개됩니다.',
   );
 
   useEffect(() => {
@@ -194,6 +219,30 @@ export function MemberHome() {
     await loadGuestProfile(userId);
   }
 
+  async function handleProposalSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const created = await proposeMemberActivity(store, {
+      actorRole: role,
+      actorUserId: userId,
+      title: proposal.title.trim(),
+      summary: proposal.summary.trim(),
+      type: proposal.type,
+      startsAt: proposal.startsAt
+        ? new Date(proposal.startsAt).toISOString()
+        : undefined,
+      now: new Date().toISOString(),
+    });
+
+    setProposal(defaultMemberProposal);
+    setProposalMessage(
+      created.proposalStatus === 'pending_review'
+        ? '프로젝트 제안이 운영진 검토 대기열에 저장되었습니다.'
+        : '스터디 제안이 저장되어 멤버 홈에 바로 반영되었습니다.',
+    );
+    await refreshMemberHome(role, userId);
+  }
+
   const upcoming = activities.filter((activity) => activity.startsAt);
   const studiesAndProjects = activities.filter((activity) =>
     ['study', 'project'].includes(activity.type),
@@ -206,6 +255,7 @@ export function MemberHome() {
   ).length;
   const access = describeMemberHomeAccess(role);
   const canApplyToActivities = Boolean(access?.canApplyToActivities);
+  const canProposeActivities = canApplyToActivities;
 
   return (
     <main className="page">
@@ -251,6 +301,15 @@ export function MemberHome() {
             onChange={setGuestProfile}
             onSubmit={handleGuestProfileSubmit}
             value={guestProfile}
+          />
+        ) : null}
+
+        {canProposeActivities ? (
+          <MemberProposalForm
+            message={proposalMessage}
+            onChange={setProposal}
+            onSubmit={handleProposalSubmit}
+            value={proposal}
           />
         ) : null}
 
@@ -313,6 +372,95 @@ export function MemberHome() {
         />
       </div>
     </main>
+  );
+}
+
+function MemberProposalForm({
+  message,
+  onChange,
+  onSubmit,
+  value,
+}: {
+  message: string;
+  onChange: (value: MemberProposalFormState) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  value: MemberProposalFormState;
+}) {
+  function updateField(
+    field: keyof MemberProposalFormState,
+    nextValue: string,
+  ) {
+    onChange({
+      ...value,
+      [field]: nextValue,
+    });
+  }
+
+  return (
+    <section className="section section-compact">
+      <form className="card guest-profile-form" onSubmit={onSubmit}>
+        <div>
+          <span className="badge badge-blue">Member Proposal</span>
+          <h2>스터디 / 프로젝트 제안</h2>
+          <p>
+            멤버가 직접 스터디를 열거나 프로젝트 아이디어를 제안할 수 있습니다. 프로젝트는
+            운영진 승인 후 멤버 홈에 공개됩니다.
+          </p>
+        </div>
+
+        <div className="grid grid-2">
+          <label className="field">
+            <span>활동 유형</span>
+            <select
+              className="select"
+              onChange={(event) =>
+                updateField('type', event.target.value as ActivityProposalType)
+              }
+              value={value.type}
+            >
+              <option value="study">Study</option>
+              <option value="project">Project</option>
+            </select>
+          </label>
+          <label className="field">
+            <span>일정</span>
+            <input
+              className="input"
+              onChange={(event) => updateField('startsAt', event.target.value)}
+              type="datetime-local"
+              value={value.startsAt}
+            />
+          </label>
+        </div>
+
+        <label className="field">
+          <span>제목</span>
+          <input
+            className="input"
+            onChange={(event) => updateField('title', event.target.value)}
+            required
+            value={value.title}
+          />
+        </label>
+
+        <label className="field">
+          <span>요약</span>
+          <textarea
+            className="textarea"
+            onChange={(event) => updateField('summary', event.target.value)}
+            required
+            value={value.summary}
+          />
+        </label>
+
+        <div className="form-footer">
+          <p className="helper-text">{message}</p>
+          <button className="button button-primary" type="submit">
+            제안 제출
+          </button>
+        </div>
+      </form>
+    </section>
   );
 }
 
