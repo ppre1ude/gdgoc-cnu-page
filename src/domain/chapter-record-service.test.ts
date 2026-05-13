@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 
 import {
   createInMemoryChapterRecordStore,
+  getVisibleChapterRecordById,
   listHomeChapterRecords,
   publishChapterRecord,
   submitChapterRecord,
@@ -265,5 +266,91 @@ describe('member home chapter record visibility', () => {
         'chapter-record-old-published',
       ],
     );
+  });
+});
+
+describe('chapter record detail lookup', () => {
+  it('returns a published public chapter record detail for visitors', async () => {
+    const store = createInMemoryChapterRecordStore([baseRecord]);
+
+    const record = await getVisibleChapterRecordById(
+      store,
+      'chapter-record-public',
+      'visitor',
+    );
+
+    assert.equal(record?.id, 'chapter-record-public');
+  });
+
+  it('hides member-only chapter record detail from visitors but returns it to members', async () => {
+    const store = createInMemoryChapterRecordStore([
+      {
+        ...baseRecord,
+        id: 'chapter-record-member',
+        visibility: 'member',
+      },
+    ]);
+
+    const visitorRecord = await getVisibleChapterRecordById(
+      store,
+      'chapter-record-member',
+      'visitor',
+    );
+    const memberRecord = await getVisibleChapterRecordById(
+      store,
+      'chapter-record-member',
+      'member',
+    );
+
+    assert.equal(visitorRecord, null);
+    assert.equal(memberRecord?.id, 'chapter-record-member');
+  });
+
+  it('returns operator-only chapter record detail to operator roles', async () => {
+    const store = createInMemoryChapterRecordStore([
+      {
+        ...baseRecord,
+        id: 'chapter-record-operator',
+        visibility: 'operator',
+      },
+    ]);
+
+    const records = await Promise.all([
+      getVisibleChapterRecordById(store, 'chapter-record-operator', 'team_member'),
+      getVisibleChapterRecordById(store, 'chapter-record-operator', 'organizer'),
+      getVisibleChapterRecordById(store, 'chapter-record-operator', 'admin'),
+    ]);
+
+    assert.deepEqual(
+      records.map((record) => record?.id),
+      [
+        'chapter-record-operator',
+        'chapter-record-operator',
+        'chapter-record-operator',
+      ],
+    );
+  });
+
+  it('does not return draft, pending, or archived chapter record detail', async () => {
+    const hiddenStatuses = ['draft', 'pending_review', 'archived'] as const;
+    const store = createInMemoryChapterRecordStore(
+      hiddenStatuses.map((status) => ({
+        ...baseRecord,
+        id: `chapter-record-${status}`,
+        status,
+      })),
+    );
+
+    const records = await Promise.all(
+      hiddenStatuses.map((status) =>
+        getVisibleChapterRecordById(
+          store,
+          `chapter-record-${status}`,
+          'admin',
+        ),
+      ),
+    );
+
+    assert.deepEqual(records, [null, null, null]);
   });
 });

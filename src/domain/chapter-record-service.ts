@@ -168,6 +168,20 @@ export async function listHomeChapterRecords(
   });
 }
 
+export async function getVisibleChapterRecordById(
+  store: ChapterRecordStore,
+  recordId: string,
+  role: UserRole,
+): Promise<ChapterRecord | null> {
+  const records = await store.list();
+
+  return (
+    listVisibleChapterRecords(records, role).find(
+      (record) => record.id === recordId,
+    ) ?? null
+  );
+}
+
 function normalizeTags(tags: string[]) {
   return tags.map((tag) => tag.trim()).filter(Boolean);
 }

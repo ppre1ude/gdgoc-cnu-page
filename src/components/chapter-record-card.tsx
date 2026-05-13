@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import type { ChapterRecord } from '@/domain/chapter-record';
 import { formatKoreanDate } from '@/lib/format-korean-date-time';
 
@@ -22,8 +24,16 @@ export function ChapterRecordCard({ record }: { record: ChapterRecord }) {
       </div>
       <p className="helper-text" style={{ marginTop: 14 }}>
         {record.authorUserId}
-        {record.publishedAt ? ` · ${formatKoreanDate(record.publishedAt)}` : ''}
+        {record.publishedAt ? ` / ${formatKoreanDate(record.publishedAt)}` : ''}
       </p>
+      <div className="card-actions">
+        <Link
+          className="button button-ghost button-small"
+          href={`/records/${encodeURIComponent(record.id)}`}
+        >
+          자세히
+        </Link>
+      </div>
     </article>
   );
 }
@@ -38,4 +48,3 @@ export function getRecordKindLabel(kind: ChapterRecord['kind']) {
       return 'Technical Note';
   }
 }
-
