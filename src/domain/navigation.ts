@@ -56,6 +56,13 @@ const adminNavigationItems: AdminNavigationItemDefinition[] = [
   },
   {
     description:
+      '회고, 리뷰, 기술 노트처럼 오래 남길 챕터 기록을 검토하고 게시합니다.',
+    href: '/admin/records',
+    allowedRoles: sharedAdminToolRoles,
+    label: 'Record Admin',
+  },
+  {
+    description:
       '성과, 회고, 갤러리, 프로젝트 결과를 등록하고 공개 범위를 관리합니다.',
     href: '/admin/showcases',
     allowedRoles: sharedAdminToolRoles,
