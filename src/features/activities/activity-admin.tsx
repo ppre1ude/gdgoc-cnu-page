@@ -53,7 +53,6 @@ type AiResponse = {
 
 type ActivityDraftFormState = {
   body: string;
-  externalRegistrationLabel: string;
   externalRegistrationUrl: string;
   registrationMode: ActivityRegistrationMode;
   startsAt: string;
@@ -73,7 +72,6 @@ const initialDraft: ActivityDraftFormState = {
   startsAt: '2026-05-16T04:00',
   registrationMode: 'hybrid' as ActivityRegistrationMode,
   externalRegistrationUrl: 'https://gdg.community.dev/',
-  externalRegistrationLabel: 'gdg.community.dev 등록',
 };
 
 const operatorRoles = new Set(['team_member', 'organizer', 'admin']);
@@ -230,7 +228,6 @@ export function ActivityAdmin() {
       startsAt: draft.startsAt ? new Date(draft.startsAt).toISOString() : undefined,
       registrationMode: draft.registrationMode,
       externalRegistrationUrl: draft.externalRegistrationUrl.trim() || undefined,
-      externalRegistrationLabel: draft.externalRegistrationLabel.trim() || undefined,
       now,
     };
 
@@ -256,7 +253,6 @@ export function ActivityAdmin() {
     setEditingActivityId(activity.id);
     setDraft({
       body: activity.summary,
-      externalRegistrationLabel: activity.externalRegistrationLabel ?? '',
       externalRegistrationUrl: activity.externalRegistrationUrl ?? '',
       registrationMode: activity.registrationMode ?? 'internal',
       startsAt: toDateTimeLocalValue(activity.startsAt),
@@ -445,11 +441,6 @@ export function ActivityAdmin() {
                       setDraft((current) => ({
                         ...current,
                         registrationMode,
-                        externalRegistrationLabel: isExternalRegistrationMode(
-                          registrationMode,
-                        )
-                          ? current.externalRegistrationLabel
-                          : '',
                         externalRegistrationUrl: isExternalRegistrationMode(
                           registrationMode,
                         )
@@ -465,23 +456,6 @@ export function ActivityAdmin() {
                     <option value="none">정보 안내만</option>
                   </select>
                 </label>
-
-                {usesExternalRegistration ? (
-                  <label className="field">
-                    <span>외부 등록 버튼 문구</span>
-                    <input
-                      className="input"
-                      onChange={(event) =>
-                        setDraft((current) => ({
-                          ...current,
-                          externalRegistrationLabel: event.target.value,
-                        }))
-                      }
-                      placeholder="예: gdg.community.dev 등록"
-                      value={draft.externalRegistrationLabel}
-                    />
-                  </label>
-                ) : null}
               </div>
 
               {usesExternalRegistration ? (
@@ -501,7 +475,8 @@ export function ActivityAdmin() {
                   />
                   <span className="helper-text">
                     GDG 공식 행사, Build with AI, 외부 신청 폼처럼 홈페이지 밖에서
-                    신청해야 하는 활동에만 사용합니다.
+                    신청해야 하는 활동에만 사용합니다. 카드 CTA는 "바로가기"로
+                    고정됩니다.
                   </span>
                 </label>
               ) : null}

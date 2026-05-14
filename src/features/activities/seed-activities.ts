@@ -12,7 +12,6 @@ export const seedActivities: Activity[] = [
     startsAt: '2026-05-16T04:00:00.000Z',
     registrationMode: 'hybrid',
     externalRegistrationUrl: 'https://gdg.community.dev/',
-    externalRegistrationLabel: 'gdg.community.dev 등록',
     createdAt: '2026-05-11T09:00:00.000Z',
     updatedAt: '2026-05-11T09:00:00.000Z',
   },

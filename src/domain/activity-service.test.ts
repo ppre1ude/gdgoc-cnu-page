@@ -29,7 +29,6 @@ describe('activity authoring flow', () => {
       startsAt: '2026-05-16T04:00:00.000Z',
       registrationMode: 'hybrid',
       externalRegistrationUrl: 'https://gdg.community.dev/events/example',
-      externalRegistrationLabel: 'gdg.community.dev 등록',
       now: '2026-05-11T09:00:00.000Z',
     });
 
@@ -193,7 +192,6 @@ describe('activity authoring flow', () => {
       startsAt: '2026-05-20T09:00:00.000Z',
       registrationMode: 'external',
       externalRegistrationUrl: 'https://gdg.community.dev/events/demo-day',
-      externalRegistrationLabel: 'GDG event page',
       now: '2026-05-14T09:00:00.000Z',
     });
     const activities = await store.list();
@@ -209,14 +207,14 @@ describe('activity authoring flow', () => {
     assert.equal(updated.startsAt, '2026-05-20T09:00:00.000Z');
     assert.equal(updated.registrationMode, 'external');
     assert.equal(updated.externalRegistrationUrl, 'https://gdg.community.dev/events/demo-day');
-    assert.equal(updated.externalRegistrationLabel, 'GDG event page');
+    assert.equal(updated.externalRegistrationLabel, undefined);
     assert.equal(updated.proposalStatus, 'pending_review');
     assert.equal(updated.proposedByUserId, 'member-1');
     assert.equal(updated.proposalSubmittedAt, '2026-05-12T09:00:00.000Z');
     assert.deepEqual(activities[0], updated);
   });
 
-  it('stores external registration fields only for external or hybrid registration', async () => {
+  it('stores external registration URLs only for external or hybrid registration', async () => {
     const store = createInMemoryActivityStore();
 
     const internalActivity = await createActivity(store, {
@@ -228,7 +226,6 @@ describe('activity authoring flow', () => {
       status: 'published',
       registrationMode: 'internal',
       externalRegistrationUrl: 'https://gdg.community.dev/events/unused',
-      externalRegistrationLabel: 'Should not be stored',
       now: '2026-05-14T09:00:00.000Z',
     });
 
@@ -241,7 +238,6 @@ describe('activity authoring flow', () => {
       status: 'published',
       registrationMode: 'external',
       externalRegistrationUrl: 'https://gdg.community.dev/events/gdg-korea',
-      externalRegistrationLabel: 'gdg.community.dev 등록',
       now: '2026-05-14T09:00:00.000Z',
     });
 
@@ -251,7 +247,7 @@ describe('activity authoring flow', () => {
       externalActivity.externalRegistrationUrl,
       'https://gdg.community.dev/events/gdg-korea',
     );
-    assert.equal(externalActivity.externalRegistrationLabel, 'gdg.community.dev 등록');
+    assert.equal(externalActivity.externalRegistrationLabel, undefined);
   });
 
   it('clears stale external registration fields when switching to internal registration', async () => {
@@ -280,7 +276,6 @@ describe('activity authoring flow', () => {
       status: originalActivity.status,
       registrationMode: 'none',
       externalRegistrationUrl: originalActivity.externalRegistrationUrl,
-      externalRegistrationLabel: originalActivity.externalRegistrationLabel,
       now: '2026-05-14T10:00:00.000Z',
     });
 

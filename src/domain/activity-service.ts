@@ -26,7 +26,6 @@ export type CreateActivityInput = {
   startsAt?: string;
   registrationMode?: ActivityRegistrationMode;
   externalRegistrationUrl?: string;
-  externalRegistrationLabel?: string;
   now: string;
 };
 
@@ -64,7 +63,6 @@ export type UpdateActivityInput = {
   startsAt?: string;
   registrationMode?: ActivityRegistrationMode;
   externalRegistrationUrl?: string;
-  externalRegistrationLabel?: string;
   now: string;
 };
 
@@ -136,10 +134,19 @@ export async function updateActivity(
   }
 
   const activity = await findActivityOrThrow(store, input.activityId);
-  const registrationFields = getRegistrationFields(input);
+  const registrationFields = getRegistrationFields({
+    registrationMode: input.registrationMode ?? activity.registrationMode,
+    externalRegistrationUrl: input.externalRegistrationUrl,
+  });
+  const {
+    externalRegistrationLabel: _legacyExternalRegistrationLabel,
+    externalRegistrationUrl: _legacyExternalRegistrationUrl,
+    registrationMode: _legacyRegistrationMode,
+    ...activityWithoutRegistrationFields
+  } = activity;
 
   return store.save({
-    ...activity,
+    ...activityWithoutRegistrationFields,
     title: input.title,
     summary: input.summary,
     type: input.type,
@@ -303,25 +310,25 @@ async function findActivityOrThrow(
 function getRegistrationFields(
   input: Pick<
     CreateActivityInput,
-    'externalRegistrationLabel' | 'externalRegistrationUrl' | 'registrationMode'
+    'externalRegistrationUrl' | 'registrationMode'
   >,
-): Pick<
-  Activity,
-  'externalRegistrationLabel' | 'externalRegistrationUrl' | 'registrationMode'
-> {
+): Partial<Pick<Activity, 'externalRegistrationUrl' | 'registrationMode'>> {
   const registrationMode = input.registrationMode;
+
+  if (!registrationMode) {
+    return {};
+  }
 
   if (registrationMode !== 'external' && registrationMode !== 'hybrid') {
     return {
       registrationMode,
-      externalRegistrationLabel: undefined,
-      externalRegistrationUrl: undefined,
     };
   }
 
   return {
     registrationMode,
-    externalRegistrationLabel: input.externalRegistrationLabel,
-    externalRegistrationUrl: input.externalRegistrationUrl,
+    ...(input.externalRegistrationUrl
+      ? { externalRegistrationUrl: input.externalRegistrationUrl }
+      : {}),
   };
 }
