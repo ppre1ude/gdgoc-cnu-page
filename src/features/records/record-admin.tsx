@@ -15,6 +15,14 @@ import {
   submitChapterRecord,
 } from '@/domain/chapter-record-service';
 import { ChapterRecordCard } from '@/components/chapter-record-card';
+import {
+  WdsButton,
+  WdsField,
+  WdsInput,
+  WdsSelect,
+  WdsTextArea,
+  type WdsSelectOption,
+} from '@/components/wds-form-controls';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserChapterRecordStore } from './browser-chapter-record-store';
 import { seedChapterRecords } from './seed-chapter-records';
@@ -41,6 +49,23 @@ const initialDraft: RecordDraft = {
   title: 'Build with AI 운영 기록',
   visibility: 'member',
 };
+
+const recordKindOptions = [
+  { value: 'retrospective', label: 'Retrospective' },
+  { value: 'review', label: 'Review' },
+  { value: 'technical_note', label: 'Technical Note' },
+] satisfies readonly WdsSelectOption<ChapterRecordKind>[];
+
+const recordVisibilityOptions = [
+  { value: 'public', label: 'Public' },
+  { value: 'member', label: 'Member' },
+  { value: 'operator', label: 'Operator' },
+] satisfies readonly WdsSelectOption<ActivityVisibility>[];
+
+const recordStatusOptions = [
+  { value: 'pending_review', label: 'Pending Review' },
+  { value: 'draft', label: 'Draft' },
+] satisfies readonly WdsSelectOption<RecordDraft['status']>[];
 
 export function RecordAdmin() {
   const { role, userId } = useAuthSession();
@@ -115,65 +140,49 @@ export function RecordAdmin() {
           <section className="card">
             <form className="form" onSubmit={submitRecord}>
               <div className="grid grid-2">
-                <label className="field">
-                  <span>기록 유형</span>
-                  <select
-                    className="select"
-                    onChange={(event) =>
+                <WdsField label="기록 유형">
+                  <WdsSelect
+                    onValueChange={(kind) =>
                       setDraft((current) => ({
                         ...current,
-                        kind: event.target.value as ChapterRecordKind,
+                        kind,
                       }))
                     }
+                    options={recordKindOptions}
                     value={draft.kind}
-                  >
-                    <option value="retrospective">Retrospective</option>
-                    <option value="review">Review</option>
-                    <option value="technical_note">Technical Note</option>
-                  </select>
-                </label>
+                  />
+                </WdsField>
 
-                <label className="field">
-                  <span>공개 범위</span>
-                  <select
-                    className="select"
-                    onChange={(event) =>
+                <WdsField label="공개 범위">
+                  <WdsSelect
+                    onValueChange={(visibility) =>
                       setDraft((current) => ({
                         ...current,
-                        visibility: event.target.value as ActivityVisibility,
+                        visibility,
                       }))
                     }
+                    options={recordVisibilityOptions}
                     value={draft.visibility}
-                  >
-                    <option value="public">Public</option>
-                    <option value="member">Member</option>
-                    <option value="operator">Operator</option>
-                  </select>
-                </label>
+                  />
+                </WdsField>
               </div>
 
               <div className="grid grid-2">
-                <label className="field">
-                  <span>저장 상태</span>
-                  <select
-                    className="select"
-                    onChange={(event) =>
+                <WdsField label="저장 상태">
+                  <WdsSelect
+                    onValueChange={(status) =>
                       setDraft((current) => ({
                         ...current,
-                        status: event.target.value as RecordDraft['status'],
+                        status,
                       }))
                     }
+                    options={recordStatusOptions}
                     value={draft.status}
-                  >
-                    <option value="pending_review">Pending Review</option>
-                    <option value="draft">Draft</option>
-                  </select>
-                </label>
+                  />
+                </WdsField>
 
-                <label className="field">
-                  <span>Related Activity ID</span>
-                  <input
-                    className="input"
+                <WdsField label="Related Activity ID">
+                  <WdsInput
                     onChange={(event) =>
                       setDraft((current) => ({
                         ...current,
@@ -182,25 +191,21 @@ export function RecordAdmin() {
                     }
                     value={draft.relatedActivityId}
                   />
-                </label>
+                </WdsField>
               </div>
 
-              <label className="field">
-                <span>제목</span>
-                <input
-                  className="input"
+              <WdsField label="제목">
+                <WdsInput
                   onChange={(event) =>
                     setDraft((current) => ({ ...current, title: event.target.value }))
                   }
                   required
                   value={draft.title}
                 />
-              </label>
+              </WdsField>
 
-              <label className="field">
-                <span>요약</span>
-                <textarea
-                  className="textarea"
+              <WdsField label="요약">
+                <WdsTextArea
                   onChange={(event) =>
                     setDraft((current) => ({
                       ...current,
@@ -210,35 +215,31 @@ export function RecordAdmin() {
                   required
                   value={draft.summary}
                 />
-              </label>
+              </WdsField>
 
-              <label className="field">
-                <span>본문</span>
-                <textarea
-                  className="textarea"
+              <WdsField label="본문">
+                <WdsTextArea
                   onChange={(event) =>
                     setDraft((current) => ({ ...current, body: event.target.value }))
                   }
                   required
                   value={draft.body}
                 />
-              </label>
+              </WdsField>
 
-              <label className="field">
-                <span>태그</span>
-                <input
-                  className="input"
+              <WdsField label="태그">
+                <WdsInput
                   onChange={(event) =>
                     setDraft((current) => ({ ...current, tags: event.target.value }))
                   }
                   value={draft.tags}
                 />
-              </label>
+              </WdsField>
 
               <div className="toolbar">
-                <button className="button button-primary" type="submit">
+                <WdsButton tone="primary" type="submit">
                   기록 저장
-                </button>
+                </WdsButton>
               </div>
               <p className="helper-text">{message}</p>
             </form>
@@ -261,20 +262,22 @@ export function RecordAdmin() {
                         <p className="helper-text">{record.summary}</p>
                       </div>
                       <div className="toolbar">
-                        <button
-                          className="button button-secondary button-small"
+                        <WdsButton
                           onClick={() => publishRecord(record, false)}
+                          size="small"
+                          tone="secondary"
                           type="button"
                         >
                           게시
-                        </button>
-                        <button
-                          className="button button-primary button-small"
+                        </WdsButton>
+                        <WdsButton
                           onClick={() => publishRecord(record, true)}
+                          size="small"
+                          tone="primary"
                           type="button"
                         >
                           쇼케이스 후보
-                        </button>
+                        </WdsButton>
                       </div>
                     </div>
                   ))}
@@ -310,4 +313,3 @@ function parseTags(value: string) {
     .map((tag) => tag.trim())
     .filter(Boolean);
 }
-

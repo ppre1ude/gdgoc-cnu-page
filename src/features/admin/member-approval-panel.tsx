@@ -7,6 +7,7 @@ import {
   approveGuestToMember,
   listPendingGuestUsers,
 } from '@/domain/chapter-user-service';
+import { WdsButton } from '@/components/wds-form-controls';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { formatKoreanDate } from '@/lib/format-korean-date-time';
 import { createBrowserChapterUserStore } from '../users/browser-chapter-user-store';
@@ -105,13 +106,14 @@ export function MemberApprovalPanel() {
                 <p>{user.email}</p>
                 <GuestProfileSummary user={user} />
               </div>
-              <button
-                className="button button-primary button-small"
+              <WdsButton
                 onClick={() => approveUser(user)}
+                size="small"
+                tone="primary"
                 type="button"
               >
                 member 승인
-              </button>
+              </WdsButton>
             </article>
           ))
         ) : (

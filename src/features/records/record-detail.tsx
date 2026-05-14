@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 import type { UserRole } from '@/domain/activity';
@@ -8,11 +7,23 @@ import type { ChapterRecord } from '@/domain/chapter-record';
 import { getVisibleChapterRecordById } from '@/domain/chapter-record-service';
 import { getRecordKindLabel } from '@/components/chapter-record-card';
 import {
+  WdsField,
+  WdsLinkButton,
+  WdsSelect,
+  WdsTextLinkButton,
+  type WdsSelectOption,
+} from '@/components/wds-form-controls';
+import {
   demoRoleOptions,
   useAuthSession,
 } from '@/features/auth/auth-session-provider';
 import { formatKoreanDate } from '@/lib/format-korean-date-time';
 import { createBrowserChapterRecordStore } from './browser-chapter-record-store';
+
+const demoRoleSelectOptions = demoRoleOptions.map((role) => ({
+  label: role,
+  value: role,
+})) satisfies WdsSelectOption<UserRole>[];
 
 export function RecordDetail({ recordId }: { recordId: string }) {
   const store = useMemo(() => createBrowserChapterRecordStore(), []);
@@ -59,12 +70,12 @@ export function RecordDetail({ recordId }: { recordId: string }) {
     <main className="page">
       <div className="container">
         <div className="toolbar" style={{ marginBottom: 20 }}>
-          <Link className="button button-secondary button-small" href="/member">
+          <WdsLinkButton href="/member" size="small" tone="secondary">
             Member Home
-          </Link>
-          <Link className="button button-ghost button-small" href="/admin/records">
+          </WdsLinkButton>
+          <WdsTextLinkButton href="/admin/records">
             Record Admin
-          </Link>
+          </WdsTextLinkButton>
         </div>
 
         <section className="section section-compact">
@@ -77,21 +88,14 @@ export function RecordDetail({ recordId }: { recordId: string }) {
               <h2>{record ? record.title : '챕터 기록 상세'}</h2>
               <p>{message}</p>
             </div>
-            <label className="field demo-role-field">
-              <span>현재 역할</span>
-              <select
-                className="select"
+            <WdsField className="demo-role-field" label="현재 역할">
+              <WdsSelect
                 disabled={isFirebaseConfigured}
-                onChange={(event) => void changeDemoRole(event.target.value as UserRole)}
+                onValueChange={(nextRole) => void changeDemoRole(nextRole)}
+                options={demoRoleSelectOptions}
                 value={role}
-              >
-                {demoRoleOptions.map((role) => (
-                  <option key={role} value={role}>
-                    {role}
-                  </option>
-                ))}
-              </select>
-            </label>
+              />
+            </WdsField>
           </div>
         </section>
 
@@ -153,4 +157,3 @@ export function RecordDetail({ recordId }: { recordId: string }) {
     </main>
   );
 }
-

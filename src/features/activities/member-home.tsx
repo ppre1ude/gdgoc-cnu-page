@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 
 import type { Activity, UserRole } from '@/domain/activity';
@@ -37,6 +36,15 @@ import { ActivityCard } from '@/components/activity-card';
 import { ChapterRecordCard } from '@/components/chapter-record-card';
 import { NoticeBoard } from '@/components/notice-board';
 import { ShowcaseCard } from '@/components/showcase-card';
+import {
+  WdsButton,
+  WdsField,
+  WdsInput,
+  WdsSelect,
+  WdsTextArea,
+  WdsTextLinkButton,
+  type WdsSelectOption,
+} from '@/components/wds-form-controls';
 import {
   demoRoleOptions,
   useAuthSession,
@@ -101,6 +109,23 @@ const defaultMemberRecord: MemberRecordFormState = {
   kind: 'retrospective',
   tags: '',
 };
+
+const demoRoleSelectOptions: readonly WdsSelectOption<UserRole>[] =
+  demoRoleOptions.map((role) => ({
+    label: role,
+    value: role,
+  }));
+
+const activityProposalTypeOptions = [
+  { label: 'Study', value: 'study' },
+  { label: 'Project', value: 'project' },
+] satisfies readonly WdsSelectOption<ActivityProposalType>[];
+
+const chapterRecordKindOptions = [
+  { label: 'Retrospective', value: 'retrospective' },
+  { label: 'Review', value: 'review' },
+  { label: 'Technical Note', value: 'technical_note' },
+] satisfies readonly WdsSelectOption<ChapterRecordKind>[];
 
 export function MemberHome() {
   const {
@@ -340,21 +365,17 @@ export function MemberHome() {
               <h2>{getAccessPanelTitle(access?.status)}</h2>
               <p>{access.message}</p>
             </div>
-            <label className="field demo-role-field">
-              <span>{isFirebaseConfigured ? '현재 역할' : 'Demo 역할'}</span>
-              <select
-                className="select"
+            <WdsField
+              className="demo-role-field"
+              label={isFirebaseConfigured ? '현재 역할' : 'Demo 역할'}
+            >
+              <WdsSelect
                 disabled={authStatus !== 'demo'}
-                onChange={(event) => changeDemoRole(event.target.value as UserRole)}
+                onValueChange={changeDemoRole}
+                options={demoRoleSelectOptions}
                 value={role}
-              >
-                {demoRoleOptions.map((role) => (
-                  <option key={role} value={role}>
-                    {role}
-                  </option>
-                ))}
-              </select>
-            </label>
+              />
+            </WdsField>
           </div>
         </section>
 
@@ -487,55 +508,43 @@ function MemberProposalForm({
         </div>
 
         <div className="grid grid-2">
-          <label className="field">
-            <span>활동 유형</span>
-            <select
-              className="select"
-              onChange={(event) =>
-                updateField('type', event.target.value as ActivityProposalType)
-              }
+          <WdsField label="활동 유형">
+            <WdsSelect
+              onValueChange={(nextValue) => updateField('type', nextValue)}
+              options={activityProposalTypeOptions}
               value={value.type}
-            >
-              <option value="study">Study</option>
-              <option value="project">Project</option>
-            </select>
-          </label>
-          <label className="field">
-            <span>일정</span>
-            <input
-              className="input"
+            />
+          </WdsField>
+          <WdsField label="일정">
+            <WdsInput
               onChange={(event) => updateField('startsAt', event.target.value)}
               type="datetime-local"
               value={value.startsAt}
             />
-          </label>
+          </WdsField>
         </div>
 
-        <label className="field">
-          <span>제목</span>
-          <input
-            className="input"
+        <WdsField label="제목">
+          <WdsInput
             onChange={(event) => updateField('title', event.target.value)}
             required
             value={value.title}
           />
-        </label>
+        </WdsField>
 
-        <label className="field">
-          <span>요약</span>
-          <textarea
-            className="textarea"
+        <WdsField label="요약">
+          <WdsTextArea
             onChange={(event) => updateField('summary', event.target.value)}
             required
             value={value.summary}
           />
-        </label>
+        </WdsField>
 
         <div className="form-footer">
           <p className="helper-text">{message}</p>
-          <button className="button button-primary" type="submit">
+          <WdsButton tone="primary" type="submit">
             제안 제출
-          </button>
+          </WdsButton>
         </div>
       </form>
     </section>
@@ -573,66 +582,51 @@ function MemberRecordForm({
         </div>
 
         <div className="grid grid-2">
-          <label className="field">
-            <span>기록 유형</span>
-            <select
-              className="select"
-              onChange={(event) =>
-                updateField('kind', event.target.value as ChapterRecordKind)
-              }
+          <WdsField label="기록 유형">
+            <WdsSelect
+              onValueChange={(nextValue) => updateField('kind', nextValue)}
+              options={chapterRecordKindOptions}
               value={value.kind}
-            >
-              <option value="retrospective">Retrospective</option>
-              <option value="review">Review</option>
-              <option value="technical_note">Technical Note</option>
-            </select>
-          </label>
-          <label className="field">
-            <span>태그</span>
-            <input
-              className="input"
+            />
+          </WdsField>
+          <WdsField label="태그">
+            <WdsInput
               onChange={(event) => updateField('tags', event.target.value)}
               placeholder="Gemini, Firebase"
               value={value.tags}
             />
-          </label>
+          </WdsField>
         </div>
 
-        <label className="field">
-          <span>제목</span>
-          <input
-            className="input"
+        <WdsField label="제목">
+          <WdsInput
             onChange={(event) => updateField('title', event.target.value)}
             required
             value={value.title}
           />
-        </label>
+        </WdsField>
 
-        <label className="field">
-          <span>요약</span>
-          <textarea
-            className="textarea"
+        <WdsField label="요약">
+          <WdsTextArea
             onChange={(event) => updateField('summary', event.target.value)}
             required
             value={value.summary}
           />
-        </label>
+        </WdsField>
 
-        <label className="field">
-          <span>본문</span>
-          <textarea
-            className="textarea"
+        <WdsField label="본문">
+          <WdsTextArea
             onChange={(event) => updateField('body', event.target.value)}
             required
             value={value.body}
           />
-        </label>
+        </WdsField>
 
         <div className="form-footer">
           <p className="helper-text">{message}</p>
-          <button className="button button-primary" type="submit">
+          <WdsButton tone="primary" type="submit">
             기록 제출
-          </button>
+          </WdsButton>
         </div>
       </form>
     </section>
@@ -673,77 +667,63 @@ function GuestProfileForm({
         </div>
 
         <div className="grid grid-2">
-          <label className="field">
-            <span>이름</span>
-            <input
-              className="input"
+          <WdsField label="이름">
+            <WdsInput
               onChange={(event) => updateField('displayName', event.target.value)}
               required
               value={value.displayName}
             />
-          </label>
-          <label className="field">
-            <span>이메일</span>
-            <input
-              className="input"
+          </WdsField>
+          <WdsField label="이메일">
+            <WdsInput
               onChange={(event) => updateField('email', event.target.value)}
               required
               type="email"
               value={value.email}
             />
-          </label>
-          <label className="field">
-            <span>학과</span>
-            <input
-              className="input"
+          </WdsField>
+          <WdsField label="학과">
+            <WdsInput
               onChange={(event) => updateField('department', event.target.value)}
               placeholder="예: 컴퓨터융합학부"
               value={value.department}
             />
-          </label>
-          <label className="field">
-            <span>기수 또는 학년</span>
-            <input
-              className="input"
+          </WdsField>
+          <WdsField label="기수 또는 학년">
+            <WdsInput
               onChange={(event) => updateField('cohort', event.target.value)}
               placeholder="예: 3기, 2학년"
               value={value.cohort}
             />
-          </label>
-          <label className="field">
-            <span>학번</span>
-            <input
-              className="input"
+          </WdsField>
+          <WdsField label="학번">
+            <WdsInput
               onChange={(event) => updateField('studentId', event.target.value)}
               value={value.studentId}
             />
-          </label>
-          <label className="field">
-            <span>관심 분야</span>
-            <input
-              className="input"
+          </WdsField>
+          <WdsField label="관심 분야">
+            <WdsInput
               onChange={(event) => updateField('interests', event.target.value)}
               placeholder="예: Firebase, Gemini, 프론트엔드"
               value={value.interests}
             />
-          </label>
+          </WdsField>
         </div>
 
-        <label className="field">
-          <span>참여 동기</span>
-          <textarea
-            className="textarea"
+        <WdsField label="참여 동기">
+          <WdsTextArea
             onChange={(event) => updateField('motivation', event.target.value)}
             placeholder="GDGoC CNU에서 하고 싶은 활동을 적어주세요."
             value={value.motivation}
           />
-        </label>
+        </WdsField>
 
         <div className="form-footer">
           <p className="helper-text">{message}</p>
-          <button className="button button-primary" type="submit">
+          <WdsButton tone="primary" type="submit">
             승인 요청 정보 저장
-          </button>
+          </WdsButton>
         </div>
       </form>
     </section>
@@ -848,12 +828,11 @@ function MemberApplicationsSection({
                     : '일정 미정'}
                 </p>
               </div>
-              <Link
-                className="button button-secondary button-small"
+              <WdsTextLinkButton
                 href={`/activities/${encodeURIComponent(activity.id)}`}
               >
                 자세히
-              </Link>
+              </WdsTextLinkButton>
             </article>
           ))}
         </div>

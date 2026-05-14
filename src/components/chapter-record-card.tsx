@@ -1,5 +1,4 @@
-import Link from 'next/link';
-
+import { WdsTextLinkButton } from '@/components/wds-form-controls';
 import type { ChapterRecord } from '@/domain/chapter-record';
 import { formatKoreanDate } from '@/lib/format-korean-date-time';
 
@@ -27,12 +26,11 @@ export function ChapterRecordCard({ record }: { record: ChapterRecord }) {
         {record.publishedAt ? ` / ${formatKoreanDate(record.publishedAt)}` : ''}
       </p>
       <div className="card-actions">
-        <Link
-          className="button button-ghost button-small"
+        <WdsTextLinkButton
           href={`/records/${encodeURIComponent(record.id)}`}
         >
           자세히
-        </Link>
+        </WdsTextLinkButton>
       </div>
     </article>
   );

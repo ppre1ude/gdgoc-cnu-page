@@ -1,9 +1,12 @@
-import Link from 'next/link';
-
 import {
   type Activity,
   getActivityRegistrationPolicy,
 } from '@/domain/activity';
+import {
+  WdsButton,
+  WdsLinkButton,
+  WdsTextLinkButton,
+} from '@/components/wds-form-controls';
 import type { ActivityApplicationState } from '@/domain/activity-application';
 import { formatKoreanDateTime } from '@/lib/format-korean-date-time';
 
@@ -77,39 +80,42 @@ export function ActivityCard({
         </p>
       ) : null}
       <div className="card-actions">
-        <Link
-          className="button button-ghost button-small"
+        <WdsTextLinkButton
           href={`/activities/${encodeURIComponent(activity.id)}`}
         >
           자세히
-        </Link>
+        </WdsTextLinkButton>
         {registrationPolicy.externalRegistrationUrl ? (
-          <a
-            className="button button-secondary button-small"
+          <WdsLinkButton
+            external
             href={registrationPolicy.externalRegistrationUrl}
             rel="noreferrer"
+            size="small"
             target="_blank"
+            tone="secondary"
           >
             {registrationPolicy.externalRegistrationLabel}
-          </a>
+          </WdsLinkButton>
         ) : null}
         {canApply ? (
-          <button
-            className="button button-primary button-small"
+          <WdsButton
             onClick={() => onApply(activity)}
+            size="small"
+            tone="primary"
             type="button"
           >
             참여 신청
-          </button>
+          </WdsButton>
         ) : null}
         {canCancel ? (
-          <button
-            className="button button-secondary button-small"
+          <WdsButton
             onClick={() => onCancel(activity)}
+            size="small"
+            tone="secondary"
             type="button"
           >
             신청 취소
-          </button>
+          </WdsButton>
         ) : null}
       </div>
     </article>

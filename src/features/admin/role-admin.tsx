@@ -9,6 +9,11 @@ import {
   formatKoreanDate,
   formatKoreanDateTime,
 } from '@/lib/format-korean-date-time';
+import {
+  WdsButton,
+  WdsField,
+  WdsSelect,
+} from '@/components/wds-form-controls';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserChapterUserStore } from '../users/browser-chapter-user-store';
 import { seedChapterUsers } from '../users/seed-chapter-users';
@@ -216,33 +221,27 @@ export function RoleAdmin() {
                     </div>
 
                     <div className="toolbar">
-                      <label className="field demo-role-field">
-                        <span>변경할 역할</span>
-                        <select
-                          className="select"
-                          onChange={(event) =>
+                      <WdsField className="demo-role-field" label="변경할 역할">
+                        <WdsSelect
+                          onValueChange={(nextRole) =>
                             setSelectedRoles((current) => ({
                               ...current,
-                              [user.id]: event.target.value as AccountRole,
+                              [user.id]: nextRole,
                             }))
                           }
+                          options={accountRoles}
                           value={selectedRole}
-                        >
-                          {accountRoles.map((role) => (
-                            <option key={role.value} value={role.value}>
-                              {role.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <button
-                        className="button button-primary button-small"
+                        />
+                      </WdsField>
+                      <WdsButton
                         disabled={isPending || selectedRole === user.role}
                         onClick={() => requestRoleChange(user)}
+                        size="small"
+                        tone="primary"
                         type="button"
                       >
                         {isPending ? '변경 중' : '역할 변경'}
-                      </button>
+                      </WdsButton>
                     </div>
                   </article>
                 );

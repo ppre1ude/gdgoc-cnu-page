@@ -13,6 +13,7 @@ import {
 import type { Notice } from '@/domain/notice';
 import type { Showcase } from '@/domain/showcase';
 import { loadOrSyncDefaultActivitySession } from '@/domain/activity-session';
+import { WdsButton } from '@/components/wds-form-controls';
 import { formatKoreanDateTime } from '@/lib/format-korean-date-time';
 import { getFirestoreDb, hasFirebaseConfig } from '@/lib/firebase/client';
 import { createBrowserActivityStore } from '@/features/activities/browser-activity-store';
@@ -110,14 +111,14 @@ export function DemoSeedPanel() {
             콘텐츠를 Firestore에 저장합니다.
           </p>
         </div>
-        <button
-          className="button button-primary"
+        <WdsButton
           disabled={isSeeding}
           onClick={seedDemoData}
+          tone="primary"
           type="button"
         >
           {isSeeding ? '채우는 중' : 'Demo 데이터 채우기'}
-        </button>
+        </WdsButton>
       </div>
 
       <div className="notice">

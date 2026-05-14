@@ -2,9 +2,19 @@
 
 import type { UserRole } from '@/domain/activity';
 import {
+  WdsButton,
+  WdsSelect,
+  type WdsSelectOption,
+} from '@/components/wds-form-controls';
+import {
   demoRoleOptions,
   useAuthSession,
 } from '@/features/auth/auth-session-provider';
+
+const demoRoleSelectOptions = demoRoleOptions.map((option) => ({
+  label: option,
+  value: option,
+})) satisfies WdsSelectOption<UserRole>[];
 
 export function AuthPanel() {
   const {
@@ -21,20 +31,16 @@ export function AuthPanel() {
 
   if (!isFirebaseConfigured) {
     return (
-      <label className="auth-role-control">
+      <div className="auth-role-control">
         <span className="auth-pill">Demo role</span>
-        <select
-          className="auth-role-select"
-          onChange={(event) => setDemoRole(event.target.value as UserRole)}
+        <WdsSelect
+          height={32}
+          onValueChange={setDemoRole}
+          options={demoRoleSelectOptions}
           value={role}
-        >
-          {demoRoleOptions.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </label>
+          width="160px"
+        />
+      </div>
     );
   }
 
@@ -44,19 +50,25 @@ export function AuthPanel() {
 
   if (status === 'signed_in') {
     return (
-      <button
-        className="auth-pill auth-button"
+      <WdsButton
         onClick={signOutCurrentUser}
+        size="small"
+        tone="ghost"
         type="button"
       >
         {displayName ?? email ?? '로그아웃'}
-      </button>
+      </WdsButton>
     );
   }
 
   return (
-    <button className="auth-pill auth-button" onClick={signInWithGoogle} type="button">
+    <WdsButton
+      onClick={signInWithGoogle}
+      size="small"
+      tone="ghost"
+      type="button"
+    >
       {errorMessage ? 'Auth 재시도' : 'Google 로그인'}
-    </button>
+    </WdsButton>
   );
 }

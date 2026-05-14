@@ -38,6 +38,14 @@ import {
 } from '@/domain/activity-service';
 import { listVisibleActivities } from '@/domain/activity';
 import { ActivityCard } from '@/components/activity-card';
+import {
+  WdsButton,
+  WdsField,
+  WdsInput,
+  WdsSelect,
+  WdsTextArea,
+  type WdsSelectOption,
+} from '@/components/wds-form-controls';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserActivityApplicationStore } from './browser-activity-application-store';
 import { createBrowserActivitySessionStore } from './browser-activity-session-store';
@@ -75,6 +83,27 @@ const initialDraft: ActivityDraftFormState = {
 };
 
 const operatorRoles = new Set(['team_member', 'organizer', 'admin']);
+
+const activityTypeOptions: WdsSelectOption<ActivityType>[] = [
+  { label: 'Event', value: 'event' },
+  { label: 'Study', value: 'study' },
+  { label: 'Project', value: 'project' },
+  { label: 'Challenge', value: 'challenge' },
+  { label: 'Social', value: 'social' },
+];
+
+const activityVisibilityOptions: WdsSelectOption<ActivityVisibility>[] = [
+  { label: 'Public', value: 'public' },
+  { label: 'Member', value: 'member' },
+  { label: 'Operator', value: 'operator' },
+];
+
+const registrationModeOptions: WdsSelectOption<ActivityRegistrationMode>[] = [
+  { label: '내부 신청', value: 'internal' },
+  { label: '외부 등록', value: 'external' },
+  { label: '내부 신청 + 외부 등록', value: 'hybrid' },
+  { label: '정보 안내만', value: 'none' },
+];
 
 export function ActivityAdmin() {
   const { role, userId } = useAuthSession();
@@ -366,78 +395,57 @@ export function ActivityAdmin() {
                   <span className="badge">{editingActivityId}</span>
                 ) : null}
               </div>
-              <label className="field">
-                <span>제목</span>
-                <input
-                  className="input"
+              <WdsField label="제목">
+                <WdsInput
                   onChange={(event) =>
                     setDraft((current) => ({ ...current, title: event.target.value }))
                   }
                   value={draft.title}
                 />
-              </label>
+              </WdsField>
 
               <div className="grid grid-2">
-                <label className="field">
-                  <span>유형</span>
-                  <select
-                    className="select"
-                    onChange={(event) =>
+                <WdsField label="유형">
+                  <WdsSelect
+                    onValueChange={(type) =>
                       setDraft((current) => ({
                         ...current,
-                        type: event.target.value as ActivityType,
+                        type,
                       }))
                     }
+                    options={activityTypeOptions}
                     value={draft.type}
-                  >
-                    <option value="event">Event</option>
-                    <option value="study">Study</option>
-                    <option value="project">Project</option>
-                    <option value="challenge">Challenge</option>
-                    <option value="social">Social</option>
-                  </select>
-                </label>
+                  />
+                </WdsField>
 
-                <label className="field">
-                  <span>공개 범위</span>
-                  <select
-                    className="select"
-                    onChange={(event) =>
+                <WdsField label="공개 범위">
+                  <WdsSelect
+                    onValueChange={(visibility) =>
                       setDraft((current) => ({
                         ...current,
-                        visibility: event.target.value as ActivityVisibility,
+                        visibility,
                       }))
                     }
+                    options={activityVisibilityOptions}
                     value={draft.visibility}
-                  >
-                    <option value="public">Public</option>
-                    <option value="member">Member</option>
-                    <option value="operator">Operator</option>
-                  </select>
-                </label>
+                  />
+                </WdsField>
               </div>
 
-              <label className="field">
-                <span>일정</span>
-                <input
-                  className="input"
+              <WdsField label="일정">
+                <WdsInput
                   onChange={(event) =>
                     setDraft((current) => ({ ...current, startsAt: event.target.value }))
                   }
                   type="datetime-local"
                   value={draft.startsAt}
                 />
-              </label>
+              </WdsField>
 
               <div className="grid grid-2">
-                <label className="field">
-                  <span>등록 방식</span>
-                  <select
-                    className="select"
-                    onChange={(event) => {
-                      const registrationMode = event.target
-                        .value as ActivityRegistrationMode;
-
+                <WdsField label="등록 방식">
+                  <WdsSelect
+                    onValueChange={(registrationMode) => {
                       setDraft((current) => ({
                         ...current,
                         registrationMode,
@@ -448,21 +456,24 @@ export function ActivityAdmin() {
                           : '',
                       }));
                     }}
+                    options={registrationModeOptions}
                     value={draft.registrationMode}
-                  >
-                    <option value="internal">내부 신청</option>
-                    <option value="external">외부 등록</option>
-                    <option value="hybrid">내부 신청 + 외부 등록</option>
-                    <option value="none">정보 안내만</option>
-                  </select>
-                </label>
+                  />
+                </WdsField>
               </div>
 
               {usesExternalRegistration ? (
-                <label className="field">
-                  <span>외부 등록 URL</span>
-                  <input
-                    className="input"
+                <WdsField
+                  label="외부 등록 URL"
+                  message={
+                    <>
+                      GDG 공식 행사, Build with AI, 외부 신청 폼처럼 홈페이지 밖에서
+                      신청해야 하는 활동에만 사용합니다. 카드 CTA는 "바로가기"로
+                      고정됩니다.
+                    </>
+                  }
+                >
+                  <WdsInput
                     onChange={(event) =>
                       setDraft((current) => ({
                         ...current,
@@ -473,47 +484,40 @@ export function ActivityAdmin() {
                     type="url"
                     value={draft.externalRegistrationUrl}
                   />
-                  <span className="helper-text">
-                    GDG 공식 행사, Build with AI, 외부 신청 폼처럼 홈페이지 밖에서
-                    신청해야 하는 활동에만 사용합니다. 카드 CTA는 "바로가기"로
-                    고정됩니다.
-                  </span>
-                </label>
+                </WdsField>
               ) : null}
 
-              <label className="field">
-                <span>운영진 메모 / 본문</span>
-                <textarea
-                  className="textarea"
+              <WdsField label="운영진 메모 / 본문">
+                <WdsTextArea
                   onChange={(event) =>
                     setDraft((current) => ({ ...current, body: event.target.value }))
                   }
                   value={draft.body}
                 />
-              </label>
+              </WdsField>
 
               <div className="toolbar">
-                <button
-                  className="button button-secondary"
+                <WdsButton
                   disabled={isSuggesting}
                   onClick={requestSuggestion}
+                  tone="secondary"
                   type="button"
                 >
                   {isSuggesting ? 'AI 작성 중' : 'AI로 문구 정리'}
-                </button>
-                <button className="button button-primary" type="submit">
+                </WdsButton>
+                <WdsButton tone="primary" type="submit">
                   {editingActivityId ? 'Activity 수정' : 'Activity 저장'}
-                </button>
+                </WdsButton>
               </div>
               {editingActivityId ? (
                 <div className="toolbar">
-                  <button
-                    className="button button-secondary"
+                  <WdsButton
                     onClick={cancelEditing}
+                    tone="secondary"
                     type="button"
                   >
                     수정 취소
-                  </button>
+                  </WdsButton>
                 </div>
               ) : null}
               <p className="helper-text">{message}</p>
@@ -545,9 +549,9 @@ export function ActivityAdmin() {
                       보완 필요: {suggestion.missingInfo.join(', ')}
                     </p>
                   ) : null}
-                  <button className="button button-ghost" onClick={applySuggestion} type="button">
+                  <WdsButton onClick={applySuggestion} tone="ghost" type="button">
                     제안 적용
-                  </button>
+                  </WdsButton>
                 </div>
               ) : (
                 <p className="helper-text" style={{ marginTop: 14 }}>
@@ -576,21 +580,23 @@ export function ActivityAdmin() {
                   <div className="stack" key={activity.id}>
                     <ActivityCard activity={activity} />
                     <div className="toolbar">
-                      <button
-                        className="button button-secondary button-small"
+                      <WdsButton
                         disabled={editingActivityId === activity.id}
                         onClick={() => startEditing(activity)}
+                        size="small"
+                        tone="secondary"
                         type="button"
                       >
                         {editingActivityId === activity.id ? '수정 중' : '수정'}
-                      </button>
-                      <button
-                        className="button button-ghost button-small"
+                      </WdsButton>
+                      <WdsButton
                         onClick={() => void archiveSavedActivity(activity)}
+                        size="small"
+                        tone="ghost"
                         type="button"
                       >
                         아카이브
-                      </button>
+                      </WdsButton>
                     </div>
                     <ApplicationQueue
                       activity={activity}
@@ -640,13 +646,14 @@ function ProposalReviewQueue({
                 </div>
                 <p className="helper-text">{proposal.summary}</p>
               </div>
-              <button
-                className="button button-primary button-small"
+              <WdsButton
                 onClick={() => onApprove(proposal)}
+                size="small"
+                tone="primary"
                 type="button"
               >
                 승인
-              </button>
+              </WdsButton>
             </div>
           ))}
         </div>
@@ -714,24 +721,26 @@ function ApplicationQueue({
               </div>
             </div>
             {application.state === 'applied' ? (
-              <button
-                className="button button-primary button-small"
+              <WdsButton
                 onClick={() => onApprove(application)}
+                size="small"
+                tone="primary"
                 type="button"
               >
                 승인
-              </button>
+              </WdsButton>
             ) : isAttended ? (
               <span className="badge badge-green">출석 완료</span>
             ) : (
-              <button
-                className="button button-secondary button-small"
+              <WdsButton
                 disabled={!session}
                 onClick={() => onMarkAttended(activity, application)}
+                size="small"
+                tone="secondary"
                 type="button"
               >
                 출석 처리
-              </button>
+              </WdsButton>
             )}
           </div>
         );
