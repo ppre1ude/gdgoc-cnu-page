@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import type { Notice } from '@/domain/notice';
 import { formatKoreanDate } from '@/lib/format-korean-date-time';
 
@@ -10,25 +12,38 @@ const visibilityLabel: Record<Notice['visibility'], string> = {
 export function NoticeBoard({
   notices,
   emptyMessage = '등록된 공지사항이 없습니다.',
+  renderActions,
 }: {
   notices: Notice[];
   emptyMessage?: string;
+  renderActions?: (notice: Notice) => ReactNode;
 }) {
   if (notices.length === 0) {
     return <div className="empty">{emptyMessage}</div>;
   }
 
   return (
-    <div className="notice-board" role="table" aria-label="공지사항 목록">
+    <div
+      aria-label="공지사항 목록"
+      className={
+        renderActions ? 'notice-board notice-board-with-actions' : 'notice-board'
+      }
+      role="table"
+    >
       <div className="notice-board-head" role="row">
         <span role="columnheader">상태</span>
         <span role="columnheader">제목</span>
         <span role="columnheader">범위</span>
         <span role="columnheader">수정일</span>
+        {renderActions ? <span role="columnheader">관리</span> : null}
       </div>
       {notices.map((notice) => (
         <article
-          className={notice.pinned ? 'notice-board-row notice-board-row-pinned' : 'notice-board-row'}
+          className={
+            notice.pinned
+              ? 'notice-board-row notice-board-row-pinned'
+              : 'notice-board-row'
+          }
           key={notice.id}
           role="row"
         >
@@ -47,14 +62,15 @@ export function NoticeBoard({
             <span className="badge">{visibilityLabel[notice.visibility]}</span>
           </div>
           <div className="notice-board-cell notice-board-date" role="cell">
-            {formatDate(notice.updatedAt)}
+            {formatKoreanDate(notice.updatedAt)}
           </div>
+          {renderActions ? (
+            <div className="notice-board-cell notice-board-actions" role="cell">
+              {renderActions(notice)}
+            </div>
+          ) : null}
         </article>
       ))}
     </div>
   );
-}
-
-function formatDate(value: string) {
-  return formatKoreanDate(value);
 }

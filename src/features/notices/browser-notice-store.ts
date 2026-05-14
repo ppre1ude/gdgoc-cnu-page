@@ -31,6 +31,20 @@ function createLocalStorageNoticeStore(): NoticeStore {
       writeNotices([notice, ...notices]);
       return notice;
     },
+    async save(notice) {
+      const notices = readNotices();
+      const index = notices.findIndex((current) => current.id === notice.id);
+
+      if (index === -1) {
+        writeNotices([notice, ...notices]);
+        return notice;
+      }
+
+      const nextNotices = [...notices];
+      nextNotices[index] = notice;
+      writeNotices(nextNotices);
+      return notice;
+    },
     async list() {
       return readNotices();
     },
@@ -60,6 +74,11 @@ function writeNotices(notices: Notice[]) {
 function createFirestoreNoticeStore(): NoticeStore {
   return {
     async create(notice) {
+      const { doc, setDoc } = await import('firebase/firestore');
+      await setDoc(doc(getFirestoreDb(), 'notices', notice.id), notice);
+      return notice;
+    },
+    async save(notice) {
       const { doc, setDoc } = await import('firebase/firestore');
       await setDoc(doc(getFirestoreDb(), 'notices', notice.id), notice);
       return notice;

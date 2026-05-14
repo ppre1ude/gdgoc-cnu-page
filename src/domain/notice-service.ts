@@ -8,6 +8,7 @@ import {
 
 export type NoticeStore = {
   create(notice: Notice): Promise<Notice>;
+  save(notice: Notice): Promise<Notice>;
   list(): Promise<Notice[]>;
 };
 
@@ -21,6 +22,23 @@ export type CreateNoticeInput = {
   now: string;
 };
 
+export type UpdateNoticeInput = {
+  actorRole: UserRole;
+  noticeId: string;
+  title: string;
+  body: string;
+  visibility: NoticeVisibility;
+  status: NoticeStatus;
+  pinned: boolean;
+  now: string;
+};
+
+export type ArchiveNoticeInput = {
+  actorRole: UserRole;
+  noticeId: string;
+  now: string;
+};
+
 const operatorRoles = new Set<UserRole>(['team_member', 'organizer', 'admin']);
 
 export function createInMemoryNoticeStore(
@@ -31,6 +49,19 @@ export function createInMemoryNoticeStore(
   return {
     async create(notice) {
       notices.push(notice);
+      return notice;
+    },
+    async save(notice) {
+      const noticeIndex = notices.findIndex(
+        (storedNotice) => storedNotice.id === notice.id,
+      );
+
+      if (noticeIndex === -1) {
+        notices.push(notice);
+      } else {
+        notices[noticeIndex] = notice;
+      }
+
       return notice;
     },
     async list() {
@@ -59,6 +90,44 @@ export async function createNotice(
   });
 }
 
+export async function updateNotice(
+  store: NoticeStore,
+  input: UpdateNoticeInput,
+): Promise<Notice> {
+  if (!operatorRoles.has(input.actorRole)) {
+    throw new Error('Only operators can update notices.');
+  }
+
+  const existingNotice = await findNoticeOrThrow(store, input.noticeId);
+
+  return store.save({
+    ...existingNotice,
+    title: input.title,
+    body: input.body,
+    visibility: input.visibility,
+    status: input.status,
+    pinned: input.pinned,
+    updatedAt: input.now,
+  });
+}
+
+export async function archiveNotice(
+  store: NoticeStore,
+  input: ArchiveNoticeInput,
+): Promise<Notice> {
+  if (!operatorRoles.has(input.actorRole)) {
+    throw new Error('Only operators can archive notices.');
+  }
+
+  const existingNotice = await findNoticeOrThrow(store, input.noticeId);
+
+  return store.save({
+    ...existingNotice,
+    status: 'archived',
+    updatedAt: input.now,
+  });
+}
+
 export async function listHomeNotices(
   store: NoticeStore,
   role: UserRole,
@@ -72,4 +141,19 @@ export async function listHomeNotices(
 
     return b.updatedAt.localeCompare(a.updatedAt);
   });
+}
+
+async function findNoticeOrThrow(
+  store: NoticeStore,
+  noticeId: string,
+): Promise<Notice> {
+  const notice = (await store.list()).find(
+    (storedNotice) => storedNotice.id === noticeId,
+  );
+
+  if (!notice) {
+    throw new Error(`Notice was not found: ${noticeId}`);
+  }
+
+  return notice;
 }

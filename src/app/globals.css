@@ -841,6 +841,11 @@ textarea {
   padding: 14px 16px;
 }
 
+.notice-board-with-actions .notice-board-head,
+.notice-board-with-actions .notice-board-row {
+  grid-template-columns: 92px minmax(0, 1fr) 92px 110px 150px;
+}
+
 .notice-board-head {
   background: var(--surface-muted);
   border-bottom: 1px solid var(--line);
@@ -881,6 +886,13 @@ textarea {
 .notice-board-date {
   color: var(--text-muted);
   font-size: 13px;
+}
+
+.notice-board-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .dashboard-grid .notice-board-head {
