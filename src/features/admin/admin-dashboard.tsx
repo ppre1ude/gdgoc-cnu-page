@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { getAdminNavigationItems } from '@/domain/navigation';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { DemoEnvironmentPanel } from './demo-environment-panel';
+import { DemoSeedPanel } from './demo-seed-panel';
 import { MemberApprovalPanel } from './member-approval-panel';
 import { OperatorAnalyticsPanel } from './operator-analytics-panel';
 
@@ -46,6 +47,8 @@ export function AdminDashboard() {
         </section>
 
         <DemoEnvironmentPanel />
+
+        <DemoSeedPanel />
 
         <OperatorAnalyticsPanel />
 
