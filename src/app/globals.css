@@ -810,6 +810,16 @@ textarea {
   overflow-wrap: anywhere;
 }
 
+.helper-list {
+  color: #7a4d00;
+  display: grid;
+  font-size: 13px;
+  gap: 6px;
+  line-height: 1.5;
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
 .toolbar {
   display: flex;
   flex-wrap: wrap;
