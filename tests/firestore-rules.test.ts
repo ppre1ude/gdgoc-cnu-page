@@ -280,6 +280,42 @@ describe('Firestore security rules', () => {
       }),
     );
   });
+
+  it('lets operators manage sessions and blocks regular members from doing so', async () => {
+    await seedChapterUser('team-1', 'team_member');
+    await seedChapterUser('member-1', 'member');
+
+    const teamDb = authenticatedDb('team-1');
+
+    await assertSucceeds(
+      setDoc(doc(teamDb, 'sessions', 'activity-1_default-session'), {
+        id: 'activity-1_default-session',
+        activityId: 'activity-1',
+        title: 'Build with AI Sprint',
+        startsAt: '2026-05-16T04:00:00.000Z',
+        endsAt: '2026-05-16T06:00:00.000Z',
+        createdAt: '2026-05-14T00:00:00.000Z',
+        updatedAt: '2026-05-14T00:00:00.000Z',
+      }),
+    );
+    await assertSucceeds(
+      updateDoc(doc(teamDb, 'sessions', 'activity-1_default-session'), {
+        title: 'Build with AI Demo Day',
+        updatedAt: '2026-05-14T01:00:00.000Z',
+      }),
+    );
+    await assertFails(
+      setDoc(doc(authenticatedDb('member-1'), 'sessions', 'member-session'), {
+        id: 'member-session',
+        activityId: 'activity-1',
+        title: 'Member Session',
+        startsAt: '2026-05-16T04:00:00.000Z',
+        endsAt: '2026-05-16T06:00:00.000Z',
+        createdAt: '2026-05-14T00:00:00.000Z',
+        updatedAt: '2026-05-14T00:00:00.000Z',
+      }),
+    );
+  });
 });
 
 function authenticatedDb(userId: string): Firestore {

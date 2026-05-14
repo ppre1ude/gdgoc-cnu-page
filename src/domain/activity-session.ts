@@ -25,6 +25,12 @@ export type SessionAttendance = {
   updatedAt: string;
 };
 
+export type ActivitySessionStore = {
+  save(session: ActivitySession): Promise<ActivitySession>;
+  listByActivity(activityId: string): Promise<ActivitySession[]>;
+  findById(sessionId: string): Promise<ActivitySession | null>;
+};
+
 export type CreateActivitySessionInput = {
   activityId: string;
   title: string;
@@ -92,13 +98,58 @@ export function createDefaultActivitySession(
   const startsAt = new Date(activity.startsAt);
   const endsAt = new Date(startsAt.getTime() + 2 * 60 * 60 * 1000);
 
-  return createActivitySession({
-    activityId: activity.id,
-    endsAt: endsAt.toISOString(),
-    now: activity.createdAt,
-    startsAt: activity.startsAt,
-    title: activity.title,
-  });
+  return {
+    ...createActivitySession({
+      activityId: activity.id,
+      endsAt: endsAt.toISOString(),
+      now: activity.createdAt,
+      startsAt: activity.startsAt,
+      title: activity.title,
+    }),
+    updatedAt: activity.updatedAt,
+  };
+}
+
+export function createInMemoryActivitySessionStore(
+  initialSessions: ActivitySession[] = [],
+): ActivitySessionStore {
+  const sessions = new Map(
+    initialSessions.map((session) => [session.id, session]),
+  );
+
+  return {
+    async save(session) {
+      sessions.set(session.id, session);
+      return session;
+    },
+    async listByActivity(activityId) {
+      return [...sessions.values()].filter(
+        (session) => session.activityId === activityId,
+      );
+    },
+    async findById(sessionId) {
+      return sessions.get(sessionId) ?? null;
+    },
+  };
+}
+
+export async function syncDefaultActivitySession(
+  store: ActivitySessionStore,
+  activity: Activity,
+): Promise<ActivitySession | null> {
+  const nextSession = createDefaultActivitySession(activity);
+
+  if (!nextSession) {
+    return null;
+  }
+
+  const currentSession = await store.findById(nextSession.id);
+  const session = {
+    ...nextSession,
+    createdAt: currentSession?.createdAt ?? activity.createdAt,
+  };
+
+  return store.save(session);
 }
 
 export function recordSessionAttendance(

@@ -25,6 +25,7 @@ import {
   createDefaultActivitySession,
   markAttendanceForSession,
   summarizeSessionAttendance,
+  syncDefaultActivitySession,
 } from '@/domain/activity-session';
 import {
   acceptActivityProposal,
@@ -38,6 +39,7 @@ import { listVisibleActivities } from '@/domain/activity';
 import { ActivityCard } from '@/components/activity-card';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserActivityApplicationStore } from './browser-activity-application-store';
+import { createBrowserActivitySessionStore } from './browser-activity-session-store';
 import { createBrowserActivityStore } from './browser-activity-store';
 import { createBrowserSessionAttendanceStore } from './browser-session-attendance-store';
 import { seedActivities } from './seed-activities';
@@ -79,6 +81,7 @@ export function ActivityAdmin() {
   const { role, userId } = useAuthSession();
   const store = useMemo(() => createBrowserActivityStore(), []);
   const applicationStore = useMemo(() => createBrowserActivityApplicationStore(), []);
+  const sessionStore = useMemo(() => createBrowserActivitySessionStore(), []);
   const attendanceStore = useMemo(() => createBrowserSessionAttendanceStore(), []);
   const [draft, setDraft] = useState(initialDraft);
   const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
@@ -88,6 +91,9 @@ export function ActivityAdmin() {
   const [pendingProposals, setPendingProposals] = useState<Activity[]>([]);
   const [applicationsByActivity, setApplicationsByActivity] = useState<
     Record<string, ActivityApplication[]>
+  >({});
+  const [sessionsByActivity, setSessionsByActivity] = useState<
+    Record<string, ActivitySession | null>
   >({});
   const [attendancesBySession, setAttendancesBySession] = useState<
     Record<string, SessionAttendance[]>
@@ -104,6 +110,14 @@ export function ActivityAdmin() {
 
   async function refreshDashboard() {
     const nextActivities = await listHomeActivities(store, role);
+    const nextSessionsByActivity = Object.fromEntries(
+      await Promise.all(
+        nextActivities.map(async (activity) => [
+          activity.id,
+          await loadDefaultSessionForActivity(activity),
+        ]),
+      ),
+    );
     const nextApplicationsByActivity = Object.fromEntries(
       await Promise.all(
         nextActivities.map(async (activity) => [
@@ -114,8 +128,7 @@ export function ActivityAdmin() {
     );
     const nextAttendancesBySession = Object.fromEntries(
       await Promise.all(
-        nextActivities
-          .map((activity) => getDefaultSessionForActivity(activity))
+        Object.values(nextSessionsByActivity)
           .filter((session): session is ActivitySession => Boolean(session))
           .map(async (session) => [
             session.id,
@@ -129,9 +142,30 @@ export function ActivityAdmin() {
       : [];
 
     setActivities(nextActivities);
+    setSessionsByActivity(nextSessionsByActivity);
     setPendingProposals(nextPendingProposals);
     setApplicationsByActivity(nextApplicationsByActivity);
     setAttendancesBySession(nextAttendancesBySession);
+  }
+
+  async function loadDefaultSessionForActivity(activity: Activity) {
+    const defaultSession = createDefaultActivitySession(activity);
+
+    if (!defaultSession) {
+      return null;
+    }
+
+    const sessions = await sessionStore.listByActivity(activity.id);
+    const savedSession =
+      sessions.find((session) => session.id === defaultSession.id) ??
+      sessions[0] ??
+      null;
+
+    if (!savedSession || shouldSyncDefaultSession(savedSession, defaultSession)) {
+      return syncDefaultActivitySession(sessionStore, activity);
+    }
+
+    return savedSession;
   }
 
   async function requestSuggestion() {
@@ -208,14 +242,13 @@ export function ActivityAdmin() {
       now,
     };
 
-    if (editingActivityId) {
-      await updateActivity(store, {
+    const savedActivity = editingActivityId
+      ? await updateActivity(store, {
         ...activityFields,
         activityId: editingActivityId,
-      });
-    } else {
-      await createActivity(store, activityFields);
-    }
+      })
+      : await createActivity(store, activityFields);
+    await syncDefaultActivitySession(sessionStore, savedActivity);
     setMessage(
       editingActivityId
         ? 'Activity가 수정되었습니다. Member Home에서 바로 확인할 수 있습니다.'
@@ -290,7 +323,8 @@ export function ActivityAdmin() {
     activity: Activity,
     application: ActivityApplication,
   ) {
-    const session = getDefaultSessionForActivity(activity);
+    const session =
+      sessionsByActivity[activity.id] ?? (await loadDefaultSessionForActivity(activity));
 
     if (!session) {
       setMessage('일정이 있는 activity만 출석 처리할 수 있습니다.');
@@ -544,7 +578,7 @@ export function ActivityAdmin() {
                 </div>
               </div>
               {activities.map((activity) => {
-                const session = getDefaultSessionForActivity(activity);
+                const session = sessionsByActivity[activity.id] ?? null;
 
                 return (
                   <div className="stack" key={activity.id}>
@@ -729,10 +763,6 @@ function AttendanceSummary({
   );
 }
 
-function getDefaultSessionForActivity(activity: Activity): ActivitySession | null {
-  return createDefaultActivitySession(activity);
-}
-
 function toDateTimeLocalValue(value: string | undefined) {
   if (!value) {
     return '';
@@ -746,4 +776,16 @@ function toDateTimeLocalValue(value: string | undefined) {
 
   const offsetMs = date.getTimezoneOffset() * 60_000;
   return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+}
+
+function shouldSyncDefaultSession(
+  savedSession: ActivitySession,
+  defaultSession: ActivitySession,
+) {
+  return (
+    savedSession.title !== defaultSession.title ||
+    savedSession.startsAt !== defaultSession.startsAt ||
+    savedSession.endsAt !== defaultSession.endsAt ||
+    savedSession.updatedAt !== defaultSession.updatedAt
+  );
 }
