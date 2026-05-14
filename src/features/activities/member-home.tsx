@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 
 import type { Activity, UserRole } from '@/domain/activity';
@@ -28,7 +29,10 @@ import {
   applyForActivity,
   cancelApplicationForActivity,
   getApplicationStateByActivity,
+  listMemberApplicationSummaries,
+  type MemberApplicationSummary,
 } from '@/domain/activity-participation-service';
+import { formatKoreanDateTime } from '@/lib/format-korean-date-time';
 import { ActivityCard } from '@/components/activity-card';
 import { ChapterRecordCard } from '@/components/chapter-record-card';
 import { NoticeBoard } from '@/components/notice-board';
@@ -214,7 +218,7 @@ export function MemberHome() {
 
   async function handleCancel(activity: Activity) {
     const confirmed = window.confirm(
-      '정말 취소하시겠습니까? 이 결정은 되돌릴 수 없습니다.',
+      '정말 취소하시겠습니까? 승인된 신청을 취소하면 다시 신청 시 운영진 승인을 다시 받아야 합니다.',
     );
 
     if (!confirmed) {
@@ -308,6 +312,10 @@ export function MemberHome() {
   const activeApplicationCount = Object.values(applicationStates).filter(
     (state) => state === 'applied' || state === 'approved',
   ).length;
+  const memberApplicationSummaries = listMemberApplicationSummaries(
+    activities,
+    applicationStates,
+  );
   const access = describeMemberHomeAccess(role);
   const canApplyToActivities = Boolean(access?.canApplyToActivities);
   const canProposeActivities = canApplyToActivities;
@@ -411,6 +419,10 @@ export function MemberHome() {
             <p>Firebase 설정 전에는 localStorage bridge로 같은 흐름을 검증합니다.</p>
           </div>
         </div>
+
+        {canApplyToActivities ? (
+          <MemberApplicationsSection summaries={memberApplicationSummaries} />
+        ) : null}
 
         <ActivitySection
           activities={upcoming}
@@ -799,6 +811,59 @@ function ChapterRecordSection({ records }: { records: ChapterRecord[] }) {
   );
 }
 
+function MemberApplicationsSection({
+  summaries,
+}: {
+  summaries: MemberApplicationSummary[];
+}) {
+  return (
+    <section className="section section-compact">
+      <div className="section-header">
+        <div>
+          <h2>내 신청 현황</h2>
+          <p>
+            내가 신청한 활동의 승인 상태와 다음 일정을 별도 목록으로 확인합니다.
+          </p>
+        </div>
+      </div>
+      {summaries.length > 0 ? (
+        <div className="application-queue">
+          {summaries.map(({ activity, state }) => (
+            <article className="application-row" key={activity.id}>
+              <div>
+                <div className="badge-row">
+                  <span
+                    className={
+                      state === 'approved' ? 'badge badge-green' : 'badge badge-blue'
+                    }
+                  >
+                    {getApplicationStateLabel(state)}
+                  </span>
+                  <span className="badge">{activity.type}</span>
+                </div>
+                <strong>{activity.title}</strong>
+                <p className="helper-text">
+                  {activity.startsAt
+                    ? formatKoreanDateTime(activity.startsAt)
+                    : '일정 미정'}
+                </p>
+              </div>
+              <Link
+                className="button button-secondary button-small"
+                href={`/activities/${encodeURIComponent(activity.id)}`}
+              >
+                자세히
+              </Link>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="empty">아직 신청 중인 활동이 없습니다.</div>
+      )}
+    </section>
+  );
+}
+
 function ActivitySection({
   activities,
   applicationStates,
@@ -861,6 +926,15 @@ function getAccessPanelTitle(status?: string) {
       return '멤버 홈 이용 가능';
     default:
       return '역할 확인 중';
+  }
+}
+
+function getApplicationStateLabel(state: ActivityApplicationState) {
+  switch (state) {
+    case 'applied':
+      return '운영진 승인 대기 중';
+    case 'approved':
+      return '승인됨';
   }
 }
 

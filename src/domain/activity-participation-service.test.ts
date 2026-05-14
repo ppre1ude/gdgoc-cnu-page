@@ -8,8 +8,10 @@ import {
   createInMemoryActivityApplicationStore,
   getCancelledActivityIdsByUser,
   getApplicationStateByActivity,
+  listMemberApplicationSummaries,
   listApplicationsForActivity,
 } from './activity-participation-service.ts';
+import type { Activity } from './activity.ts';
 
 describe('member activity participation flow', () => {
   it('stores a member application and exposes the applied state by activity', async () => {
@@ -103,5 +105,71 @@ describe('member activity participation flow', () => {
     assert.deepEqual(await getApplicationStateByActivity(store, 'member-1'), {
       'activity-1': 'approved',
     });
+  });
+
+  it('builds a member application summary ordered by next scheduled activity', () => {
+    const activities: Activity[] = [
+      {
+        id: 'activity-unscheduled',
+        title: 'Unscheduled Study',
+        summary: 'No fixed session yet.',
+        type: 'study',
+        visibility: 'member',
+        status: 'published',
+        createdAt: '2026-05-11T09:00:00.000Z',
+        updatedAt: '2026-05-11T09:00:00.000Z',
+      },
+      {
+        id: 'activity-approved',
+        title: 'Build with AI Demo',
+        summary: 'Demo day.',
+        type: 'event',
+        visibility: 'member',
+        status: 'published',
+        startsAt: '2026-05-16T04:00:00.000Z',
+        createdAt: '2026-05-11T09:00:00.000Z',
+        updatedAt: '2026-05-11T09:00:00.000Z',
+      },
+      {
+        id: 'activity-applied',
+        title: 'Gemini Study',
+        summary: 'Weekly study.',
+        type: 'study',
+        visibility: 'member',
+        status: 'published',
+        startsAt: '2026-05-15T09:00:00.000Z',
+        createdAt: '2026-05-11T09:00:00.000Z',
+        updatedAt: '2026-05-11T09:00:00.000Z',
+      },
+      {
+        id: 'activity-not-applied',
+        title: 'Public Seminar',
+        summary: 'Visible but not applied.',
+        type: 'event',
+        visibility: 'public',
+        status: 'published',
+        startsAt: '2026-05-14T09:00:00.000Z',
+        createdAt: '2026-05-11T09:00:00.000Z',
+        updatedAt: '2026-05-11T09:00:00.000Z',
+      },
+    ];
+
+    const summaries = listMemberApplicationSummaries(activities, {
+      'activity-applied': 'applied',
+      'activity-approved': 'approved',
+      'activity-unscheduled': 'applied',
+    });
+
+    assert.deepEqual(
+      summaries.map((summary) => ({
+        id: summary.activity.id,
+        state: summary.state,
+      })),
+      [
+        { id: 'activity-applied', state: 'applied' },
+        { id: 'activity-approved', state: 'approved' },
+        { id: 'activity-unscheduled', state: 'applied' },
+      ],
+    );
   });
 });
