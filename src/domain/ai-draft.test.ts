@@ -4,6 +4,8 @@ import { describe, it } from 'node:test';
 import {
   applyActivityDraftSuggestion,
   createActivityDraftSuggestion,
+  describeActivityDraftAssistantError,
+  describeActivityDraftAssistantResult,
   validateActivityDraftSuggestion,
 } from './ai-draft.ts';
 
@@ -100,5 +102,34 @@ describe('AI-assisted activity draft suggestions', () => {
     assert.equal(updatedDraft.memberCopy, 'Existing member-facing copy');
     assert.deepEqual(updatedDraft.tags, ['existing']);
     assert.equal(updatedDraft.body, 'Original operator notes stay editable.');
+  });
+
+  it('describes Gemini, fallback, and failed fallback outcomes for operators', () => {
+    assert.equal(
+      describeActivityDraftAssistantResult({ provider: 'gemini' }),
+      'Gemini 제안을 불러왔습니다.',
+    );
+    assert.equal(
+      describeActivityDraftAssistantResult({ provider: 'local-fallback' }),
+      'Gemini 키가 없어 local fallback 제안을 사용했습니다.',
+    );
+    assert.equal(
+      describeActivityDraftAssistantResult({
+        provider: 'local-fallback',
+        warning: 'Gemini request failed with 429.',
+      }),
+      'Gemini 호출이 실패해 local fallback 제안을 사용했습니다. Gemini request failed with 429.',
+    );
+  });
+
+  it('normalizes unrecoverable assistant request errors for the UI', () => {
+    assert.equal(
+      describeActivityDraftAssistantError(new Error('Network offline')),
+      'AI 작성 보조를 불러오지 못했습니다. Network offline',
+    );
+    assert.equal(
+      describeActivityDraftAssistantError('unknown'),
+      'AI 작성 보조를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
+    );
   });
 });

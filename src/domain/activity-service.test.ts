@@ -3,12 +3,15 @@ import { describe, it } from 'node:test';
 
 import {
   acceptActivityProposal,
+  archiveActivity,
   createActivity,
   createInMemoryActivityStore,
   getVisibleActivityById,
+  listPublicHomeActivities,
   listPendingActivityProposals,
   listHomeActivities,
   proposeMemberActivity,
+  updateActivity,
 } from './activity-service.ts';
 import type { Activity } from './activity.ts';
 
@@ -160,6 +163,241 @@ describe('activity authoring flow', () => {
       /Only operators can approve activity proposals/,
     );
   });
+
+  it('lets an operator update editable activity fields while preserving identity and proposal metadata', async () => {
+    const originalActivity: Activity = {
+      id: 'activity-existing',
+      title: 'Campus Map Assistant',
+      summary: 'Prototype a Gemini powered campus navigation helper.',
+      type: 'project',
+      visibility: 'operator',
+      status: 'draft',
+      startsAt: '2026-05-12T09:00:00.000Z',
+      registrationMode: 'internal',
+      proposalStatus: 'pending_review',
+      proposedByUserId: 'member-1',
+      proposalSubmittedAt: '2026-05-12T09:00:00.000Z',
+      createdAt: '2026-05-12T09:00:00.000Z',
+      updatedAt: '2026-05-12T09:00:00.000Z',
+    };
+    const store = createInMemoryActivityStore([originalActivity]);
+
+    const updated = await updateActivity(store, {
+      actorRole: 'team_member',
+      activityId: originalActivity.id,
+      title: 'Build with AI Demo Day',
+      summary: 'Showcase member prototypes made with Gemini and Firebase.',
+      type: 'event',
+      visibility: 'public',
+      status: 'published',
+      startsAt: '2026-05-20T09:00:00.000Z',
+      registrationMode: 'external',
+      externalRegistrationUrl: 'https://gdg.community.dev/events/demo-day',
+      externalRegistrationLabel: 'GDG event page',
+      now: '2026-05-14T09:00:00.000Z',
+    });
+    const activities = await store.list();
+
+    assert.equal(updated.id, originalActivity.id);
+    assert.equal(updated.createdAt, originalActivity.createdAt);
+    assert.equal(updated.updatedAt, '2026-05-14T09:00:00.000Z');
+    assert.equal(updated.title, 'Build with AI Demo Day');
+    assert.equal(updated.summary, 'Showcase member prototypes made with Gemini and Firebase.');
+    assert.equal(updated.type, 'event');
+    assert.equal(updated.visibility, 'public');
+    assert.equal(updated.status, 'published');
+    assert.equal(updated.startsAt, '2026-05-20T09:00:00.000Z');
+    assert.equal(updated.registrationMode, 'external');
+    assert.equal(updated.externalRegistrationUrl, 'https://gdg.community.dev/events/demo-day');
+    assert.equal(updated.externalRegistrationLabel, 'GDG event page');
+    assert.equal(updated.proposalStatus, 'pending_review');
+    assert.equal(updated.proposedByUserId, 'member-1');
+    assert.equal(updated.proposalSubmittedAt, '2026-05-12T09:00:00.000Z');
+    assert.deepEqual(activities[0], updated);
+  });
+
+  it('blocks non-operators from updating activities', async () => {
+    const originalActivity: Activity = {
+      id: 'activity-existing',
+      title: 'Campus Map Assistant',
+      summary: 'Prototype a Gemini powered campus navigation helper.',
+      type: 'project',
+      visibility: 'operator',
+      status: 'draft',
+      createdAt: '2026-05-12T09:00:00.000Z',
+      updatedAt: '2026-05-12T09:00:00.000Z',
+    };
+    const store = createInMemoryActivityStore([originalActivity]);
+
+    await assert.rejects(
+      updateActivity(store, {
+        actorRole: 'member',
+        activityId: originalActivity.id,
+        title: 'Build with AI Demo Day',
+        summary: 'Showcase member prototypes made with Gemini and Firebase.',
+        type: 'event',
+        visibility: 'public',
+        status: 'published',
+        now: '2026-05-14T09:00:00.000Z',
+      }),
+      /Only operators can update activities/,
+    );
+
+    assert.deepEqual((await store.list())[0], originalActivity);
+  });
+
+  it('throws a clear error when updating a missing activity', async () => {
+    const store = createInMemoryActivityStore();
+
+    await assert.rejects(
+      updateActivity(store, {
+        actorRole: 'team_member',
+        activityId: 'activity-missing',
+        title: 'Build with AI Demo Day',
+        summary: 'Showcase member prototypes made with Gemini and Firebase.',
+        type: 'event',
+        visibility: 'public',
+        status: 'published',
+        now: '2026-05-14T09:00:00.000Z',
+      }),
+      /Activity was not found: activity-missing/,
+    );
+  });
+
+  it('lets an operator archive an activity while preserving activity metadata', async () => {
+    const originalActivity: Activity = {
+      id: 'activity-existing',
+      title: 'Campus Map Assistant',
+      summary: 'Prototype a Gemini powered campus navigation helper.',
+      type: 'project',
+      visibility: 'member',
+      status: 'published',
+      startsAt: '2026-05-20T09:00:00.000Z',
+      registrationMode: 'hybrid',
+      externalRegistrationUrl: 'https://gdg.community.dev/events/demo-day',
+      externalRegistrationLabel: 'GDG event page',
+      proposalStatus: 'accepted',
+      proposedByUserId: 'member-1',
+      proposalSubmittedAt: '2026-05-12T09:00:00.000Z',
+      proposalReviewedAt: '2026-05-13T09:00:00.000Z',
+      proposalReviewedByUserId: 'operator-1',
+      createdAt: '2026-05-12T09:00:00.000Z',
+      updatedAt: '2026-05-13T09:00:00.000Z',
+    };
+    const store = createInMemoryActivityStore([originalActivity]);
+
+    const archived = await archiveActivity(store, {
+      actorRole: 'organizer',
+      activityId: originalActivity.id,
+      now: '2026-05-14T09:00:00.000Z',
+    });
+    const memberHomeActivities = await listHomeActivities(store, 'member');
+    const memberDetailActivity = await getVisibleActivityById(
+      store,
+      originalActivity.id,
+      'member',
+    );
+
+    assert.equal(archived.id, originalActivity.id);
+    assert.equal(archived.createdAt, originalActivity.createdAt);
+    assert.equal(archived.updatedAt, '2026-05-14T09:00:00.000Z');
+    assert.equal(archived.status, 'archived');
+    assert.equal(archived.title, originalActivity.title);
+    assert.equal(archived.summary, originalActivity.summary);
+    assert.equal(archived.type, originalActivity.type);
+    assert.equal(archived.visibility, originalActivity.visibility);
+    assert.equal(archived.startsAt, originalActivity.startsAt);
+    assert.equal(archived.registrationMode, originalActivity.registrationMode);
+    assert.equal(
+      archived.externalRegistrationUrl,
+      originalActivity.externalRegistrationUrl,
+    );
+    assert.equal(
+      archived.externalRegistrationLabel,
+      originalActivity.externalRegistrationLabel,
+    );
+    assert.equal(archived.proposalStatus, originalActivity.proposalStatus);
+    assert.equal(archived.proposedByUserId, originalActivity.proposedByUserId);
+    assert.equal(
+      archived.proposalSubmittedAt,
+      originalActivity.proposalSubmittedAt,
+    );
+    assert.equal(
+      archived.proposalReviewedAt,
+      originalActivity.proposalReviewedAt,
+    );
+    assert.equal(
+      archived.proposalReviewedByUserId,
+      originalActivity.proposalReviewedByUserId,
+    );
+    assert.equal(memberHomeActivities.length, 0);
+    assert.equal(memberDetailActivity, null);
+  });
+
+  it('blocks non-operators from archiving activities', async () => {
+    const originalActivity: Activity = {
+      id: 'activity-existing',
+      title: 'Campus Map Assistant',
+      summary: 'Prototype a Gemini powered campus navigation helper.',
+      type: 'project',
+      visibility: 'member',
+      status: 'published',
+      createdAt: '2026-05-12T09:00:00.000Z',
+      updatedAt: '2026-05-12T09:00:00.000Z',
+    };
+    const store = createInMemoryActivityStore([originalActivity]);
+
+    await assert.rejects(
+      archiveActivity(store, {
+        actorRole: 'member',
+        activityId: originalActivity.id,
+        now: '2026-05-14T09:00:00.000Z',
+      }),
+      /Only operators can archive activities/,
+    );
+
+    assert.deepEqual((await store.list())[0], originalActivity);
+  });
+
+  it('throws a clear error when archiving a missing activity', async () => {
+    const store = createInMemoryActivityStore();
+
+    await assert.rejects(
+      archiveActivity(store, {
+        actorRole: 'team_member',
+        activityId: 'activity-missing',
+        now: '2026-05-14T09:00:00.000Z',
+      }),
+      /Activity was not found: activity-missing/,
+    );
+  });
+
+  it('archives an already archived activity idempotently', async () => {
+    const originalActivity: Activity = {
+      id: 'activity-existing',
+      title: 'Campus Map Assistant',
+      summary: 'Prototype a Gemini powered campus navigation helper.',
+      type: 'project',
+      visibility: 'member',
+      status: 'archived',
+      createdAt: '2026-05-12T09:00:00.000Z',
+      updatedAt: '2026-05-13T09:00:00.000Z',
+    };
+    const store = createInMemoryActivityStore([originalActivity]);
+
+    const archived = await archiveActivity(store, {
+      actorRole: 'admin',
+      activityId: originalActivity.id,
+      now: '2026-05-14T09:00:00.000Z',
+    });
+    const activities = await store.list();
+
+    assert.equal(archived.id, originalActivity.id);
+    assert.equal(archived.status, 'archived');
+    assert.equal(archived.updatedAt, '2026-05-14T09:00:00.000Z');
+    assert.equal(activities.length, 1);
+    assert.deepEqual(activities[0], archived);
+  });
 });
 
 describe('activity detail lookup', () => {
@@ -221,5 +459,52 @@ describe('activity detail lookup', () => {
     );
 
     assert.equal(activity, null);
+  });
+});
+
+describe('public home activity list', () => {
+  it('shows newly published public activities without leaking member-only or archived content', async () => {
+    const publicActivity: Activity = {
+      id: 'activity-public',
+      title: 'Build with AI Open Demo',
+      summary: 'Visitors can see this public event.',
+      type: 'event',
+      visibility: 'public',
+      status: 'published',
+      startsAt: '2026-05-16T04:00:00.000Z',
+      createdAt: '2026-05-11T09:00:00.000Z',
+      updatedAt: '2026-05-11T09:00:00.000Z',
+    };
+    const store = createInMemoryActivityStore([
+      {
+        ...publicActivity,
+        id: 'activity-member',
+        title: 'Member-only Study',
+        visibility: 'member',
+      },
+      {
+        ...publicActivity,
+        id: 'activity-archived',
+        title: 'Archived Public Event',
+        status: 'archived',
+      },
+    ]);
+    await createActivity(store, {
+      actorRole: 'team_member',
+      title: publicActivity.title,
+      summary: publicActivity.summary,
+      type: publicActivity.type,
+      visibility: publicActivity.visibility,
+      status: publicActivity.status,
+      startsAt: publicActivity.startsAt,
+      now: publicActivity.createdAt,
+    });
+
+    const activities = await listPublicHomeActivities(store);
+
+    assert.deepEqual(
+      activities.map((activity) => activity.title),
+      ['Build with AI Open Demo'],
+    );
   });
 });

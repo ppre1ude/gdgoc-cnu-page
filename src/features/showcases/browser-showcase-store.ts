@@ -1,5 +1,6 @@
 'use client';
 
+import type { ActivityVisibility, UserRole } from '@/domain/activity';
 import type { Showcase } from '@/domain/showcase';
 import { normalizeShowcase, normalizeShowcases } from '@/domain/showcase';
 import {
@@ -102,9 +103,20 @@ function createFirestoreShowcaseStore(): ShowcaseStore {
       await setDoc(doc(getFirestoreDb(), 'showcases', safeShowcase.id), safeShowcase);
       return safeShowcase;
     },
-    async list() {
-      const { collection, getDocs } = await import('firebase/firestore');
-      const snapshot = await getDocs(collection(getFirestoreDb(), 'showcases'));
+    async list(role) {
+      const { collection, getDocs, query, where } = await import(
+        'firebase/firestore'
+      );
+      const showcasesCollection = collection(getFirestoreDb(), 'showcases');
+      const snapshot = await getDocs(
+        shouldListAllForRole(role)
+          ? showcasesCollection
+          : query(
+              showcasesCollection,
+              where('status', '==', 'published'),
+              where('visibility', 'in', getVisibleShowcaseVisibilities(role)),
+            ),
+      );
 
       if (snapshot.empty) {
         return seedShowcases;
@@ -113,4 +125,18 @@ function createFirestoreShowcaseStore(): ShowcaseStore {
       return normalizeShowcases(snapshot.docs.map((item) => item.data()));
     },
   };
+}
+
+function shouldListAllForRole(role: UserRole | undefined) {
+  return role === undefined || ['team_member', 'organizer', 'admin'].includes(role);
+}
+
+function getVisibleShowcaseVisibilities(
+  role: UserRole | undefined,
+): ActivityVisibility[] {
+  if (role === 'member' || role === 'alumni') {
+    return ['public', 'member'];
+  }
+
+  return ['public'];
 }

@@ -11,6 +11,13 @@
 - [ ] Firestore rules는 데모 공개 전 반드시 점검한다.
   - 빠른 데모용 임시 규칙을 쓰더라도 공개 배포에는 그대로 쓰지 않는다.
   - 현재 클라이언트 Firebase SDK 흐름에서는 rules가 실제 접근 제어의 마지막 방어선이다.
+- [ ] 최초 운영자 계정으로 Google 로그인한 뒤, Firebase Console에서 해당 `uid`의 `chapterUsers/{uid}` 문서를 `admin` role로 한 번 bootstrap한다.
+  - 이 단계가 없으면 보안 규칙상 클라이언트에서 운영 콘텐츠 seed를 만들 수 없다.
+- [ ] `.env.local` 설정 후 `/admin`의 `Demo Data` 패널에서 `Demo 데이터 채우기`를 눌러 seed 문서를 실제 Firestore에 넣는다.
+  - Firebase 설정 전에는 같은 버튼이 localStorage demo bridge만 채운다.
+  - Firestore 모드에서는 `activities`, `notices`, `showcases`, 기본 `sessions`를 채운다.
+  - `chapterUsers`와 `chapterRecords`는 보안 규칙상 로그인/승인/작성 흐름 또는 수동 bootstrap으로 준비한다.
+  - 이 작업은 기존 seed id 문서를 덮어쓰지 않고 누락된 문서만 추가한다.
 
 ## `.env.local`
 

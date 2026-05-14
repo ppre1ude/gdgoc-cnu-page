@@ -12,6 +12,11 @@ import { listVisibleActivities } from '@/domain/activity';
 import type { ActivityApplicationState } from '@/domain/activity-application';
 import type { ChapterUser } from '@/domain/chapter-user';
 import { submitGuestProfile } from '@/domain/chapter-user-service';
+import type { ChapterRecord, ChapterRecordKind } from '@/domain/chapter-record';
+import {
+  listHomeChapterRecords,
+  submitChapterRecord,
+} from '@/domain/chapter-record-service';
 import { describeMemberHomeAccess } from '@/domain/member-access';
 import type { Notice } from '@/domain/notice';
 import { listVisibleNotices } from '@/domain/notice';
@@ -25,6 +30,7 @@ import {
   getApplicationStateByActivity,
 } from '@/domain/activity-participation-service';
 import { ActivityCard } from '@/components/activity-card';
+import { ChapterRecordCard } from '@/components/chapter-record-card';
 import { NoticeBoard } from '@/components/notice-board';
 import { ShowcaseCard } from '@/components/showcase-card';
 import {
@@ -36,8 +42,10 @@ import { createBrowserActivityStore } from './browser-activity-store';
 import { createBrowserNoticeStore } from '../notices/browser-notice-store';
 import { createBrowserShowcaseStore } from '../showcases/browser-showcase-store';
 import { createBrowserChapterUserStore } from '../users/browser-chapter-user-store';
+import { createBrowserChapterRecordStore } from '../records/browser-chapter-record-store';
 import { seedActivities } from './seed-activities';
 import { seedNotices } from '../notices/seed-notices';
+import { seedChapterRecords } from '../records/seed-chapter-records';
 import { seedShowcases } from '../showcases/seed-showcases';
 
 type GuestProfileFormState = {
@@ -57,6 +65,14 @@ type MemberProposalFormState = {
   startsAt: string;
 };
 
+type MemberRecordFormState = {
+  title: string;
+  summary: string;
+  body: string;
+  kind: ChapterRecordKind;
+  tags: string;
+};
+
 const defaultGuestProfile: GuestProfileFormState = {
   displayName: 'Build with AI Guest',
   email: 'guest.demo@example.com',
@@ -74,6 +90,14 @@ const defaultMemberProposal: MemberProposalFormState = {
   startsAt: '',
 };
 
+const defaultMemberRecord: MemberRecordFormState = {
+  title: '',
+  summary: '',
+  body: '',
+  kind: 'retrospective',
+  tags: '',
+};
+
 export function MemberHome() {
   const {
     isFirebaseConfigured,
@@ -87,6 +111,7 @@ export function MemberHome() {
   const noticeStore = useMemo(() => createBrowserNoticeStore(), []);
   const showcaseStore = useMemo(() => createBrowserShowcaseStore(), []);
   const userStore = useMemo(() => createBrowserChapterUserStore(), []);
+  const recordStore = useMemo(() => createBrowserChapterRecordStore(), []);
   const [activities, setActivities] = useState<Activity[]>(
     listVisibleActivities(seedActivities, 'visitor'),
   );
@@ -96,6 +121,7 @@ export function MemberHome() {
   const [showcases, setShowcases] = useState<Showcase[]>(
     listVisibleShowcases(seedShowcases, 'visitor'),
   );
+  const [records, setRecords] = useState<ChapterRecord[]>(seedChapterRecords);
   const [applicationStates, setApplicationStates] = useState<
     Record<string, ActivityApplicationState>
   >({});
@@ -110,6 +136,11 @@ export function MemberHome() {
   );
   const [proposalMessage, setProposalMessage] = useState(
     '스터디는 바로 멤버 홈에 공개되고, 프로젝트는 운영진 검토 후 공개됩니다.',
+  );
+  const [recordDraft, setRecordDraft] =
+    useState<MemberRecordFormState>(defaultMemberRecord);
+  const [recordMessage, setRecordMessage] = useState(
+    '회고와 기술 노트는 운영진 검토 후 멤버 홈에 게시됩니다.',
   );
 
   useEffect(() => {
@@ -131,6 +162,7 @@ export function MemberHome() {
       nextApplicationStates,
       nextNotices,
       nextShowcases,
+      nextRecords,
     ] = await Promise.all([
       listHomeActivities(store, contentRole),
       access.canApplyToActivities
@@ -138,12 +170,14 @@ export function MemberHome() {
         : Promise.resolve({}),
       listHomeNotices(noticeStore, contentRole),
       listHomeShowcases(showcaseStore, contentRole),
+      listHomeChapterRecords(recordStore, contentRole),
     ]);
 
     setActivities(nextActivities);
     setApplicationStates(nextApplicationStates);
     setNotices(nextNotices);
     setShowcases(nextShowcases);
+    setRecords(nextRecords);
   }
 
   function changeDemoRole(nextRole: UserRole) {
@@ -243,6 +277,27 @@ export function MemberHome() {
     await refreshMemberHome(role, userId);
   }
 
+  async function handleRecordSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    await submitChapterRecord(recordStore, {
+      actorRole: role,
+      actorUserId: userId,
+      title: recordDraft.title.trim(),
+      summary: recordDraft.summary.trim(),
+      body: recordDraft.body.trim(),
+      kind: recordDraft.kind,
+      visibility: 'member',
+      status: 'pending_review',
+      tags: parseCsvTags(recordDraft.tags),
+      now: new Date().toISOString(),
+    });
+
+    setRecordDraft(defaultMemberRecord);
+    setRecordMessage('긴 글 기록이 운영진 검토 대기열에 저장되었습니다.');
+    await refreshMemberHome(role, userId);
+  }
+
   const upcoming = activities.filter((activity) => activity.startsAt);
   const studiesAndProjects = activities.filter((activity) =>
     ['study', 'project'].includes(activity.type),
@@ -313,6 +368,15 @@ export function MemberHome() {
           />
         ) : null}
 
+        {canProposeActivities ? (
+          <MemberRecordForm
+            message={recordMessage}
+            onChange={setRecordDraft}
+            onSubmit={handleRecordSubmit}
+            value={recordDraft}
+          />
+        ) : null}
+
         <section className="section section-compact">
           <div className="section-header">
             <div>
@@ -324,6 +388,8 @@ export function MemberHome() {
         </section>
 
         <ShowcasePreviewSection showcases={showcases.slice(0, 3)} />
+
+        <ChapterRecordSection records={records.slice(0, 3)} />
 
         <div className="grid grid-3" style={{ marginTop: 28 }}>
           <div className="card">
@@ -457,6 +523,103 @@ function MemberProposalForm({
           <p className="helper-text">{message}</p>
           <button className="button button-primary" type="submit">
             제안 제출
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
+function MemberRecordForm({
+  message,
+  onChange,
+  onSubmit,
+  value,
+}: {
+  message: string;
+  onChange: (value: MemberRecordFormState) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  value: MemberRecordFormState;
+}) {
+  function updateField(field: keyof MemberRecordFormState, nextValue: string) {
+    onChange({
+      ...value,
+      [field]: nextValue,
+    });
+  }
+
+  return (
+    <section className="section section-compact">
+      <form className="card guest-profile-form" onSubmit={onSubmit}>
+        <div>
+          <span className="badge badge-green">Chapter Record</span>
+          <h2>회고 / 리뷰 / 기술 노트 작성</h2>
+          <p>
+            Discord에 묻히기 쉬운 긴 글을 홈페이지 기록으로 남깁니다. 제출된 글은 운영진
+            검토 후 멤버 홈에 게시됩니다.
+          </p>
+        </div>
+
+        <div className="grid grid-2">
+          <label className="field">
+            <span>기록 유형</span>
+            <select
+              className="select"
+              onChange={(event) =>
+                updateField('kind', event.target.value as ChapterRecordKind)
+              }
+              value={value.kind}
+            >
+              <option value="retrospective">Retrospective</option>
+              <option value="review">Review</option>
+              <option value="technical_note">Technical Note</option>
+            </select>
+          </label>
+          <label className="field">
+            <span>태그</span>
+            <input
+              className="input"
+              onChange={(event) => updateField('tags', event.target.value)}
+              placeholder="Gemini, Firebase"
+              value={value.tags}
+            />
+          </label>
+        </div>
+
+        <label className="field">
+          <span>제목</span>
+          <input
+            className="input"
+            onChange={(event) => updateField('title', event.target.value)}
+            required
+            value={value.title}
+          />
+        </label>
+
+        <label className="field">
+          <span>요약</span>
+          <textarea
+            className="textarea"
+            onChange={(event) => updateField('summary', event.target.value)}
+            required
+            value={value.summary}
+          />
+        </label>
+
+        <label className="field">
+          <span>본문</span>
+          <textarea
+            className="textarea"
+            onChange={(event) => updateField('body', event.target.value)}
+            required
+            value={value.body}
+          />
+        </label>
+
+        <div className="form-footer">
+          <p className="helper-text">{message}</p>
+          <button className="button button-primary" type="submit">
+            기록 제출
           </button>
         </div>
       </form>
@@ -612,6 +775,30 @@ function ShowcasePreviewSection({ showcases }: { showcases: Showcase[] }) {
   );
 }
 
+function ChapterRecordSection({ records }: { records: ChapterRecord[] }) {
+  return (
+    <section className="section section-compact">
+      <div className="section-header">
+        <div>
+          <h2>긴 글 기록</h2>
+          <p>
+            회고, 리뷰, 기술 노트처럼 Discord보다 오래 남겨야 하는 글을 모아 보여줍니다.
+          </p>
+        </div>
+      </div>
+      {records.length > 0 ? (
+        <div className="grid grid-3">
+          {records.map((record) => (
+            <ChapterRecordCard key={record.id} record={record} />
+          ))}
+        </div>
+      ) : (
+        <div className="empty">아직 게시된 긴 글 기록이 없습니다.</div>
+      )}
+    </section>
+  );
+}
+
 function ActivitySection({
   activities,
   applicationStates,
@@ -675,4 +862,11 @@ function getAccessPanelTitle(status?: string) {
     default:
       return '역할 확인 중';
   }
+}
+
+function parseCsvTags(value: string) {
+  return value
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter(Boolean);
 }

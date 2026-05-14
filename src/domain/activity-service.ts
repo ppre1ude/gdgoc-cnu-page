@@ -11,7 +11,7 @@ import {
 export type ActivityStore = {
   create(activity: Activity): Promise<Activity>;
   save(activity: Activity): Promise<Activity>;
-  list(): Promise<Activity[]>;
+  list(role?: UserRole): Promise<Activity[]>;
 };
 
 export type ActivityProposalType = Extract<ActivityType, 'study' | 'project'>;
@@ -44,6 +44,27 @@ export type AcceptActivityProposalInput = {
   actorRole: UserRole;
   actorUserId: string;
   activityId: string;
+  now: string;
+};
+
+export type ArchiveActivityInput = {
+  actorRole: UserRole;
+  activityId: string;
+  now: string;
+};
+
+export type UpdateActivityInput = {
+  actorRole: UserRole;
+  activityId: string;
+  title: string;
+  summary: string;
+  type: ActivityType;
+  visibility: ActivityVisibility;
+  status: ActivityStatus;
+  startsAt?: string;
+  registrationMode?: ActivityRegistrationMode;
+  externalRegistrationUrl?: string;
+  externalRegistrationLabel?: string;
   now: string;
 };
 
@@ -106,6 +127,48 @@ export async function createActivity(
   });
 }
 
+export async function updateActivity(
+  store: ActivityStore,
+  input: UpdateActivityInput,
+): Promise<Activity> {
+  if (!operatorRoles.has(input.actorRole)) {
+    throw new Error('Only operators can update activities.');
+  }
+
+  const activity = await findActivityOrThrow(store, input.activityId);
+
+  return store.save({
+    ...activity,
+    title: input.title,
+    summary: input.summary,
+    type: input.type,
+    visibility: input.visibility,
+    status: input.status,
+    startsAt: input.startsAt,
+    registrationMode: input.registrationMode,
+    externalRegistrationUrl: input.externalRegistrationUrl,
+    externalRegistrationLabel: input.externalRegistrationLabel,
+    updatedAt: input.now,
+  });
+}
+
+export async function archiveActivity(
+  store: ActivityStore,
+  input: ArchiveActivityInput,
+): Promise<Activity> {
+  if (!operatorRoles.has(input.actorRole)) {
+    throw new Error('Only operators can archive activities.');
+  }
+
+  const activity = await findActivityOrThrow(store, input.activityId);
+
+  return store.save({
+    ...activity,
+    status: 'archived',
+    updatedAt: input.now,
+  });
+}
+
 export async function proposeMemberActivity(
   store: ActivityStore,
   input: ProposeMemberActivityInput,
@@ -143,7 +206,7 @@ export async function listPendingActivityProposals(
     throw new Error('Only operators can list pending activity proposals.');
   }
 
-  const activities = await store.list();
+  const activities = await store.list(actorRole);
 
   return activities
     .filter((activity) => activity.proposalStatus === 'pending_review')
@@ -167,7 +230,7 @@ export async function acceptActivityProposal(
     throw new Error('Only operators can approve activity proposals.');
   }
 
-  const activities = await store.list();
+  const activities = await store.list(input.actorRole);
   const activity = activities.find((current) => current.id === input.activityId);
 
   if (!activity) {
@@ -193,7 +256,7 @@ export async function listHomeActivities(
   store: ActivityStore,
   role: UserRole,
 ): Promise<Activity[]> {
-  const activities = await store.list();
+  const activities = await store.list(role);
 
   return listVisibleActivities(activities, role).sort((a, b) => {
     if (!a.startsAt || !b.startsAt) {
@@ -204,16 +267,36 @@ export async function listHomeActivities(
   });
 }
 
+export function listPublicHomeActivities(
+  store: ActivityStore,
+): Promise<Activity[]> {
+  return listHomeActivities(store, 'visitor');
+}
+
 export async function getVisibleActivityById(
   store: ActivityStore,
   activityId: string,
   role: UserRole,
 ): Promise<Activity | null> {
-  const activities = await store.list();
+  const activities = await store.list(role);
 
   return (
     listVisibleActivities(activities, role).find(
       (activity) => activity.id === activityId,
     ) ?? null
   );
+}
+
+async function findActivityOrThrow(
+  store: ActivityStore,
+  activityId: string,
+): Promise<Activity> {
+  const activities = await store.list();
+  const activity = activities.find((current) => current.id === activityId);
+
+  if (!activity) {
+    throw new Error(`Activity was not found: ${activityId}`);
+  }
+
+  return activity;
 }

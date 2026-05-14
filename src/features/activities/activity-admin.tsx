@@ -5,6 +5,8 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import {
   applyActivityDraftSuggestion,
   type ActivityDraftSuggestion,
+  describeActivityDraftAssistantError,
+  describeActivityDraftAssistantResult,
   type OperatorActivityDraft,
 } from '@/domain/ai-draft';
 import type {
@@ -22,20 +24,23 @@ import {
 import {
   type ActivitySession,
   type SessionAttendance,
-  createDefaultActivitySession,
+  loadOrSyncDefaultActivitySession,
   markAttendanceForSession,
   summarizeSessionAttendance,
 } from '@/domain/activity-session';
 import {
   acceptActivityProposal,
+  archiveActivity,
   createActivity,
   listHomeActivities,
   listPendingActivityProposals,
+  updateActivity,
 } from '@/domain/activity-service';
 import { listVisibleActivities } from '@/domain/activity';
 import { ActivityCard } from '@/components/activity-card';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserActivityApplicationStore } from './browser-activity-application-store';
+import { createBrowserActivitySessionStore } from './browser-activity-session-store';
 import { createBrowserActivityStore } from './browser-activity-store';
 import { createBrowserSessionAttendanceStore } from './browser-session-attendance-store';
 import { seedActivities } from './seed-activities';
@@ -46,7 +51,19 @@ type AiResponse = {
   warning?: string;
 };
 
-const initialDraft = {
+type ActivityDraftFormState = {
+  body: string;
+  externalRegistrationLabel: string;
+  externalRegistrationUrl: string;
+  registrationMode: ActivityRegistrationMode;
+  startsAt: string;
+  status: ActivityStatus;
+  title: string;
+  type: ActivityType;
+  visibility: ActivityVisibility;
+};
+
+const initialDraft: ActivityDraftFormState = {
   title: 'Build with AI Prototype Sprint',
   body:
     'Firebase Auth, Firestore Activity CRUD, Gemini 작성 보조를 연결해서 실제 작동하는 챕터 홈페이지 데모를 만듭니다.',
@@ -65,14 +82,19 @@ export function ActivityAdmin() {
   const { role, userId } = useAuthSession();
   const store = useMemo(() => createBrowserActivityStore(), []);
   const applicationStore = useMemo(() => createBrowserActivityApplicationStore(), []);
+  const sessionStore = useMemo(() => createBrowserActivitySessionStore(), []);
   const attendanceStore = useMemo(() => createBrowserSessionAttendanceStore(), []);
   const [draft, setDraft] = useState(initialDraft);
+  const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
   const [activities, setActivities] = useState<Activity[]>(
     listVisibleActivities(seedActivities, role),
   );
   const [pendingProposals, setPendingProposals] = useState<Activity[]>([]);
   const [applicationsByActivity, setApplicationsByActivity] = useState<
     Record<string, ActivityApplication[]>
+  >({});
+  const [sessionsByActivity, setSessionsByActivity] = useState<
+    Record<string, ActivitySession | null>
   >({});
   const [attendancesBySession, setAttendancesBySession] = useState<
     Record<string, SessionAttendance[]>
@@ -89,6 +111,14 @@ export function ActivityAdmin() {
 
   async function refreshDashboard() {
     const nextActivities = await listHomeActivities(store, role);
+    const nextSessionsByActivity = Object.fromEntries(
+      await Promise.all(
+        nextActivities.map(async (activity) => [
+          activity.id,
+          await loadDefaultSessionForActivity(activity),
+        ]),
+      ),
+    );
     const nextApplicationsByActivity = Object.fromEntries(
       await Promise.all(
         nextActivities.map(async (activity) => [
@@ -99,8 +129,7 @@ export function ActivityAdmin() {
     );
     const nextAttendancesBySession = Object.fromEntries(
       await Promise.all(
-        nextActivities
-          .map((activity) => getDefaultSessionForActivity(activity))
+        Object.values(nextSessionsByActivity)
           .filter((session): session is ActivitySession => Boolean(session))
           .map(async (session) => [
             session.id,
@@ -114,34 +143,46 @@ export function ActivityAdmin() {
       : [];
 
     setActivities(nextActivities);
+    setSessionsByActivity(nextSessionsByActivity);
     setPendingProposals(nextPendingProposals);
     setApplicationsByActivity(nextApplicationsByActivity);
     setAttendancesBySession(nextAttendancesBySession);
+  }
+
+  async function loadDefaultSessionForActivity(activity: Activity) {
+    return loadOrSyncDefaultActivitySession(sessionStore, activity);
   }
 
   async function requestSuggestion() {
     setIsSuggesting(true);
     setMessage('AI가 활동 문구를 정리하는 중입니다.');
 
-    const response = await fetch('/api/ai/activity-draft', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: draft.title,
-        body: draft.body,
-        type: draft.type,
-        visibility: draft.visibility,
-      } satisfies OperatorActivityDraft),
-    });
-    const payload = (await response.json()) as AiResponse;
+    try {
+      const response = await fetch('/api/ai/activity-draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: draft.title,
+          body: draft.body,
+          type: draft.type,
+          visibility: draft.visibility,
+        } satisfies OperatorActivityDraft),
+      });
 
-    setSuggestion(payload.suggestion);
-    setMessage(
-      payload.provider === 'gemini'
-        ? 'Gemini 제안을 불러왔습니다.'
-        : 'Gemini 키가 없어 local fallback 제안을 사용했습니다.',
-    );
-    setIsSuggesting(false);
+      if (!response.ok) {
+        throw new Error(`AI assistant request failed with ${response.status}.`);
+      }
+
+      const payload = (await response.json()) as AiResponse;
+
+      setSuggestion(payload.suggestion);
+      setMessage(describeActivityDraftAssistantResult(payload));
+    } catch (error) {
+      setSuggestion(null);
+      setMessage(describeActivityDraftAssistantError(error));
+    } finally {
+      setIsSuggesting(false);
+    }
   }
 
   function applySuggestion() {
@@ -178,7 +219,8 @@ export function ActivityAdmin() {
   async function saveActivity(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    await createActivity(store, {
+    const now = new Date().toISOString();
+    const activityFields = {
       actorRole: role,
       title: draft.title,
       summary: draft.body,
@@ -189,10 +231,73 @@ export function ActivityAdmin() {
       registrationMode: draft.registrationMode,
       externalRegistrationUrl: draft.externalRegistrationUrl.trim() || undefined,
       externalRegistrationLabel: draft.externalRegistrationLabel.trim() || undefined,
+      now,
+    };
+
+    const savedActivity = editingActivityId
+      ? await updateActivity(store, {
+        ...activityFields,
+        activityId: editingActivityId,
+      })
+      : await createActivity(store, activityFields);
+    await loadOrSyncDefaultActivitySession(sessionStore, savedActivity);
+    setMessage(
+      editingActivityId
+        ? 'Activity가 수정되었습니다. Member Home에서 바로 확인할 수 있습니다.'
+        : 'Activity가 저장되었습니다. Member Home에서 바로 확인할 수 있습니다.',
+    );
+    setDraft(initialDraft);
+    setEditingActivityId(null);
+    setSuggestion(null);
+    await refreshDashboard();
+  }
+
+  function startEditing(activity: Activity) {
+    setEditingActivityId(activity.id);
+    setDraft({
+      body: activity.summary,
+      externalRegistrationLabel: activity.externalRegistrationLabel ?? '',
+      externalRegistrationUrl: activity.externalRegistrationUrl ?? '',
+      registrationMode: activity.registrationMode ?? 'internal',
+      startsAt: toDateTimeLocalValue(activity.startsAt),
+      status: activity.status,
+      title: activity.title,
+      type: activity.type,
+      visibility: activity.visibility,
+    });
+    setSuggestion(null);
+    setMessage(`${activity.title} 수정 모드입니다. 내용을 고친 뒤 저장하세요.`);
+  }
+
+  function cancelEditing() {
+    setEditingActivityId(null);
+    setDraft(initialDraft);
+    setSuggestion(null);
+    setMessage('새 Activity 작성 모드입니다.');
+  }
+
+  async function archiveSavedActivity(activity: Activity) {
+    const confirmed = window.confirm(
+      `${activity.title} activity를 아카이브하시겠습니까? 아카이브된 activity는 Member Home과 상세 화면에서 숨겨집니다.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    await archiveActivity(store, {
+      actorRole: role,
+      activityId: activity.id,
       now: new Date().toISOString(),
     });
-    setMessage('Activity가 저장되었습니다. Member Home에서 바로 확인할 수 있습니다.');
-    setSuggestion(null);
+
+    if (editingActivityId === activity.id) {
+      setEditingActivityId(null);
+      setDraft(initialDraft);
+      setSuggestion(null);
+    }
+
+    setMessage(`${activity.title} activity가 아카이브되었습니다.`);
     await refreshDashboard();
   }
 
@@ -210,7 +315,8 @@ export function ActivityAdmin() {
     activity: Activity,
     application: ActivityApplication,
   ) {
-    const session = getDefaultSessionForActivity(activity);
+    const session =
+      sessionsByActivity[activity.id] ?? (await loadDefaultSessionForActivity(activity));
 
     if (!session) {
       setMessage('일정이 있는 activity만 출석 처리할 수 있습니다.');
@@ -252,6 +358,14 @@ export function ActivityAdmin() {
         <div className="dashboard-grid" style={{ marginTop: 28 }}>
           <section className="card">
             <form className="form" onSubmit={saveActivity}>
+              <div className="badge-row">
+                <span className="badge badge-blue">
+                  {editingActivityId ? 'Activity 수정' : 'Activity 생성'}
+                </span>
+                {editingActivityId ? (
+                  <span className="badge">{editingActivityId}</span>
+                ) : null}
+              </div>
               <label className="field">
                 <span>제목</span>
                 <input
@@ -388,9 +502,20 @@ export function ActivityAdmin() {
                   {isSuggesting ? 'AI 작성 중' : 'AI로 문구 정리'}
                 </button>
                 <button className="button button-primary" type="submit">
-                  Activity 저장
+                  {editingActivityId ? 'Activity 수정' : 'Activity 저장'}
                 </button>
               </div>
+              {editingActivityId ? (
+                <div className="toolbar">
+                  <button
+                    className="button button-secondary"
+                    onClick={cancelEditing}
+                    type="button"
+                  >
+                    수정 취소
+                  </button>
+                </div>
+              ) : null}
               <p className="helper-text">{message}</p>
             </form>
           </section>
@@ -445,11 +570,28 @@ export function ActivityAdmin() {
                 </div>
               </div>
               {activities.map((activity) => {
-                const session = getDefaultSessionForActivity(activity);
+                const session = sessionsByActivity[activity.id] ?? null;
 
                 return (
                   <div className="stack" key={activity.id}>
                     <ActivityCard activity={activity} />
+                    <div className="toolbar">
+                      <button
+                        className="button button-secondary button-small"
+                        disabled={editingActivityId === activity.id}
+                        onClick={() => startEditing(activity)}
+                        type="button"
+                      >
+                        {editingActivityId === activity.id ? '수정 중' : '수정'}
+                      </button>
+                      <button
+                        className="button button-ghost button-small"
+                        onClick={() => void archiveSavedActivity(activity)}
+                        type="button"
+                      >
+                        아카이브
+                      </button>
+                    </div>
                     <ApplicationQueue
                       activity={activity}
                       applications={applicationsByActivity[activity.id] ?? []}
@@ -613,6 +755,17 @@ function AttendanceSummary({
   );
 }
 
-function getDefaultSessionForActivity(activity: Activity): ActivitySession | null {
-  return createDefaultActivitySession(activity);
+function toDateTimeLocalValue(value: string | undefined) {
+  if (!value) {
+    return '';
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  const offsetMs = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
 }

@@ -1,6 +1,8 @@
 'use client';
 
+import type { UserRole } from '@/domain/activity';
 import type { Notice } from '@/domain/notice';
+import type { NoticeVisibility } from '@/domain/notice';
 import {
   type NoticeStore,
   createInMemoryNoticeStore,
@@ -29,6 +31,20 @@ function createLocalStorageNoticeStore(): NoticeStore {
     async create(notice) {
       const notices = readNotices();
       writeNotices([notice, ...notices]);
+      return notice;
+    },
+    async save(notice) {
+      const notices = readNotices();
+      const index = notices.findIndex((current) => current.id === notice.id);
+
+      if (index === -1) {
+        writeNotices([notice, ...notices]);
+        return notice;
+      }
+
+      const nextNotices = [...notices];
+      nextNotices[index] = notice;
+      writeNotices(nextNotices);
       return notice;
     },
     async list() {
@@ -64,9 +80,25 @@ function createFirestoreNoticeStore(): NoticeStore {
       await setDoc(doc(getFirestoreDb(), 'notices', notice.id), notice);
       return notice;
     },
-    async list() {
-      const { collection, getDocs } = await import('firebase/firestore');
-      const snapshot = await getDocs(collection(getFirestoreDb(), 'notices'));
+    async save(notice) {
+      const { doc, setDoc } = await import('firebase/firestore');
+      await setDoc(doc(getFirestoreDb(), 'notices', notice.id), notice);
+      return notice;
+    },
+    async list(role) {
+      const { collection, getDocs, query, where } = await import(
+        'firebase/firestore'
+      );
+      const noticesCollection = collection(getFirestoreDb(), 'notices');
+      const snapshot = await getDocs(
+        shouldListAllForRole(role)
+          ? noticesCollection
+          : query(
+              noticesCollection,
+              where('status', '==', 'published'),
+              where('visibility', 'in', getVisibleNoticeVisibilities(role)),
+            ),
+      );
 
       if (snapshot.empty) {
         return seedNotices;
@@ -75,4 +107,18 @@ function createFirestoreNoticeStore(): NoticeStore {
       return snapshot.docs.map((item) => item.data() as Notice);
     },
   };
+}
+
+function shouldListAllForRole(role: UserRole | undefined) {
+  return role === undefined || ['team_member', 'organizer', 'admin'].includes(role);
+}
+
+function getVisibleNoticeVisibilities(
+  role: UserRole | undefined,
+): NoticeVisibility[] {
+  if (role === 'member' || role === 'alumni') {
+    return ['public', 'member'];
+  }
+
+  return ['public'];
 }

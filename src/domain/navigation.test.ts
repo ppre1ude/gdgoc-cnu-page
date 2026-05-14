@@ -13,6 +13,7 @@ describe('primary navigation', () => {
     assert.equal(hrefs.includes('/admin'), true);
     assert.equal(hrefs.includes('/admin/activities'), false);
     assert.equal(hrefs.includes('/admin/notices'), false);
+    assert.equal(hrefs.includes('/admin/records'), false);
     assert.equal(hrefs.includes('/admin/showcases'), false);
     assert.equal(hrefs.includes('/admin/roles'), false);
   });
@@ -84,6 +85,10 @@ describe('admin navigation', () => {
           label: 'Notice Admin',
         },
         {
+          href: '/admin/records',
+          label: 'Record Admin',
+        },
+        {
           href: '/admin/showcases',
           label: 'Showcase Admin',
         },
@@ -99,6 +104,7 @@ describe('admin navigation', () => {
     const sharedToolHrefs = [
       '/admin/activities',
       '/admin/notices',
+      '/admin/records',
       '/admin/showcases',
     ];
 
@@ -116,6 +122,7 @@ describe('admin navigation', () => {
       [
         '/admin/activities',
         '/admin/notices',
+        '/admin/records',
         '/admin/showcases',
         '/admin/roles',
       ],

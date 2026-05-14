@@ -6,10 +6,13 @@ import type { Activity } from './activity.ts';
 import {
   createActivitySession,
   createDefaultActivitySession,
+  createInMemoryActivitySessionStore,
+  loadOrSyncDefaultActivitySession,
   createInMemorySessionAttendanceStore,
   markAttendanceForSession,
   recordSessionAttendance,
   summarizeSessionAttendance,
+  syncDefaultActivitySession,
 } from './activity-session.ts';
 
 const approvedApplication: ActivityApplication = {
@@ -68,6 +71,30 @@ describe('activity session attendance', () => {
     });
   });
 
+  it('keeps the activity creation time when deriving an updated default session', () => {
+    const activity: Activity = {
+      id: 'activity-1',
+      title: 'Updated Scheduled Activity',
+      summary: 'Scheduled activity summary.',
+      type: 'event',
+      visibility: 'member',
+      status: 'published',
+      startsAt: '2026-05-17T04:00:00.000Z',
+      createdAt: '2026-05-11T09:00:00.000Z',
+      updatedAt: '2026-05-12T09:00:00.000Z',
+    };
+
+    assert.deepEqual(createDefaultActivitySession(activity), {
+      id: 'activity-1_default-session',
+      activityId: 'activity-1',
+      title: 'Updated Scheduled Activity',
+      startsAt: '2026-05-17T04:00:00.000Z',
+      endsAt: '2026-05-17T06:00:00.000Z',
+      createdAt: '2026-05-11T09:00:00.000Z',
+      updatedAt: '2026-05-12T09:00:00.000Z',
+    });
+  });
+
   it('does not create a default session for an unscheduled activity', () => {
     const activity: Activity = {
       id: 'activity-1',
@@ -81,6 +108,79 @@ describe('activity session attendance', () => {
     };
 
     assert.equal(createDefaultActivitySession(activity), null);
+  });
+
+  it('stores and updates the default session for a scheduled activity', async () => {
+    const store = createInMemoryActivitySessionStore();
+    const activity: Activity = {
+      id: 'activity-1',
+      title: 'Build with AI Sprint',
+      summary: 'Scheduled activity summary.',
+      type: 'event',
+      visibility: 'member',
+      status: 'published',
+      startsAt: '2026-05-16T04:00:00.000Z',
+      createdAt: '2026-05-11T09:00:00.000Z',
+      updatedAt: '2026-05-11T09:00:00.000Z',
+    };
+
+    const firstSession = await syncDefaultActivitySession(store, activity);
+    const updatedSession = await syncDefaultActivitySession(store, {
+      ...activity,
+      title: 'Build with AI Demo Day',
+      startsAt: '2026-05-17T04:00:00.000Z',
+      updatedAt: '2026-05-12T09:00:00.000Z',
+    });
+
+    assert.deepEqual(await store.listByActivity(activity.id), [updatedSession]);
+    assert.deepEqual(updatedSession, {
+      ...firstSession,
+      title: 'Build with AI Demo Day',
+      startsAt: '2026-05-17T04:00:00.000Z',
+      endsAt: '2026-05-17T06:00:00.000Z',
+      updatedAt: '2026-05-12T09:00:00.000Z',
+    });
+  });
+
+  it('loads an already synced default session without rewriting it', async () => {
+    const activity: Activity = {
+      id: 'activity-1',
+      title: 'Build with AI Sprint',
+      summary: 'Scheduled activity summary.',
+      type: 'event',
+      visibility: 'member',
+      status: 'published',
+      startsAt: '2026-05-16T04:00:00.000Z',
+      createdAt: '2026-05-11T09:00:00.000Z',
+      updatedAt: '2026-05-12T09:00:00.000Z',
+    };
+    const syncedSession = createDefaultActivitySession(activity);
+
+    assert.ok(syncedSession);
+
+    const store = createInMemoryActivitySessionStore([syncedSession]);
+
+    assert.deepEqual(
+      await loadOrSyncDefaultActivitySession(store, activity),
+      syncedSession,
+    );
+  });
+
+  it('does not store a default session for an unscheduled activity', async () => {
+    const store = createInMemoryActivitySessionStore();
+    const activity: Activity = {
+      id: 'activity-1',
+      title: 'Unscheduled Project',
+      summary: 'No fixed session yet.',
+      type: 'project',
+      visibility: 'member',
+      status: 'published',
+      createdAt: '2026-05-11T09:00:00.000Z',
+      updatedAt: '2026-05-11T09:00:00.000Z',
+    };
+
+    assert.equal(await syncDefaultActivitySession(store, activity), null);
+    assert.deepEqual(await store.listByActivity(activity.id), []);
   });
 
   it('records attended state only for an approved active application', () => {

@@ -3,11 +3,11 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import type { ActivityApplication } from '@/domain/activity-application';
-import { createDefaultActivitySession } from '@/domain/activity-session';
 import type { ActivitySession, SessionAttendance } from '@/domain/activity-session';
+import { loadOrSyncDefaultActivitySession } from '@/domain/activity-session';
 import { listApplicationsForActivity } from '@/domain/activity-participation-service';
 import { listHomeActivities } from '@/domain/activity-service';
-import type { ActivityType } from '@/domain/activity';
+import type { Activity, ActivityType } from '@/domain/activity';
 import {
   calculateOperatorAnalytics,
   type ActivityParticipationFunnel,
@@ -17,6 +17,7 @@ import {
 } from '@/domain/operator-analytics';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserActivityApplicationStore } from '../activities/browser-activity-application-store';
+import { createBrowserActivitySessionStore } from '../activities/browser-activity-session-store';
 import { createBrowserActivityStore } from '../activities/browser-activity-store';
 import { createBrowserSessionAttendanceStore } from '../activities/browser-session-attendance-store';
 import { createBrowserChapterUserStore } from '../users/browser-chapter-user-store';
@@ -40,6 +41,7 @@ export function OperatorAnalyticsPanel() {
   const { role } = useAuthSession();
   const activityStore = useMemo(() => createBrowserActivityStore(), []);
   const applicationStore = useMemo(() => createBrowserActivityApplicationStore(), []);
+  const sessionStore = useMemo(() => createBrowserActivitySessionStore(), []);
   const attendanceStore = useMemo(() => createBrowserSessionAttendanceStore(), []);
   const userStore = useMemo(() => createBrowserChapterUserStore(), []);
   const [analytics, setAnalytics] = useState<OperatorAnalytics>(initialAnalytics);
@@ -59,9 +61,11 @@ export function OperatorAnalyticsPanel() {
         listApplicationsForActivity(applicationStore, activity.id),
       ),
     );
-    const sessions = activities
-      .map((activity) => createDefaultActivitySession(activity))
-      .filter((session): session is ActivitySession => Boolean(session));
+    const sessions = (
+      await Promise.all(
+        activities.map((activity) => loadDefaultSessionForActivity(activity)),
+      )
+    ).filter((session): session is ActivitySession => Boolean(session));
     const attendancesBySession = await Promise.all(
       sessions.map((session) => attendanceStore.listBySession(session.id)),
     );
@@ -71,6 +75,7 @@ export function OperatorAnalyticsPanel() {
     setAnalytics(
       calculateOperatorAnalytics({
         activities,
+        activityCapacityById: getDemoActivityCapacityById(activities),
         applications,
         activitySessions: sessions,
         now: new Date().toISOString(),
@@ -79,6 +84,10 @@ export function OperatorAnalyticsPanel() {
         users,
       }),
     );
+  }
+
+  async function loadDefaultSessionForActivity(activity: Activity) {
+    return loadOrSyncDefaultActivitySession(sessionStore, activity);
   }
 
   return (
@@ -124,6 +133,16 @@ export function OperatorAnalyticsPanel() {
           label="Derived Absence"
           title={`${analytics.derivedAbsentSessionCount}건 미참석 추정`}
         />
+        <AnalyticsCard
+          description="다가오는 활동별 active member 신청 비율입니다. 취소된 신청과 alumni는 제외합니다."
+          label="Upcoming Demand"
+          title={`${analytics.upcomingActivityApplicationRate}% 신청률`}
+        />
+        <AnalyticsCard
+          description="활동별 데모 capacity 대비 신청/승인된 active member 비율입니다."
+          label="Capacity Fill"
+          title={`${analytics.upcomingActivityCapacityFillRate}% 충원율`}
+        />
       </div>
 
       <div className="analytics-dashboard-grid">
@@ -135,6 +154,29 @@ export function OperatorAnalyticsPanel() {
       </div>
     </section>
   );
+}
+
+function getDemoActivityCapacityById(activities: Activity[]) {
+  return Object.fromEntries(
+    activities
+      .filter((activity) => activity.startsAt)
+      .map((activity) => [activity.id, getDemoCapacityByType(activity.type)]),
+  );
+}
+
+function getDemoCapacityByType(type: ActivityType) {
+  switch (type) {
+    case 'event':
+      return 30;
+    case 'study':
+      return 12;
+    case 'project':
+      return 8;
+    case 'challenge':
+      return 40;
+    case 'social':
+      return 20;
+  }
 }
 
 function AnalyticsCard({

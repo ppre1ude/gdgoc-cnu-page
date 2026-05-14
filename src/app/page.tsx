@@ -1,14 +1,9 @@
 import Link from 'next/link';
 
-import { ActivityCard } from '@/components/activity-card';
-import { seedActivities } from '@/features/activities/seed-activities';
+import { PublicActivitySection } from '@/features/activities/public-activity-section';
 import { PublicShowcaseSection } from '@/features/showcases/public-showcase-section';
 
 export default function PublicHomePage() {
-  const publicActivities = seedActivities.filter(
-    (activity) => activity.visibility === 'public' && activity.status === 'published',
-  );
-
   return (
     <main>
       <section className="hero">
@@ -45,21 +40,7 @@ export default function PublicHomePage() {
 
       <PublicShowcaseSection />
 
-      <section className="section">
-        <div className="container">
-          <div className="section-header">
-            <div>
-              <h2>Public Activities</h2>
-              <p>외부 방문자에게 공개할 수 있는 최근 활동과 캠페인입니다.</p>
-            </div>
-          </div>
-          <div className="grid grid-3">
-            {publicActivities.map((activity) => (
-              <ActivityCard activity={activity} key={activity.id} />
-            ))}
-          </div>
-        </div>
-      </section>
+      <PublicActivitySection />
 
       <section className="section">
         <div className="container grid grid-3">

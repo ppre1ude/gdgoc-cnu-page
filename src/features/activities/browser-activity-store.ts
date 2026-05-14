@@ -4,7 +4,7 @@ import {
   type ActivityStore,
   createInMemoryActivityStore,
 } from '@/domain/activity-service';
-import type { Activity } from '@/domain/activity';
+import type { Activity, ActivityVisibility, UserRole } from '@/domain/activity';
 import { getFirestoreDb, hasFirebaseConfig } from '@/lib/firebase/client';
 import { seedActivities } from './seed-activities';
 
@@ -113,9 +113,20 @@ function createFirestoreActivityStore(): ActivityStore {
       await setDoc(doc(getFirestoreDb(), 'activities', activity.id), activity);
       return activity;
     },
-    async list() {
-      const { collection, getDocs } = await import('firebase/firestore');
-      const snapshot = await getDocs(collection(getFirestoreDb(), 'activities'));
+    async list(role) {
+      const { collection, getDocs, query, where } = await import(
+        'firebase/firestore'
+      );
+      const activitiesCollection = collection(getFirestoreDb(), 'activities');
+      const snapshot = await getDocs(
+        shouldListAllForRole(role)
+          ? activitiesCollection
+          : query(
+              activitiesCollection,
+              where('status', '==', 'published'),
+              where('visibility', 'in', getVisibleActivityVisibilities(role)),
+            ),
+      );
 
       if (snapshot.empty) {
         return seedActivities;
@@ -124,4 +135,18 @@ function createFirestoreActivityStore(): ActivityStore {
       return snapshot.docs.map((item) => item.data() as Activity);
     },
   };
+}
+
+function shouldListAllForRole(role: UserRole | undefined) {
+  return role === undefined || ['team_member', 'organizer', 'admin'].includes(role);
+}
+
+function getVisibleActivityVisibilities(
+  role: UserRole | undefined,
+): ActivityVisibility[] {
+  if (role === 'member' || role === 'alumni') {
+    return ['public', 'member'];
+  }
+
+  return ['public'];
 }

@@ -709,6 +709,15 @@ textarea {
   margin: 0;
 }
 
+.record-body {
+  border-top: 1px solid var(--line);
+  color: var(--text-normal);
+  line-height: 1.75;
+  margin-top: 24px;
+  padding-top: 22px;
+  white-space: pre-wrap;
+}
+
 .activity-detail-side h2 {
   color: var(--text-strong);
   font-size: 22px;
@@ -801,6 +810,16 @@ textarea {
   overflow-wrap: anywhere;
 }
 
+.helper-list {
+  color: #7a4d00;
+  display: grid;
+  font-size: 13px;
+  gap: 6px;
+  line-height: 1.5;
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
 .toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -830,6 +849,11 @@ textarea {
   gap: 14px;
   grid-template-columns: 92px minmax(0, 1fr) 92px 110px;
   padding: 14px 16px;
+}
+
+.notice-board-with-actions .notice-board-head,
+.notice-board-with-actions .notice-board-row {
+  grid-template-columns: 92px minmax(0, 1fr) 92px 110px 150px;
 }
 
 .notice-board-head {
@@ -872,6 +896,13 @@ textarea {
 .notice-board-date {
   color: var(--text-muted);
   font-size: 13px;
+}
+
+.notice-board-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .dashboard-grid .notice-board-head {
