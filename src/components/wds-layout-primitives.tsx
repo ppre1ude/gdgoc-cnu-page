@@ -1,5 +1,14 @@
-import { SectionHeader } from '@wanteddev/wds';
-import type { ComponentProps, ReactNode } from 'react';
+import { Card, SectionHeader } from '@wanteddev/wds';
+import type { ComponentProps, ElementType, ReactNode } from 'react';
+
+const PolymorphicCard = Card as unknown as ElementType;
+
+type WdsSurfaceCardProps = Omit<ComponentProps<typeof Card>, 'onSubmit'> & {
+  as?: ElementType;
+  className?: string;
+  href?: string;
+  onSubmit?: ComponentProps<'form'>['onSubmit'];
+};
 
 type WdsSectionHeaderProps = {
   className?: string;
@@ -38,5 +47,23 @@ export function WdsSectionHeader({
       </div>
       {trailingContent}
     </div>
+  );
+}
+
+export function WdsSurfaceCard({
+  as = 'div',
+  className,
+  platform = 'desktop',
+  ...props
+}: WdsSurfaceCardProps) {
+  const surfaceClassName = ['card', className].filter(Boolean).join(' ');
+
+  return (
+    <PolymorphicCard
+      as={as}
+      className={surfaceClassName}
+      platform={platform}
+      {...props}
+    />
   );
 }

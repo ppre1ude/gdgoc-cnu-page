@@ -11,7 +11,10 @@ import {
   WdsNotice,
   type WdsBadgeTone,
 } from '@/components/wds-form-controls';
-import { WdsSectionHeader } from '@/components/wds-layout-primitives';
+import {
+  WdsSectionHeader,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 
 type EnvironmentStatusResponse = {
@@ -92,13 +95,13 @@ export function DemoEnvironmentPanel() {
 
       <div className="grid grid-3">
         {readiness.items.map((item) => (
-          <article className="card" key={item.id}>
+          <WdsSurfaceCard as="article" key={item.id}>
             <WdsBadge tone={getStatusBadgeTone(item.status)}>
               {statusLabels[item.status]}
             </WdsBadge>
             <h3>{item.label}</h3>
             <p>{item.description}</p>
-          </article>
+          </WdsSurfaceCard>
         ))}
       </div>
 

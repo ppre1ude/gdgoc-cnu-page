@@ -36,7 +36,10 @@ import { ActivityCard } from '@/components/activity-card';
 import { ChapterRecordCard } from '@/components/chapter-record-card';
 import { NoticeBoard } from '@/components/notice-board';
 import { ShowcaseCard } from '@/components/showcase-card';
-import { WdsSectionHeader } from '@/components/wds-layout-primitives';
+import {
+  WdsSectionHeader,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 import {
   WdsBadge,
   WdsButton,
@@ -422,7 +425,7 @@ export function MemberHome() {
         <ChapterRecordSection records={records.slice(0, 3)} />
 
         <div className="grid grid-3 section-offset-lg">
-          <div className="card">
+          <WdsSurfaceCard>
             <WdsBadge tone="green">Participation</WdsBadge>
             <h3>
               {canApplyToActivities
@@ -434,12 +437,12 @@ export function MemberHome() {
                 ? '참여 신청을 누르면 이 숫자와 카드 상태가 바로 바뀝니다.'
                 : access?.message ?? '역할 정보를 확인한 뒤 신청 가능 여부를 표시합니다.'}
             </p>
-          </div>
-          <div className="card">
+          </WdsSurfaceCard>
+          <WdsSurfaceCard>
             <WdsBadge tone="blue">Next Action</WdsBadge>
             <h3>{activities.length}개 활동 열람 가능</h3>
             <p>Firebase 설정 전에는 localStorage bridge로 같은 흐름을 검증합니다.</p>
-          </div>
+          </WdsSurfaceCard>
         </div>
 
         {canApplyToActivities ? (
@@ -498,7 +501,11 @@ function MemberProposalForm({
 
   return (
     <section className="section section-compact">
-      <form className="card guest-profile-form" onSubmit={onSubmit}>
+      <WdsSurfaceCard
+        as="form"
+        className="guest-profile-form"
+        onSubmit={onSubmit}
+      >
         <div>
           <WdsBadge tone="blue">Member Proposal</WdsBadge>
           <h2>스터디 / 프로젝트 제안</h2>
@@ -547,7 +554,7 @@ function MemberProposalForm({
             제안 제출
           </WdsButton>
         </div>
-      </form>
+      </WdsSurfaceCard>
     </section>
   );
 }
@@ -572,7 +579,11 @@ function MemberRecordForm({
 
   return (
     <section className="section section-compact">
-      <form className="card guest-profile-form" onSubmit={onSubmit}>
+      <WdsSurfaceCard
+        as="form"
+        className="guest-profile-form"
+        onSubmit={onSubmit}
+      >
         <div>
           <WdsBadge tone="green">Chapter Record</WdsBadge>
           <h2>회고 / 리뷰 / 기술 노트 작성</h2>
@@ -629,7 +640,7 @@ function MemberRecordForm({
             기록 제출
           </WdsButton>
         </div>
-      </form>
+      </WdsSurfaceCard>
     </section>
   );
 }
@@ -657,7 +668,11 @@ function GuestProfileForm({
 
   return (
     <section className="section section-compact">
-      <form className="card guest-profile-form" onSubmit={onSubmit}>
+      <WdsSurfaceCard
+        as="form"
+        className="guest-profile-form"
+        onSubmit={onSubmit}
+      >
         <div>
           <WdsBadge tone="green">Guest Profile</WdsBadge>
           <h2>멤버 승인 요청 정보</h2>
@@ -726,7 +741,7 @@ function GuestProfileForm({
             승인 요청 정보 저장
           </WdsButton>
         </div>
-      </form>
+      </WdsSurfaceCard>
     </section>
   );
 }

@@ -14,7 +14,10 @@ import {
   WdsTextArea,
   type WdsSelectOption,
 } from '@/components/wds-form-controls';
-import { WdsSectionHeader } from '@/components/wds-layout-primitives';
+import {
+  WdsSectionHeader,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserShowcaseStore } from './browser-showcase-store';
 import { seedShowcases } from './seed-showcases';
@@ -123,7 +126,7 @@ export function ShowcaseAdmin() {
         </p>
 
         <div className="dashboard-grid section-offset-lg">
-          <section className="card">
+          <WdsSurfaceCard as="section">
             <form className="form" onSubmit={saveShowcase}>
               <div className="grid grid-2">
                 <WdsField label="종류">
@@ -271,7 +274,7 @@ export function ShowcaseAdmin() {
               </div>
               <p className="helper-text">{message}</p>
             </form>
-          </section>
+          </WdsSurfaceCard>
 
           <aside className="stack">
             <WdsSectionHeader

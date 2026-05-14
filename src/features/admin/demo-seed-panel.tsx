@@ -14,7 +14,10 @@ import type { Notice } from '@/domain/notice';
 import type { Showcase } from '@/domain/showcase';
 import { loadOrSyncDefaultActivitySession } from '@/domain/activity-session';
 import { WdsBadge, WdsButton, WdsNotice } from '@/components/wds-form-controls';
-import { WdsSectionHeader } from '@/components/wds-layout-primitives';
+import {
+  WdsSectionHeader,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 import { formatKoreanDateTime } from '@/lib/format-korean-date-time';
 import { getFirestoreDb, hasFirebaseConfig } from '@/lib/firebase/client';
 import { createBrowserActivityStore } from '@/features/activities/browser-activity-store';
@@ -140,24 +143,24 @@ export function DemoSeedPanel() {
 
       {summary ? (
         <div className="grid grid-3 section-offset-sm">
-          <article className="card">
+          <WdsSurfaceCard as="article">
             <WdsBadge tone="green">Created</WdsBadge>
             <h3>{createdCount}개 문서 추가</h3>
             <p>
               이미 존재하지 않는 seed id만 저장했습니다. 기존 문서 내용은
               유지됩니다.
             </p>
-          </article>
-          <article className="card">
+          </WdsSurfaceCard>
+          <WdsSurfaceCard as="article">
             <WdsBadge tone="blue">Skipped</WdsBadge>
             <h3>{skippedCount}개 문서 유지</h3>
             <p>같은 seed id가 이미 있으면 다시 쓰지 않습니다.</p>
-          </article>
-          <article className="card">
+          </WdsSurfaceCard>
+          <WdsSurfaceCard as="article">
             <WdsBadge>Sessions</WdsBadge>
             <h3>{summary.sessionSyncCount}개 기본 세션 확인</h3>
             <p>일정이 있는 seed activity에 기본 출석 세션을 연결했습니다.</p>
-          </article>
+          </WdsSurfaceCard>
         </div>
       ) : null}
 

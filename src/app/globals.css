@@ -1007,7 +1007,7 @@ textarea {
   overflow-wrap: anywhere;
 }
 
-.showcase-card {
+.card.showcase-card {
   display: block;
   overflow: hidden;
   padding: 0;
@@ -1049,7 +1049,7 @@ textarea {
   padding: 7px 9px;
 }
 
-.admin-tool-card {
+.card.admin-tool-card {
   display: block;
   transition:
     border-color 160ms ease,
@@ -1285,7 +1285,7 @@ textarea {
   min-width: 180px;
 }
 
-.guest-profile-form {
+.card.guest-profile-form {
   display: grid;
   gap: 18px;
 }

@@ -24,7 +24,10 @@ import {
   WdsTextArea,
   type WdsSelectOption,
 } from '@/components/wds-form-controls';
-import { WdsSectionHeader } from '@/components/wds-layout-primitives';
+import {
+  WdsSectionHeader,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserChapterRecordStore } from './browser-chapter-record-store';
 import { seedChapterRecords } from './seed-chapter-records';
@@ -139,7 +142,7 @@ export function RecordAdmin() {
         </p>
 
         <div className="dashboard-grid section-offset-lg">
-          <section className="card">
+          <WdsSurfaceCard as="section">
             <form className="form" onSubmit={submitRecord}>
               <div className="grid grid-2">
                 <WdsField label="기록 유형">
@@ -245,7 +248,7 @@ export function RecordAdmin() {
               </div>
               <p className="helper-text">{message}</p>
             </form>
-          </section>
+          </WdsSurfaceCard>
 
           <aside className="stack">
             <section className="stack">

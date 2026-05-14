@@ -48,7 +48,10 @@ import {
   WdsTextArea,
   type WdsSelectOption,
 } from '@/components/wds-form-controls';
-import { WdsSectionHeader } from '@/components/wds-layout-primitives';
+import {
+  WdsSectionHeader,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserActivityApplicationStore } from './browser-activity-application-store';
 import { createBrowserActivitySessionStore } from './browser-activity-session-store';
@@ -388,7 +391,7 @@ export function ActivityAdmin() {
         </p>
 
         <div className="dashboard-grid section-offset-lg">
-          <section className="card">
+          <WdsSurfaceCard as="section">
             <form className="form" onSubmit={saveActivity}>
               <div className="badge-row">
                 <WdsBadge tone="blue">
@@ -525,10 +528,10 @@ export function ActivityAdmin() {
               ) : null}
               <p className="helper-text">{message}</p>
             </form>
-          </section>
+          </WdsSurfaceCard>
 
           <aside className="stack">
-            <section className="card">
+            <WdsSurfaceCard as="section">
               <div className="badge-row">
                 <WdsBadge tone="blue">AI Draft</WdsBadge>
               </div>
@@ -562,7 +565,7 @@ export function ActivityAdmin() {
                   표시됩니다.
                 </p>
               )}
-            </section>
+            </WdsSurfaceCard>
 
             <ProposalReviewQueue
               onApprove={approveProposal}

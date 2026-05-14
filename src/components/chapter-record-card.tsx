@@ -1,10 +1,11 @@
 import { WdsBadge, WdsTextLinkButton } from '@/components/wds-form-controls';
+import { WdsSurfaceCard } from '@/components/wds-layout-primitives';
 import type { ChapterRecord } from '@/domain/chapter-record';
 import { formatKoreanDate } from '@/lib/format-korean-date-time';
 
 export function ChapterRecordCard({ record }: { record: ChapterRecord }) {
   return (
-    <article className="card">
+    <WdsSurfaceCard as="article">
       <div className="badge-row">
         <WdsBadge tone="blue">{getRecordKindLabel(record.kind)}</WdsBadge>
         <WdsBadge>{record.visibility}</WdsBadge>
@@ -32,7 +33,7 @@ export function ChapterRecordCard({ record }: { record: ChapterRecord }) {
           자세히
         </WdsTextLinkButton>
       </div>
-    </article>
+    </WdsSurfaceCard>
   );
 }
 

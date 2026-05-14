@@ -8,7 +8,10 @@ import {
   listPendingGuestUsers,
 } from '@/domain/chapter-user-service';
 import { WdsBadge, WdsButton, WdsEmptyState } from '@/components/wds-form-controls';
-import { WdsSectionHeader } from '@/components/wds-layout-primitives';
+import {
+  WdsSectionHeader,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { formatKoreanDate } from '@/lib/format-korean-date-time';
 import { createBrowserChapterUserStore } from '../users/browser-chapter-user-store';
@@ -67,18 +70,18 @@ export function MemberApprovalPanel() {
       />
 
       <div className="grid grid-2">
-        <div className="card">
+        <WdsSurfaceCard>
           <WdsBadge tone="green">Approval Queue</WdsBadge>
           <h3>{pendingUsers.length}명 승인 대기</h3>
           <p>{message}</p>
-        </div>
-        <div className="card">
+        </WdsSurfaceCard>
+        <WdsSurfaceCard>
           <WdsBadge tone="blue">Role Logs</WdsBadge>
           <h3>{roleChangeLogs.length}건 기록됨</h3>
           <p>
             승인 작업은 actor, target, 이전 role, 다음 role과 함께 저장됩니다.
           </p>
-        </div>
+        </WdsSurfaceCard>
       </div>
 
       <div className="member-approval-list section-offset-sm">

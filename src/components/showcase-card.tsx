@@ -4,6 +4,7 @@ import {
   type ShowcaseKind,
 } from '@/domain/showcase';
 import { WdsBadge } from '@/components/wds-form-controls';
+import { WdsSurfaceCard } from '@/components/wds-layout-primitives';
 
 const showcaseKindLabel: Record<ShowcaseKind, string> = {
   achievement: '성과',
@@ -36,13 +37,17 @@ export function ShowcaseCard({ showcase }: { showcase: Showcase }) {
 
   if (safeHref) {
     return (
-      <a className="card showcase-card" href={safeHref}>
+      <WdsSurfaceCard as="a" className="showcase-card" href={safeHref}>
         {content}
-      </a>
+      </WdsSurfaceCard>
     );
   }
 
-  return <article className="card showcase-card">{content}</article>;
+  return (
+    <WdsSurfaceCard as="article" className="showcase-card">
+      {content}
+    </WdsSurfaceCard>
+  );
 }
 
 function ShowcaseMedia({ showcase }: { showcase: Showcase }) {

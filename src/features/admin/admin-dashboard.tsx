@@ -2,7 +2,10 @@
 
 import Link from 'next/link';
 
-import { WdsSectionHeader } from '@/components/wds-layout-primitives';
+import {
+  WdsSectionHeader,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 import { WdsBadge, WdsNotice } from '@/components/wds-form-controls';
 import { getAdminNavigationItems } from '@/domain/navigation';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
@@ -33,12 +36,17 @@ export function AdminDashboard() {
           />
           <div className="grid grid-2">
             {adminItems.map((item) => (
-              <Link className="card admin-tool-card" href={item.href} key={item.href}>
+              <WdsSurfaceCard
+                as={Link}
+                className="admin-tool-card"
+                href={item.href}
+                key={item.href}
+              >
                 <WdsBadge tone="blue">Admin Tool</WdsBadge>
                 <h3>{item.label}</h3>
                 <p>{item.description}</p>
                 <span className="admin-tool-link">열기</span>
-              </Link>
+              </WdsSurfaceCard>
             ))}
           </div>
         </section>

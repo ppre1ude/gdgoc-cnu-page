@@ -19,7 +19,10 @@ import {
   WdsTextArea,
   type WdsSelectOption,
 } from '@/components/wds-form-controls';
-import { WdsSectionHeader } from '@/components/wds-layout-primitives';
+import {
+  WdsSectionHeader,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserNoticeStore } from './browser-notice-store';
 import { seedNotices } from './seed-notices';
@@ -156,7 +159,7 @@ export function NoticeAdmin() {
         </p>
 
         <div className="dashboard-grid section-offset-lg">
-          <section className="card">
+          <WdsSurfaceCard as="section">
             <form className="form" onSubmit={saveNotice}>
               <div className="badge-row">
                 <WdsBadge tone="blue">
@@ -242,7 +245,7 @@ export function NoticeAdmin() {
               </div>
               <p className="helper-text">{message}</p>
             </form>
-          </section>
+          </WdsSurfaceCard>
 
           <aside className="stack">
             <WdsSectionHeader

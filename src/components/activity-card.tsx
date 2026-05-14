@@ -2,6 +2,7 @@ import {
   type Activity,
   getActivityRegistrationPolicy,
 } from '@/domain/activity';
+import { WdsSurfaceCard } from '@/components/wds-layout-primitives';
 import {
   WdsButton,
   WdsBadge,
@@ -58,7 +59,7 @@ export function ActivityCard({
     onCancel && (applicationState === 'applied' || applicationState === 'approved');
 
   return (
-    <article className="card">
+    <WdsSurfaceCard as="article">
       <div className="badge-row">
         <WdsBadge tone="blue">{activityTypeLabel[activity.type]}</WdsBadge>
         <WdsBadge>{visibilityLabel[activity.visibility]}</WdsBadge>
@@ -119,6 +120,6 @@ export function ActivityCard({
           </WdsButton>
         ) : null}
       </div>
-    </article>
+    </WdsSurfaceCard>
   );
 }

@@ -15,7 +15,10 @@ import {
   WdsField,
   WdsSelect,
 } from '@/components/wds-form-controls';
-import { WdsSectionHeader } from '@/components/wds-layout-primitives';
+import {
+  WdsSectionHeader,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserChapterUserStore } from '../users/browser-chapter-user-store';
 import { seedChapterUsers } from '../users/seed-chapter-users';
@@ -171,22 +174,22 @@ export function RoleAdmin() {
 
         <section className="section section-compact">
           <div className="grid grid-2">
-            <div className="card">
+            <WdsSurfaceCard>
               <WdsBadge tone="blue">Role Policy</WdsBadge>
               <h2>역할 변경은 admin만 수행</h2>
               <p>
                 team_member는 guest를 member로 승인할 수 있지만, 일반 역할 변경은 admin
                 전용 흐름으로 분리했습니다.
               </p>
-            </div>
-            <div className="card">
+            </WdsSurfaceCard>
+            <WdsSurfaceCard>
               <WdsBadge tone="green">Audit Log</WdsBadge>
               <h2>{roleChangeLogs.length}건 기록됨</h2>
               <p>
                 모든 역할 변경은 actor, target, 이전 역할, 다음 역할, 변경 시각과 함께
                 저장됩니다.
               </p>
-            </div>
+            </WdsSurfaceCard>
           </div>
         </section>
 
@@ -251,7 +254,7 @@ export function RoleAdmin() {
           </section>
 
           <aside className="stack">
-            <div className="card">
+            <WdsSurfaceCard>
               <WdsBadge tone="blue">Role Guide</WdsBadge>
               <h2>권한 설명</h2>
               <dl className="profile-summary-list">
@@ -262,9 +265,9 @@ export function RoleAdmin() {
                   </div>
                 ))}
               </dl>
-            </div>
+            </WdsSurfaceCard>
 
-            <div className="card">
+            <WdsSurfaceCard>
               <WdsBadge tone="green">Recent Logs</WdsBadge>
               <h2>최근 변경</h2>
               {roleChangeLogs.length > 0 ? (
@@ -282,7 +285,7 @@ export function RoleAdmin() {
               ) : (
                 <p className="helper-text">아직 역할 변경 기록이 없습니다.</p>
               )}
-            </div>
+            </WdsSurfaceCard>
           </aside>
         </div>
       </div>

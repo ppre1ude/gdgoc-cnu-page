@@ -16,7 +16,10 @@ import {
   type OperatorAnalytics,
 } from '@/domain/operator-analytics';
 import { WdsBadge } from '@/components/wds-form-controls';
-import { WdsSectionHeader } from '@/components/wds-layout-primitives';
+import {
+  WdsSectionHeader,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserActivityApplicationStore } from '../activities/browser-activity-application-store';
 import { createBrowserActivitySessionStore } from '../activities/browser-activity-session-store';
@@ -186,11 +189,11 @@ function AnalyticsCard({
   title: string;
 }) {
   return (
-    <div className="card">
+    <WdsSurfaceCard>
       <WdsBadge tone="blue">{label}</WdsBadge>
       <h3>{title}</h3>
       <p>{description}</p>
-    </div>
+    </WdsSurfaceCard>
   );
 }
 
@@ -200,7 +203,7 @@ function ActivityFunnels({
   funnels: ActivityParticipationFunnel[];
 }) {
   return (
-    <div className="card">
+    <WdsSurfaceCard>
       <WdsBadge tone="green">Activity Funnel</WdsBadge>
       <h3>활동별 참여 흐름</h3>
       {funnels.length > 0 ? (
@@ -229,7 +232,7 @@ function ActivityFunnels({
           일정이 있는 activity가 생기면 활동별 funnel이 표시됩니다.
         </p>
       )}
-    </div>
+    </WdsSurfaceCard>
   );
 }
 
@@ -239,7 +242,7 @@ function ActivityTypeRates({
   rates: ActivityTypeAttendanceRate[];
 }) {
   return (
-    <div className="card">
+    <WdsSurfaceCard>
       <WdsBadge tone="blue">Type Rates</WdsBadge>
       <h3>유형별 참석률</h3>
       {rates.length > 0 ? (
@@ -269,7 +272,7 @@ function ActivityTypeRates({
           종료된 세션의 승인/출석 데이터가 쌓이면 유형별 참석률이 표시됩니다.
         </p>
       )}
-    </div>
+    </WdsSurfaceCard>
   );
 }
 
@@ -279,7 +282,7 @@ function LowParticipationList({
   members: LowParticipationMember[];
 }) {
   return (
-    <div className="card">
+    <WdsSurfaceCard>
       <WdsBadge>Follow-up</WdsBadge>
       <h3>낮은 참여 멤버</h3>
       {members.length > 0 ? (
@@ -303,6 +306,6 @@ function LowParticipationList({
           최근 종료 세션에서 반복 미참석이 감지된 활동 멤버가 없습니다.
         </p>
       )}
-    </div>
+    </WdsSurfaceCard>
   );
 }
