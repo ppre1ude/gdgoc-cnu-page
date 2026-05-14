@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import type { ActivityApplication } from '@/domain/activity-application';
-import { createDefaultActivitySession } from '@/domain/activity-session';
 import type { ActivitySession, SessionAttendance } from '@/domain/activity-session';
+import { loadOrSyncDefaultActivitySession } from '@/domain/activity-session';
 import { listApplicationsForActivity } from '@/domain/activity-participation-service';
 import { listHomeActivities } from '@/domain/activity-service';
 import type { Activity, ActivityType } from '@/domain/activity';
@@ -17,6 +17,7 @@ import {
 } from '@/domain/operator-analytics';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserActivityApplicationStore } from '../activities/browser-activity-application-store';
+import { createBrowserActivitySessionStore } from '../activities/browser-activity-session-store';
 import { createBrowserActivityStore } from '../activities/browser-activity-store';
 import { createBrowserSessionAttendanceStore } from '../activities/browser-session-attendance-store';
 import { createBrowserChapterUserStore } from '../users/browser-chapter-user-store';
@@ -40,6 +41,7 @@ export function OperatorAnalyticsPanel() {
   const { role } = useAuthSession();
   const activityStore = useMemo(() => createBrowserActivityStore(), []);
   const applicationStore = useMemo(() => createBrowserActivityApplicationStore(), []);
+  const sessionStore = useMemo(() => createBrowserActivitySessionStore(), []);
   const attendanceStore = useMemo(() => createBrowserSessionAttendanceStore(), []);
   const userStore = useMemo(() => createBrowserChapterUserStore(), []);
   const [analytics, setAnalytics] = useState<OperatorAnalytics>(initialAnalytics);
@@ -59,9 +61,11 @@ export function OperatorAnalyticsPanel() {
         listApplicationsForActivity(applicationStore, activity.id),
       ),
     );
-    const sessions = activities
-      .map((activity) => createDefaultActivitySession(activity))
-      .filter((session): session is ActivitySession => Boolean(session));
+    const sessions = (
+      await Promise.all(
+        activities.map((activity) => loadDefaultSessionForActivity(activity)),
+      )
+    ).filter((session): session is ActivitySession => Boolean(session));
     const attendancesBySession = await Promise.all(
       sessions.map((session) => attendanceStore.listBySession(session.id)),
     );
@@ -80,6 +84,10 @@ export function OperatorAnalyticsPanel() {
         users,
       }),
     );
+  }
+
+  async function loadDefaultSessionForActivity(activity: Activity) {
+    return loadOrSyncDefaultActivitySession(sessionStore, activity);
   }
 
   return (

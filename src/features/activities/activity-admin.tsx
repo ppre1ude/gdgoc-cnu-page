@@ -22,10 +22,9 @@ import {
 import {
   type ActivitySession,
   type SessionAttendance,
-  createDefaultActivitySession,
+  loadOrSyncDefaultActivitySession,
   markAttendanceForSession,
   summarizeSessionAttendance,
-  syncDefaultActivitySession,
 } from '@/domain/activity-session';
 import {
   acceptActivityProposal,
@@ -149,23 +148,7 @@ export function ActivityAdmin() {
   }
 
   async function loadDefaultSessionForActivity(activity: Activity) {
-    const defaultSession = createDefaultActivitySession(activity);
-
-    if (!defaultSession) {
-      return null;
-    }
-
-    const sessions = await sessionStore.listByActivity(activity.id);
-    const savedSession =
-      sessions.find((session) => session.id === defaultSession.id) ??
-      sessions[0] ??
-      null;
-
-    if (!savedSession || shouldSyncDefaultSession(savedSession, defaultSession)) {
-      return syncDefaultActivitySession(sessionStore, activity);
-    }
-
-    return savedSession;
+    return loadOrSyncDefaultActivitySession(sessionStore, activity);
   }
 
   async function requestSuggestion() {
@@ -248,7 +231,7 @@ export function ActivityAdmin() {
         activityId: editingActivityId,
       })
       : await createActivity(store, activityFields);
-    await syncDefaultActivitySession(sessionStore, savedActivity);
+    await loadOrSyncDefaultActivitySession(sessionStore, savedActivity);
     setMessage(
       editingActivityId
         ? 'Activity가 수정되었습니다. Member Home에서 바로 확인할 수 있습니다.'
@@ -776,16 +759,4 @@ function toDateTimeLocalValue(value: string | undefined) {
 
   const offsetMs = date.getTimezoneOffset() * 60_000;
   return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
-}
-
-function shouldSyncDefaultSession(
-  savedSession: ActivitySession,
-  defaultSession: ActivitySession,
-) {
-  return (
-    savedSession.title !== defaultSession.title ||
-    savedSession.startsAt !== defaultSession.startsAt ||
-    savedSession.endsAt !== defaultSession.endsAt ||
-    savedSession.updatedAt !== defaultSession.updatedAt
-  );
 }

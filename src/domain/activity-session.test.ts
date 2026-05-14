@@ -7,6 +7,7 @@ import {
   createActivitySession,
   createDefaultActivitySession,
   createInMemoryActivitySessionStore,
+  loadOrSyncDefaultActivitySession,
   createInMemorySessionAttendanceStore,
   markAttendanceForSession,
   recordSessionAttendance,
@@ -139,6 +140,30 @@ describe('activity session attendance', () => {
       endsAt: '2026-05-17T06:00:00.000Z',
       updatedAt: '2026-05-12T09:00:00.000Z',
     });
+  });
+
+  it('loads an already synced default session without rewriting it', async () => {
+    const activity: Activity = {
+      id: 'activity-1',
+      title: 'Build with AI Sprint',
+      summary: 'Scheduled activity summary.',
+      type: 'event',
+      visibility: 'member',
+      status: 'published',
+      startsAt: '2026-05-16T04:00:00.000Z',
+      createdAt: '2026-05-11T09:00:00.000Z',
+      updatedAt: '2026-05-12T09:00:00.000Z',
+    };
+    const syncedSession = createDefaultActivitySession(activity);
+
+    assert.ok(syncedSession);
+
+    const store = createInMemoryActivitySessionStore([syncedSession]);
+
+    assert.deepEqual(
+      await loadOrSyncDefaultActivitySession(store, activity),
+      syncedSession,
+    );
   });
 
   it('does not store a default session for an unscheduled activity', async () => {

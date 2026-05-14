@@ -152,6 +152,41 @@ export async function syncDefaultActivitySession(
   return store.save(session);
 }
 
+export async function loadOrSyncDefaultActivitySession(
+  store: ActivitySessionStore,
+  activity: Activity,
+): Promise<ActivitySession | null> {
+  const defaultSession = createDefaultActivitySession(activity);
+
+  if (!defaultSession) {
+    return null;
+  }
+
+  const sessions = await store.listByActivity(activity.id);
+  const savedSession =
+    sessions.find((session) => session.id === defaultSession.id) ??
+    sessions[0] ??
+    null;
+
+  if (!savedSession || shouldSyncDefaultSession(savedSession, defaultSession)) {
+    return syncDefaultActivitySession(store, activity);
+  }
+
+  return savedSession;
+}
+
+function shouldSyncDefaultSession(
+  savedSession: ActivitySession,
+  defaultSession: ActivitySession,
+) {
+  return (
+    savedSession.title !== defaultSession.title ||
+    savedSession.startsAt !== defaultSession.startsAt ||
+    savedSession.endsAt !== defaultSession.endsAt ||
+    savedSession.updatedAt !== defaultSession.updatedAt
+  );
+}
+
 export function recordSessionAttendance(
   application: ActivityApplication,
   session: ActivitySession,
