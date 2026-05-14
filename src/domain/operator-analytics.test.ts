@@ -108,6 +108,8 @@ describe('operator analytics', () => {
         recentAttendanceRate: 0,
         recentEndedSessionCount: 0,
         roleChangeLogCount: 1,
+        upcomingActivityApplicationRate: 0,
+        upcomingActivityCapacityFillRate: 0,
       },
     );
   });
@@ -121,6 +123,137 @@ describe('operator analytics', () => {
       }).applicationApprovalRate,
       0,
     );
+  });
+
+  it('summarizes upcoming application and capacity fill rates for active members', () => {
+    const upcomingActivities: Activity[] = [
+      {
+        id: 'upcoming-study',
+        title: 'Upcoming Study',
+        summary: 'Upcoming study summary.',
+        type: 'study',
+        visibility: 'member',
+        status: 'published',
+        startsAt: '2026-05-20T09:00:00.000Z',
+        createdAt: '2026-05-01T09:00:00.000Z',
+        updatedAt: '2026-05-01T09:00:00.000Z',
+      },
+      {
+        id: 'upcoming-event',
+        title: 'Upcoming Event',
+        summary: 'Upcoming event summary.',
+        type: 'event',
+        visibility: 'member',
+        status: 'published',
+        startsAt: '2026-05-25T09:00:00.000Z',
+        createdAt: '2026-05-01T09:00:00.000Z',
+        updatedAt: '2026-05-01T09:00:00.000Z',
+      },
+      {
+        id: 'starting-now',
+        title: 'Starting Now',
+        summary: 'Starting now summary.',
+        type: 'event',
+        visibility: 'member',
+        status: 'published',
+        startsAt: '2026-05-11T09:00:00.000Z',
+        createdAt: '2026-05-01T09:00:00.000Z',
+        updatedAt: '2026-05-01T09:00:00.000Z',
+      },
+      {
+        id: 'past-event',
+        title: 'Past Event',
+        summary: 'Past event summary.',
+        type: 'event',
+        visibility: 'member',
+        status: 'published',
+        startsAt: '2026-05-01T09:00:00.000Z',
+        createdAt: '2026-04-20T09:00:00.000Z',
+        updatedAt: '2026-04-20T09:00:00.000Z',
+      },
+    ];
+    const upcomingApplications: ActivityApplication[] = [
+      {
+        id: 'upcoming-study_member-1',
+        activityId: 'upcoming-study',
+        userId: 'member-1',
+        state: 'applied',
+        createdAt: '2026-05-10T09:00:00.000Z',
+        updatedAt: '2026-05-10T09:00:00.000Z',
+      },
+      {
+        id: 'upcoming-study_team-member-1',
+        activityId: 'upcoming-study',
+        userId: 'team-member-1',
+        state: 'approved',
+        createdAt: '2026-05-10T09:00:00.000Z',
+        updatedAt: '2026-05-10T10:00:00.000Z',
+      },
+      {
+        id: 'upcoming-event_member-1',
+        activityId: 'upcoming-event',
+        userId: 'member-1',
+        state: 'approved',
+        createdAt: '2026-05-10T09:00:00.000Z',
+        updatedAt: '2026-05-10T10:00:00.000Z',
+      },
+      {
+        id: 'upcoming-event_team-member-1',
+        activityId: 'upcoming-event',
+        userId: 'team-member-1',
+        state: 'applied',
+        cancelledAt: '2026-05-10T11:00:00.000Z',
+        createdAt: '2026-05-10T09:00:00.000Z',
+        updatedAt: '2026-05-10T11:00:00.000Z',
+      },
+      {
+        id: 'upcoming-event_alumni-1',
+        activityId: 'upcoming-event',
+        userId: 'alumni-1',
+        state: 'approved',
+        createdAt: '2026-05-10T09:00:00.000Z',
+        updatedAt: '2026-05-10T10:00:00.000Z',
+      },
+      {
+        id: 'upcoming-event_guest-1',
+        activityId: 'upcoming-event',
+        userId: 'guest-1',
+        state: 'applied',
+        createdAt: '2026-05-10T09:00:00.000Z',
+        updatedAt: '2026-05-10T09:00:00.000Z',
+      },
+      {
+        id: 'starting-now_member-1',
+        activityId: 'starting-now',
+        userId: 'member-1',
+        state: 'applied',
+        createdAt: '2026-05-10T09:00:00.000Z',
+        updatedAt: '2026-05-10T09:00:00.000Z',
+      },
+      {
+        id: 'past-event_member-1',
+        activityId: 'past-event',
+        userId: 'member-1',
+        state: 'approved',
+        createdAt: '2026-04-20T09:00:00.000Z',
+        updatedAt: '2026-04-20T10:00:00.000Z',
+      },
+    ];
+
+    const analytics = calculateOperatorAnalytics({
+      activities: upcomingActivities,
+      activityCapacityById: {
+        'upcoming-study': 4,
+        'upcoming-event': 2,
+      },
+      applications: upcomingApplications,
+      now: '2026-05-11T09:00:00.000Z',
+      roleChangeLogs: [],
+      users,
+    });
+
+    assert.equal(analytics.upcomingActivityApplicationRate, 75);
+    assert.equal(analytics.upcomingActivityCapacityFillRate, 50);
   });
 
   it('summarizes recent attendance funnels and low-participation active members', () => {

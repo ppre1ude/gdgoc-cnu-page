@@ -12,7 +12,7 @@ import {
 export type ChapterRecordStore = {
   create(record: ChapterRecord): Promise<ChapterRecord>;
   save(record: ChapterRecord): Promise<ChapterRecord>;
-  list(): Promise<ChapterRecord[]>;
+  list(role?: UserRole): Promise<ChapterRecord[]>;
 };
 
 export type SubmitChapterRecordInput = {
@@ -108,7 +108,7 @@ export async function listPendingChapterRecords(
     throw new Error('Only operators can list pending chapter records.');
   }
 
-  const records = await store.list();
+  const records = await store.list(actorRole);
 
   return records
     .filter((record) => record.status === 'pending_review')
@@ -130,7 +130,7 @@ export async function publishChapterRecord(
     throw new Error('Only operators can publish chapter records.');
   }
 
-  const records = await store.list();
+  const records = await store.list(input.actorRole);
   const record = records.find((current) => current.id === input.recordId);
 
   if (!record) {
@@ -158,7 +158,7 @@ export async function listHomeChapterRecords(
   store: ChapterRecordStore,
   role: UserRole,
 ): Promise<ChapterRecord[]> {
-  const records = await store.list();
+  const records = await store.list(role);
 
   return listVisibleChapterRecords(records, role).sort((a, b) => {
     const bTimestamp = b.publishedAt ?? b.updatedAt;
@@ -173,7 +173,7 @@ export async function getVisibleChapterRecordById(
   recordId: string,
   role: UserRole,
 ): Promise<ChapterRecord | null> {
-  const records = await store.list();
+  const records = await store.list(role);
 
   return (
     listVisibleChapterRecords(records, role).find(

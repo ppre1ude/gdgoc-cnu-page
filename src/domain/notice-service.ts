@@ -9,7 +9,7 @@ import {
 export type NoticeStore = {
   create(notice: Notice): Promise<Notice>;
   save(notice: Notice): Promise<Notice>;
-  list(): Promise<Notice[]>;
+  list(role?: UserRole): Promise<Notice[]>;
 };
 
 export type CreateNoticeInput = {
@@ -132,7 +132,7 @@ export async function listHomeNotices(
   store: NoticeStore,
   role: UserRole,
 ): Promise<Notice[]> {
-  const notices = await store.list();
+  const notices = await store.list(role);
 
   return listVisibleNotices(notices, role).sort((a, b) => {
     if (a.pinned !== b.pinned) {

@@ -14,7 +14,7 @@ import {
 
 export type ShowcaseStore = {
   create(showcase: Showcase): Promise<Showcase>;
-  list(): Promise<Showcase[]>;
+  list(role?: UserRole): Promise<Showcase[]>;
 };
 
 export type CreateShowcaseInput = {
@@ -83,7 +83,7 @@ export async function listHomeShowcases(
   store: ShowcaseStore,
   role: UserRole,
 ): Promise<Showcase[]> {
-  const showcases = await store.list();
+  const showcases = await store.list(role);
 
   return listVisibleShowcases(normalizeShowcases(showcases), role).sort((a, b) => {
     const bTimestamp = b.publishedAt ?? b.updatedAt;

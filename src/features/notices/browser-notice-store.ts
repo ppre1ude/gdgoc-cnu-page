@@ -1,6 +1,8 @@
 'use client';
 
+import type { UserRole } from '@/domain/activity';
 import type { Notice } from '@/domain/notice';
+import type { NoticeVisibility } from '@/domain/notice';
 import {
   type NoticeStore,
   createInMemoryNoticeStore,
@@ -83,9 +85,20 @@ function createFirestoreNoticeStore(): NoticeStore {
       await setDoc(doc(getFirestoreDb(), 'notices', notice.id), notice);
       return notice;
     },
-    async list() {
-      const { collection, getDocs } = await import('firebase/firestore');
-      const snapshot = await getDocs(collection(getFirestoreDb(), 'notices'));
+    async list(role) {
+      const { collection, getDocs, query, where } = await import(
+        'firebase/firestore'
+      );
+      const noticesCollection = collection(getFirestoreDb(), 'notices');
+      const snapshot = await getDocs(
+        shouldListAllForRole(role)
+          ? noticesCollection
+          : query(
+              noticesCollection,
+              where('status', '==', 'published'),
+              where('visibility', 'in', getVisibleNoticeVisibilities(role)),
+            ),
+      );
 
       if (snapshot.empty) {
         return seedNotices;
@@ -94,4 +107,18 @@ function createFirestoreNoticeStore(): NoticeStore {
       return snapshot.docs.map((item) => item.data() as Notice);
     },
   };
+}
+
+function shouldListAllForRole(role: UserRole | undefined) {
+  return role === undefined || ['team_member', 'organizer', 'admin'].includes(role);
+}
+
+function getVisibleNoticeVisibilities(
+  role: UserRole | undefined,
+): NoticeVisibility[] {
+  if (role === 'member' || role === 'alumni') {
+    return ['public', 'member'];
+  }
+
+  return ['public'];
 }

@@ -7,7 +7,7 @@ import { createDefaultActivitySession } from '@/domain/activity-session';
 import type { ActivitySession, SessionAttendance } from '@/domain/activity-session';
 import { listApplicationsForActivity } from '@/domain/activity-participation-service';
 import { listHomeActivities } from '@/domain/activity-service';
-import type { ActivityType } from '@/domain/activity';
+import type { Activity, ActivityType } from '@/domain/activity';
 import {
   calculateOperatorAnalytics,
   type ActivityParticipationFunnel,
@@ -71,6 +71,7 @@ export function OperatorAnalyticsPanel() {
     setAnalytics(
       calculateOperatorAnalytics({
         activities,
+        activityCapacityById: getDemoActivityCapacityById(activities),
         applications,
         activitySessions: sessions,
         now: new Date().toISOString(),
@@ -124,6 +125,16 @@ export function OperatorAnalyticsPanel() {
           label="Derived Absence"
           title={`${analytics.derivedAbsentSessionCount}건 미참석 추정`}
         />
+        <AnalyticsCard
+          description="다가오는 활동별 active member 신청 비율입니다. 취소된 신청과 alumni는 제외합니다."
+          label="Upcoming Demand"
+          title={`${analytics.upcomingActivityApplicationRate}% 신청률`}
+        />
+        <AnalyticsCard
+          description="활동별 데모 capacity 대비 신청/승인된 active member 비율입니다."
+          label="Capacity Fill"
+          title={`${analytics.upcomingActivityCapacityFillRate}% 충원율`}
+        />
       </div>
 
       <div className="analytics-dashboard-grid">
@@ -135,6 +146,29 @@ export function OperatorAnalyticsPanel() {
       </div>
     </section>
   );
+}
+
+function getDemoActivityCapacityById(activities: Activity[]) {
+  return Object.fromEntries(
+    activities
+      .filter((activity) => activity.startsAt)
+      .map((activity) => [activity.id, getDemoCapacityByType(activity.type)]),
+  );
+}
+
+function getDemoCapacityByType(type: ActivityType) {
+  switch (type) {
+    case 'event':
+      return 30;
+    case 'study':
+      return 12;
+    case 'project':
+      return 8;
+    case 'challenge':
+      return 40;
+    case 'social':
+      return 20;
+  }
 }
 
 function AnalyticsCard({

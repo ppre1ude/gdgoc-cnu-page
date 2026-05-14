@@ -11,7 +11,7 @@ import {
 export type ActivityStore = {
   create(activity: Activity): Promise<Activity>;
   save(activity: Activity): Promise<Activity>;
-  list(): Promise<Activity[]>;
+  list(role?: UserRole): Promise<Activity[]>;
 };
 
 export type ActivityProposalType = Extract<ActivityType, 'study' | 'project'>;
@@ -206,7 +206,7 @@ export async function listPendingActivityProposals(
     throw new Error('Only operators can list pending activity proposals.');
   }
 
-  const activities = await store.list();
+  const activities = await store.list(actorRole);
 
   return activities
     .filter((activity) => activity.proposalStatus === 'pending_review')
@@ -230,7 +230,7 @@ export async function acceptActivityProposal(
     throw new Error('Only operators can approve activity proposals.');
   }
 
-  const activities = await store.list();
+  const activities = await store.list(input.actorRole);
   const activity = activities.find((current) => current.id === input.activityId);
 
   if (!activity) {
@@ -256,7 +256,7 @@ export async function listHomeActivities(
   store: ActivityStore,
   role: UserRole,
 ): Promise<Activity[]> {
-  const activities = await store.list();
+  const activities = await store.list(role);
 
   return listVisibleActivities(activities, role).sort((a, b) => {
     if (!a.startsAt || !b.startsAt) {
@@ -272,7 +272,7 @@ export async function getVisibleActivityById(
   activityId: string,
   role: UserRole,
 ): Promise<Activity | null> {
-  const activities = await store.list();
+  const activities = await store.list(role);
 
   return (
     listVisibleActivities(activities, role).find(

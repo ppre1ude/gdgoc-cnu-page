@@ -1,0 +1,213 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function currentUserPath() {
+      return /databases/$(database)/documents/chapterUsers/$(request.auth.uid);
+    }
+
+    function hasCurrentUser() {
+      return isSignedIn() && exists(currentUserPath());
+    }
+
+    function currentRole() {
+      return hasCurrentUser() ? get(currentUserPath()).data.role : 'visitor';
+    }
+
+    function isActiveMember() {
+      return currentRole() in ['member', 'team_member', 'organizer', 'admin'];
+    }
+
+    function isOperator() {
+      return currentRole() in ['team_member', 'organizer', 'admin'];
+    }
+
+    function isAdmin() {
+      return currentRole() == 'admin';
+    }
+
+    function roleRank(role) {
+      return role in ['team_member', 'organizer', 'admin']
+        ? 2
+        : role in ['member', 'alumni']
+          ? 1
+          : 0;
+    }
+
+    function visibilityRank(visibility) {
+      return visibility == 'operator'
+        ? 2
+        : visibility == 'member'
+          ? 1
+          : 0;
+    }
+
+    function canReadVisibleResource() {
+      return resource.data.status == 'published'
+        && visibilityRank(resource.data.visibility) <= roleRank(currentRole());
+    }
+
+    function changedOnly(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
+    function doesNotSetCancelledAt() {
+      return !request.resource.data.keys().hasAny(['cancelledAt']);
+    }
+
+    function activityPath(activityId) {
+      return /databases/$(database)/documents/activities/$(activityId);
+    }
+
+    function activityData(activityId) {
+      return get(activityPath(activityId)).data;
+    }
+
+    function activityAllowsInternalApplication(activityId) {
+      return exists(activityPath(activityId))
+        && activityData(activityId).status == 'published'
+        && visibilityRank(activityData(activityId).visibility) <= roleRank(currentRole())
+        && (
+          !activityData(activityId).keys().hasAny(['registrationMode'])
+          || activityData(activityId).registrationMode in ['internal', 'hybrid']
+        );
+    }
+
+    match /chapterUsers/{userId} {
+      allow get: if isSelf(userId) || isOperator();
+      allow list: if isOperator();
+      allow create: if isSelf(userId)
+        && request.resource.data.id == userId
+        && request.resource.data.role == 'guest';
+      allow update: if isSelf(userId)
+        && request.resource.data.id == resource.data.id
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow update: if isOperator()
+        && resource.data.role == 'guest'
+        && request.resource.data.role == 'member'
+        && changedOnly(['role', 'updatedAt']);
+      allow update: if isAdmin()
+        && request.resource.data.role != 'visitor'
+        && changedOnly(['role', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    match /roleChangeLogs/{logId} {
+      allow read: if isOperator();
+      allow create: if isOperator()
+        && request.resource.data.actorId == request.auth.uid
+        && request.resource.data.actorRole == currentRole();
+      allow update, delete: if false;
+    }
+
+    match /activities/{activityId} {
+      allow get, list: if isOperator() || canReadVisibleResource();
+      allow create: if isOperator()
+        && request.resource.data.id == activityId;
+      allow create: if isActiveMember()
+        && request.resource.data.id == activityId
+        && request.resource.data.proposedByUserId == request.auth.uid
+        && (
+          (
+            request.resource.data.type == 'study'
+            && request.resource.data.visibility == 'member'
+            && request.resource.data.status == 'published'
+            && request.resource.data.proposalStatus == 'accepted'
+          )
+          || (
+            request.resource.data.type == 'project'
+            && request.resource.data.visibility == 'operator'
+            && request.resource.data.status == 'draft'
+            && request.resource.data.proposalStatus == 'pending_review'
+          )
+        );
+      allow update: if isOperator()
+        && request.resource.data.id == resource.data.id;
+      allow delete: if false;
+    }
+
+    match /activityApplications/{applicationId} {
+      allow get, list: if isOperator()
+        || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isActiveMember()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.id == applicationId
+        && applicationId == request.resource.data.activityId + '_' + request.auth.uid
+        && activityAllowsInternalApplication(request.resource.data.activityId)
+        && request.resource.data.state == 'applied'
+        && doesNotSetCancelledAt();
+      allow update: if isOperator();
+      allow update: if isActiveMember()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.activityId == resource.data.activityId
+        && request.resource.data.id == resource.data.id
+        && (
+          (
+            request.resource.data.state == resource.data.state
+            && request.resource.data.keys().hasAny(['cancelledAt'])
+          )
+          || (
+            resource.data.keys().hasAny(['cancelledAt'])
+            && request.resource.data.state == 'applied'
+            && activityAllowsInternalApplication(request.resource.data.activityId)
+            && doesNotSetCancelledAt()
+          )
+        );
+      allow delete: if false;
+    }
+
+    match /sessionAttendances/{attendanceId} {
+      allow get, list: if isOperator()
+        || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create, update: if isOperator()
+        && request.resource.data.id == attendanceId;
+      allow delete: if false;
+    }
+
+    match /sessions/{sessionId} {
+      allow get, list: if isOperator();
+      allow create, update: if isOperator()
+        && request.resource.data.id == sessionId;
+      allow delete: if false;
+    }
+
+    match /notices/{noticeId} {
+      allow get, list: if isOperator() || canReadVisibleResource();
+      allow create, update: if isOperator()
+        && request.resource.data.id == noticeId;
+      allow delete: if false;
+    }
+
+    match /showcases/{showcaseId} {
+      allow get, list: if isOperator() || canReadVisibleResource();
+      allow create, update: if isOperator()
+        && request.resource.data.id == showcaseId;
+      allow delete: if false;
+    }
+
+    match /chapterRecords/{recordId} {
+      allow get, list: if isOperator() || canReadVisibleResource();
+      allow create: if isActiveMember()
+        && request.resource.data.id == recordId
+        && request.resource.data.authorUserId == request.auth.uid
+        && request.resource.data.status in ['draft', 'pending_review'];
+      allow update: if isOperator()
+        && request.resource.data.id == resource.data.id;
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

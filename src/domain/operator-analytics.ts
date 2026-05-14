@@ -9,6 +9,7 @@ import type { ChapterUser, RoleChangeLog } from './chapter-user.ts';
 
 export type OperatorAnalyticsInput = {
   activities?: Activity[];
+  activityCapacityById?: Record<string, number>;
   applications: ActivityApplication[];
   activitySessions?: ActivitySession[];
   now?: string;
@@ -61,6 +62,8 @@ export type OperatorAnalytics = {
   recentAttendanceRate: number;
   recentEndedSessionCount: number;
   roleChangeLogCount: number;
+  upcomingActivityApplicationRate: number;
+  upcomingActivityCapacityFillRate: number;
 };
 
 const activeMemberRoles = new Set<UserRole>([
@@ -121,6 +124,13 @@ export function calculateOperatorAnalytics(
     (total, funnel) => total + funnel.derivedAbsentCount,
     0,
   );
+  const upcomingActivityRates = getUpcomingActivityRates({
+    activeMemberCount: activeMemberIds.size,
+    activities: input.activities ?? [],
+    activityCapacityById: input.activityCapacityById ?? {},
+    applications: activeMemberApplications,
+    now,
+  });
 
   return {
     activeMemberCount: input.users.filter((user) =>
@@ -151,6 +161,59 @@ export function calculateOperatorAnalytics(
     ),
     recentEndedSessionCount: recentSessions.length,
     roleChangeLogCount: input.roleChangeLogs.length,
+    ...upcomingActivityRates,
+  };
+}
+
+function getUpcomingActivityRates({
+  activeMemberCount,
+  activities,
+  activityCapacityById,
+  applications,
+  now,
+}: {
+  activeMemberCount: number;
+  activities: Activity[];
+  activityCapacityById: Record<string, number>;
+  applications: ActivityApplication[];
+  now: string;
+}) {
+  const nowTime = Date.parse(now);
+  const upcomingActivities = activities.filter(
+    (activity) =>
+      activity.startsAt !== undefined && Date.parse(activity.startsAt) > nowTime,
+  );
+  const upcomingActivityIds = new Set(
+    upcomingActivities.map((activity) => activity.id),
+  );
+  const upcomingApplicationCount = applications.filter((application) =>
+    upcomingActivityIds.has(application.activityId),
+  ).length;
+  const capacityActivityIds = new Set(
+    upcomingActivities
+      .filter((activity) => (activityCapacityById[activity.id] ?? 0) > 0)
+      .map((activity) => activity.id),
+  );
+  const upcomingCapacity = upcomingActivities.reduce(
+    (total, activity) =>
+      capacityActivityIds.has(activity.id)
+        ? total + (activityCapacityById[activity.id] ?? 0)
+        : total,
+    0,
+  );
+  const capacityBackedApplicationCount = applications.filter((application) =>
+    capacityActivityIds.has(application.activityId),
+  ).length;
+
+  return {
+    upcomingActivityApplicationRate: percentage(
+      upcomingApplicationCount,
+      activeMemberCount * upcomingActivities.length,
+    ),
+    upcomingActivityCapacityFillRate: percentage(
+      capacityBackedApplicationCount,
+      upcomingCapacity,
+    ),
   };
 }
 

@@ -6,6 +6,8 @@
   "scripts": {
     "test": "node --test --experimental-strip-types \"src/**/*.test.ts\"",
     "test:domain": "node --test --experimental-strip-types \"src/domain/**/*.test.ts\"",
+    "test:rules": "node --test --experimental-strip-types \"tests/**/*.test.ts\"",
+    "test:rules:emulator": "firebase emulators:exec --project demo-gdgoc-cnu --only firestore \"npm run test:rules\"",
     "typecheck": "tsc --noEmit",
     "dev": "next dev",
     "build": "next build"
@@ -17,9 +19,11 @@
     "react-dom": "^19.2.6"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.1",
     "@types/node": "^25.6.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "firebase-tools": "^14.21.0",
     "typescript": "^6.0.3"
   }
 }
