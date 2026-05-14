@@ -267,6 +267,12 @@ export async function listHomeActivities(
   });
 }
 
+export function listPublicHomeActivities(
+  store: ActivityStore,
+): Promise<Activity[]> {
+  return listHomeActivities(store, 'visitor');
+}
+
 export async function getVisibleActivityById(
   store: ActivityStore,
   activityId: string,

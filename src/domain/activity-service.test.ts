@@ -7,6 +7,7 @@ import {
   createActivity,
   createInMemoryActivityStore,
   getVisibleActivityById,
+  listPublicHomeActivities,
   listPendingActivityProposals,
   listHomeActivities,
   proposeMemberActivity,
@@ -458,5 +459,52 @@ describe('activity detail lookup', () => {
     );
 
     assert.equal(activity, null);
+  });
+});
+
+describe('public home activity list', () => {
+  it('shows newly published public activities without leaking member-only or archived content', async () => {
+    const publicActivity: Activity = {
+      id: 'activity-public',
+      title: 'Build with AI Open Demo',
+      summary: 'Visitors can see this public event.',
+      type: 'event',
+      visibility: 'public',
+      status: 'published',
+      startsAt: '2026-05-16T04:00:00.000Z',
+      createdAt: '2026-05-11T09:00:00.000Z',
+      updatedAt: '2026-05-11T09:00:00.000Z',
+    };
+    const store = createInMemoryActivityStore([
+      {
+        ...publicActivity,
+        id: 'activity-member',
+        title: 'Member-only Study',
+        visibility: 'member',
+      },
+      {
+        ...publicActivity,
+        id: 'activity-archived',
+        title: 'Archived Public Event',
+        status: 'archived',
+      },
+    ]);
+    await createActivity(store, {
+      actorRole: 'team_member',
+      title: publicActivity.title,
+      summary: publicActivity.summary,
+      type: publicActivity.type,
+      visibility: publicActivity.visibility,
+      status: publicActivity.status,
+      startsAt: publicActivity.startsAt,
+      now: publicActivity.createdAt,
+    });
+
+    const activities = await listPublicHomeActivities(store);
+
+    assert.deepEqual(
+      activities.map((activity) => activity.title),
+      ['Build with AI Open Demo'],
+    );
   });
 });
