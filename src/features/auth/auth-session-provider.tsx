@@ -14,6 +14,7 @@ import type { UserRole } from '@/domain/activity';
 import { submitGuestProfile } from '@/domain/chapter-user-service';
 import { getFirebaseAuth, hasFirebaseConfig } from '@/lib/firebase/client';
 import { createBrowserChapterUserStore } from '../users/browser-chapter-user-store';
+import { signInWithPopupOrRedirect } from './firebase-google-sign-in';
 
 export type AuthSessionStatus =
   | 'loading'
@@ -162,8 +163,14 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
-    await signInWithPopup(getFirebaseAuth(), new GoogleAuthProvider());
+    const { GoogleAuthProvider, signInWithPopup, signInWithRedirect } =
+      await import('firebase/auth');
+    await signInWithPopupOrRedirect({
+      auth: getFirebaseAuth(),
+      provider: new GoogleAuthProvider(),
+      signInWithPopup,
+      signInWithRedirect,
+    });
   }
 
   async function signOutCurrentUser() {
