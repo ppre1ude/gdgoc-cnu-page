@@ -47,6 +47,21 @@ export type AcceptActivityProposalInput = {
   now: string;
 };
 
+export type UpdateActivityInput = {
+  actorRole: UserRole;
+  activityId: string;
+  title: string;
+  summary: string;
+  type: ActivityType;
+  visibility: ActivityVisibility;
+  status: ActivityStatus;
+  startsAt?: string;
+  registrationMode?: ActivityRegistrationMode;
+  externalRegistrationUrl?: string;
+  externalRegistrationLabel?: string;
+  now: string;
+};
+
 const operatorRoles = new Set<UserRole>(['team_member', 'organizer', 'admin']);
 const activeMemberRoles = new Set<UserRole>([
   'member',
@@ -102,6 +117,36 @@ export async function createActivity(
     externalRegistrationUrl: input.externalRegistrationUrl,
     externalRegistrationLabel: input.externalRegistrationLabel,
     createdAt: input.now,
+    updatedAt: input.now,
+  });
+}
+
+export async function updateActivity(
+  store: ActivityStore,
+  input: UpdateActivityInput,
+): Promise<Activity> {
+  if (!operatorRoles.has(input.actorRole)) {
+    throw new Error('Only operators can update activities.');
+  }
+
+  const activities = await store.list();
+  const activity = activities.find((current) => current.id === input.activityId);
+
+  if (!activity) {
+    throw new Error(`Activity was not found: ${input.activityId}`);
+  }
+
+  return store.save({
+    ...activity,
+    title: input.title,
+    summary: input.summary,
+    type: input.type,
+    visibility: input.visibility,
+    status: input.status,
+    startsAt: input.startsAt,
+    registrationMode: input.registrationMode,
+    externalRegistrationUrl: input.externalRegistrationUrl,
+    externalRegistrationLabel: input.externalRegistrationLabel,
     updatedAt: input.now,
   });
 }

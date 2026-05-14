@@ -9,6 +9,7 @@ import {
   listPendingActivityProposals,
   listHomeActivities,
   proposeMemberActivity,
+  updateActivity,
 } from './activity-service.ts';
 import type { Activity } from './activity.ts';
 
@@ -158,6 +159,106 @@ describe('activity authoring flow', () => {
         now: '2026-05-13T09:00:00.000Z',
       }),
       /Only operators can approve activity proposals/,
+    );
+  });
+
+  it('lets an operator update editable activity fields while preserving identity and proposal metadata', async () => {
+    const originalActivity: Activity = {
+      id: 'activity-existing',
+      title: 'Campus Map Assistant',
+      summary: 'Prototype a Gemini powered campus navigation helper.',
+      type: 'project',
+      visibility: 'operator',
+      status: 'draft',
+      startsAt: '2026-05-12T09:00:00.000Z',
+      registrationMode: 'internal',
+      proposalStatus: 'pending_review',
+      proposedByUserId: 'member-1',
+      proposalSubmittedAt: '2026-05-12T09:00:00.000Z',
+      createdAt: '2026-05-12T09:00:00.000Z',
+      updatedAt: '2026-05-12T09:00:00.000Z',
+    };
+    const store = createInMemoryActivityStore([originalActivity]);
+
+    const updated = await updateActivity(store, {
+      actorRole: 'team_member',
+      activityId: originalActivity.id,
+      title: 'Build with AI Demo Day',
+      summary: 'Showcase member prototypes made with Gemini and Firebase.',
+      type: 'event',
+      visibility: 'public',
+      status: 'published',
+      startsAt: '2026-05-20T09:00:00.000Z',
+      registrationMode: 'external',
+      externalRegistrationUrl: 'https://gdg.community.dev/events/demo-day',
+      externalRegistrationLabel: 'GDG event page',
+      now: '2026-05-14T09:00:00.000Z',
+    });
+    const activities = await store.list();
+
+    assert.equal(updated.id, originalActivity.id);
+    assert.equal(updated.createdAt, originalActivity.createdAt);
+    assert.equal(updated.updatedAt, '2026-05-14T09:00:00.000Z');
+    assert.equal(updated.title, 'Build with AI Demo Day');
+    assert.equal(updated.summary, 'Showcase member prototypes made with Gemini and Firebase.');
+    assert.equal(updated.type, 'event');
+    assert.equal(updated.visibility, 'public');
+    assert.equal(updated.status, 'published');
+    assert.equal(updated.startsAt, '2026-05-20T09:00:00.000Z');
+    assert.equal(updated.registrationMode, 'external');
+    assert.equal(updated.externalRegistrationUrl, 'https://gdg.community.dev/events/demo-day');
+    assert.equal(updated.externalRegistrationLabel, 'GDG event page');
+    assert.equal(updated.proposalStatus, 'pending_review');
+    assert.equal(updated.proposedByUserId, 'member-1');
+    assert.equal(updated.proposalSubmittedAt, '2026-05-12T09:00:00.000Z');
+    assert.deepEqual(activities[0], updated);
+  });
+
+  it('blocks non-operators from updating activities', async () => {
+    const originalActivity: Activity = {
+      id: 'activity-existing',
+      title: 'Campus Map Assistant',
+      summary: 'Prototype a Gemini powered campus navigation helper.',
+      type: 'project',
+      visibility: 'operator',
+      status: 'draft',
+      createdAt: '2026-05-12T09:00:00.000Z',
+      updatedAt: '2026-05-12T09:00:00.000Z',
+    };
+    const store = createInMemoryActivityStore([originalActivity]);
+
+    await assert.rejects(
+      updateActivity(store, {
+        actorRole: 'member',
+        activityId: originalActivity.id,
+        title: 'Build with AI Demo Day',
+        summary: 'Showcase member prototypes made with Gemini and Firebase.',
+        type: 'event',
+        visibility: 'public',
+        status: 'published',
+        now: '2026-05-14T09:00:00.000Z',
+      }),
+      /Only operators can update activities/,
+    );
+
+    assert.deepEqual((await store.list())[0], originalActivity);
+  });
+
+  it('throws a clear error when updating a missing activity', async () => {
+    const store = createInMemoryActivityStore();
+
+    await assert.rejects(
+      updateActivity(store, {
+        actorRole: 'team_member',
+        activityId: 'activity-missing',
+        title: 'Build with AI Demo Day',
+        summary: 'Showcase member prototypes made with Gemini and Firebase.',
+        type: 'event',
+        visibility: 'public',
+        status: 'published',
+        now: '2026-05-14T09:00:00.000Z',
+      }),
+      /Activity was not found: activity-missing/,
     );
   });
 });

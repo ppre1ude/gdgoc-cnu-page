@@ -31,6 +31,7 @@ import {
   createActivity,
   listHomeActivities,
   listPendingActivityProposals,
+  updateActivity,
 } from '@/domain/activity-service';
 import { listVisibleActivities } from '@/domain/activity';
 import { ActivityCard } from '@/components/activity-card';
@@ -46,7 +47,19 @@ type AiResponse = {
   warning?: string;
 };
 
-const initialDraft = {
+type ActivityDraftFormState = {
+  body: string;
+  externalRegistrationLabel: string;
+  externalRegistrationUrl: string;
+  registrationMode: ActivityRegistrationMode;
+  startsAt: string;
+  status: ActivityStatus;
+  title: string;
+  type: ActivityType;
+  visibility: ActivityVisibility;
+};
+
+const initialDraft: ActivityDraftFormState = {
   title: 'Build with AI Prototype Sprint',
   body:
     'Firebase Auth, Firestore Activity CRUD, Gemini 작성 보조를 연결해서 실제 작동하는 챕터 홈페이지 데모를 만듭니다.',
@@ -67,6 +80,7 @@ export function ActivityAdmin() {
   const applicationStore = useMemo(() => createBrowserActivityApplicationStore(), []);
   const attendanceStore = useMemo(() => createBrowserSessionAttendanceStore(), []);
   const [draft, setDraft] = useState(initialDraft);
+  const [editingActivityId, setEditingActivityId] = useState<string | null>(null);
   const [activities, setActivities] = useState<Activity[]>(
     listVisibleActivities(seedActivities, role),
   );
@@ -178,7 +192,8 @@ export function ActivityAdmin() {
   async function saveActivity(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    await createActivity(store, {
+    const now = new Date().toISOString();
+    const activityFields = {
       actorRole: role,
       title: draft.title,
       summary: draft.body,
@@ -189,11 +204,50 @@ export function ActivityAdmin() {
       registrationMode: draft.registrationMode,
       externalRegistrationUrl: draft.externalRegistrationUrl.trim() || undefined,
       externalRegistrationLabel: draft.externalRegistrationLabel.trim() || undefined,
-      now: new Date().toISOString(),
-    });
-    setMessage('Activity가 저장되었습니다. Member Home에서 바로 확인할 수 있습니다.');
+      now,
+    };
+
+    if (editingActivityId) {
+      await updateActivity(store, {
+        ...activityFields,
+        activityId: editingActivityId,
+      });
+    } else {
+      await createActivity(store, activityFields);
+    }
+    setMessage(
+      editingActivityId
+        ? 'Activity가 수정되었습니다. Member Home에서 바로 확인할 수 있습니다.'
+        : 'Activity가 저장되었습니다. Member Home에서 바로 확인할 수 있습니다.',
+    );
+    setDraft(initialDraft);
+    setEditingActivityId(null);
     setSuggestion(null);
     await refreshDashboard();
+  }
+
+  function startEditing(activity: Activity) {
+    setEditingActivityId(activity.id);
+    setDraft({
+      body: activity.summary,
+      externalRegistrationLabel: activity.externalRegistrationLabel ?? '',
+      externalRegistrationUrl: activity.externalRegistrationUrl ?? '',
+      registrationMode: activity.registrationMode ?? 'internal',
+      startsAt: toDateTimeLocalValue(activity.startsAt),
+      status: activity.status,
+      title: activity.title,
+      type: activity.type,
+      visibility: activity.visibility,
+    });
+    setSuggestion(null);
+    setMessage(`${activity.title} 수정 모드입니다. 내용을 고친 뒤 저장하세요.`);
+  }
+
+  function cancelEditing() {
+    setEditingActivityId(null);
+    setDraft(initialDraft);
+    setSuggestion(null);
+    setMessage('새 Activity 작성 모드입니다.');
   }
 
   async function approveApplication(application: ActivityApplication) {
@@ -252,6 +306,14 @@ export function ActivityAdmin() {
         <div className="dashboard-grid" style={{ marginTop: 28 }}>
           <section className="card">
             <form className="form" onSubmit={saveActivity}>
+              <div className="badge-row">
+                <span className="badge badge-blue">
+                  {editingActivityId ? 'Activity 수정' : 'Activity 생성'}
+                </span>
+                {editingActivityId ? (
+                  <span className="badge">{editingActivityId}</span>
+                ) : null}
+              </div>
               <label className="field">
                 <span>제목</span>
                 <input
@@ -388,9 +450,20 @@ export function ActivityAdmin() {
                   {isSuggesting ? 'AI 작성 중' : 'AI로 문구 정리'}
                 </button>
                 <button className="button button-primary" type="submit">
-                  Activity 저장
+                  {editingActivityId ? 'Activity 수정' : 'Activity 저장'}
                 </button>
               </div>
+              {editingActivityId ? (
+                <div className="toolbar">
+                  <button
+                    className="button button-secondary"
+                    onClick={cancelEditing}
+                    type="button"
+                  >
+                    수정 취소
+                  </button>
+                </div>
+              ) : null}
               <p className="helper-text">{message}</p>
             </form>
           </section>
@@ -450,6 +523,16 @@ export function ActivityAdmin() {
                 return (
                   <div className="stack" key={activity.id}>
                     <ActivityCard activity={activity} />
+                    <div className="toolbar">
+                      <button
+                        className="button button-secondary button-small"
+                        disabled={editingActivityId === activity.id}
+                        onClick={() => startEditing(activity)}
+                        type="button"
+                      >
+                        {editingActivityId === activity.id ? '수정 중' : '수정'}
+                      </button>
+                    </div>
                     <ApplicationQueue
                       activity={activity}
                       applications={applicationsByActivity[activity.id] ?? []}
@@ -615,4 +698,19 @@ function AttendanceSummary({
 
 function getDefaultSessionForActivity(activity: Activity): ActivitySession | null {
   return createDefaultActivitySession(activity);
+}
+
+function toDateTimeLocalValue(value: string | undefined) {
+  if (!value) {
+    return '';
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  const offsetMs = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
 }
