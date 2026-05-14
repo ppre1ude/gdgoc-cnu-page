@@ -1,42 +1,44 @@
-export type OnboardingToolBadge = {
+export type OnboardingValueBadge = {
   accent: 'blue' | 'red' | 'yellow' | 'green';
   label: string;
 };
 
-export type OnboardingProofPoint = {
+export type OnboardingBrandPoint = {
   detail: string;
   label: string;
   value: string;
 };
 
-export const onboardingToolBadges: OnboardingToolBadge[] = [
-  { accent: 'blue', label: 'Gemini' },
-  { accent: 'yellow', label: 'Firebase' },
-  { accent: 'green', label: 'Stitch' },
-  { accent: 'red', label: 'AI Studio' },
+export const onboardingValueBadges: OnboardingValueBadge[] = [
+  { accent: 'blue', label: 'Connect' },
+  { accent: 'yellow', label: 'Learn' },
+  { accent: 'green', label: 'Grow' },
 ];
 
 export const onboardingPosterPipeline = [
-  '아이디어',
-  'Gemini 초안',
-  'Firebase 저장',
-  '멤버 홈 반영',
+  'Connect',
+  'Learn',
+  'Grow',
+  'Impact',
 ] as const;
 
-export const onboardingProofPoints: OnboardingProofPoint[] = [
+export const onboardingBrandPoints: OnboardingBrandPoint[] = [
   {
-    detail: '운영진이 활동을 만들고 수정하면 Firestore에 저장됩니다.',
-    label: 'Real CRUD',
-    value: 'Firestore',
+    detail:
+      '학생들이 기술을 통해 성장하고, 다시 자신의 커뮤니티에 영향을 만들 수 있도록 돕습니다.',
+    label: 'Goal',
+    value: 'Impact & Empower',
   },
   {
-    detail: '거친 메모를 카드 요약, 멤버 공지, 공개 문구로 정리합니다.',
-    label: 'AI-assisted copy',
-    value: 'Gemini',
+    detail:
+      '워크숍을 열고 프로젝트를 만들며, 배운 내용을 실제 결과물로 연결합니다.',
+    label: 'Roles',
+    value: 'Workshops & Projects',
   },
   {
-    detail: '저장된 활동은 멤버 홈의 현재 활동 흐름에 바로 반영됩니다.',
-    label: 'Member reflection',
-    value: 'Live hub',
+    detail:
+      '전문성, 네트워크, 커뮤니티 학습을 함께 키우는 성장 환경을 제공합니다.',
+    label: 'Benefits',
+    value: 'Growth & Community',
   },
 ];

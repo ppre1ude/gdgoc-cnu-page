@@ -2,32 +2,49 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import {
+  onboardingBrandPoints,
   onboardingPosterPipeline,
-  onboardingProofPoints,
-  onboardingToolBadges,
+  onboardingValueBadges,
 } from './public-home-onboarding.ts';
 
 describe('public home onboarding content', () => {
-  it('keeps Build with AI anchored to concrete Google tools', () => {
+  it('frames GDGoC CNU around the chapter values', () => {
     assert.deepEqual(
-      onboardingToolBadges.map((badge) => badge.label),
-      ['Gemini', 'Firebase', 'Stitch', 'AI Studio'],
+      onboardingValueBadges.map((badge) => badge.label),
+      ['Connect', 'Learn', 'Grow'],
     );
   });
 
-  it('frames the poster pipeline as a real homepage product loop', () => {
+  it('turns the poster flow into an external visitor brand story', () => {
     assert.deepEqual(onboardingPosterPipeline, [
-      '아이디어',
-      'Gemini 초안',
-      'Firebase 저장',
-      '멤버 홈 반영',
+      'Connect',
+      'Learn',
+      'Grow',
+      'Impact',
     ]);
   });
 
-  it('shows the three proof points needed for the Saturday demo narrative', () => {
+  it('shows the goal, roles, and benefits external visitors should understand', () => {
     assert.deepEqual(
-      onboardingProofPoints.map((point) => point.label),
-      ['Real CRUD', 'AI-assisted copy', 'Member reflection'],
+      onboardingBrandPoints.map((point) => point.label),
+      ['Goal', 'Roles', 'Benefits'],
+    );
+  });
+
+  it('does not expose internal demo or implementation copy on the public onboarding surface', () => {
+    const publicCopy = [
+      ...onboardingValueBadges.map((badge) => badge.label),
+      ...onboardingPosterPipeline,
+      ...onboardingBrandPoints.flatMap((point) => [
+        point.detail,
+        point.label,
+        point.value,
+      ]),
+    ].join(' ');
+
+    assert.doesNotMatch(
+      publicCopy,
+      /Saturday Demo|operator note|Firestore|Real CRUD|AI-assisted copy|Member reflection|현재성/,
     );
   });
 });

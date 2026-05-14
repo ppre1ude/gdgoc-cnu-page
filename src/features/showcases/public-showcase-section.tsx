@@ -24,7 +24,7 @@ export function PublicShowcaseSection() {
   }, [store]);
 
   return (
-    <section className="section">
+    <section className="section" id="showcase">
       <div className="container">
         <div className="section-header">
           <div>
