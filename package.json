@@ -13,6 +13,9 @@
     "build": "next build"
   },
   "dependencies": {
+    "@wanteddev/wds": "^3.6.0",
+    "@wanteddev/wds-icon": "^3.6.0",
+    "@wanteddev/wds-nextjs": "^3.6.0",
     "firebase": "^12.13.0",
     "next": "^16.2.6",
     "react": "^19.2.6",
