@@ -28,6 +28,7 @@ import {
 } from '@/domain/activity-session';
 import {
   acceptActivityProposal,
+  archiveActivity,
   createActivity,
   listHomeActivities,
   listPendingActivityProposals,
@@ -248,6 +249,31 @@ export function ActivityAdmin() {
     setDraft(initialDraft);
     setSuggestion(null);
     setMessage('새 Activity 작성 모드입니다.');
+  }
+
+  async function archiveSavedActivity(activity: Activity) {
+    const confirmed = window.confirm(
+      `${activity.title} activity를 아카이브하시겠습니까? 아카이브된 activity는 Member Home과 상세 화면에서 숨겨집니다.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    await archiveActivity(store, {
+      actorRole: role,
+      activityId: activity.id,
+      now: new Date().toISOString(),
+    });
+
+    if (editingActivityId === activity.id) {
+      setEditingActivityId(null);
+      setDraft(initialDraft);
+      setSuggestion(null);
+    }
+
+    setMessage(`${activity.title} activity가 아카이브되었습니다.`);
+    await refreshDashboard();
   }
 
   async function approveApplication(application: ActivityApplication) {
@@ -531,6 +557,13 @@ export function ActivityAdmin() {
                         type="button"
                       >
                         {editingActivityId === activity.id ? '수정 중' : '수정'}
+                      </button>
+                      <button
+                        className="button button-ghost button-small"
+                        onClick={() => void archiveSavedActivity(activity)}
+                        type="button"
+                      >
+                        아카이브
                       </button>
                     </div>
                     <ApplicationQueue

@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 
 import {
   acceptActivityProposal,
+  archiveActivity,
   createActivity,
   createInMemoryActivityStore,
   getVisibleActivityById,
@@ -260,6 +261,141 @@ describe('activity authoring flow', () => {
       }),
       /Activity was not found: activity-missing/,
     );
+  });
+
+  it('lets an operator archive an activity while preserving activity metadata', async () => {
+    const originalActivity: Activity = {
+      id: 'activity-existing',
+      title: 'Campus Map Assistant',
+      summary: 'Prototype a Gemini powered campus navigation helper.',
+      type: 'project',
+      visibility: 'member',
+      status: 'published',
+      startsAt: '2026-05-20T09:00:00.000Z',
+      registrationMode: 'hybrid',
+      externalRegistrationUrl: 'https://gdg.community.dev/events/demo-day',
+      externalRegistrationLabel: 'GDG event page',
+      proposalStatus: 'accepted',
+      proposedByUserId: 'member-1',
+      proposalSubmittedAt: '2026-05-12T09:00:00.000Z',
+      proposalReviewedAt: '2026-05-13T09:00:00.000Z',
+      proposalReviewedByUserId: 'operator-1',
+      createdAt: '2026-05-12T09:00:00.000Z',
+      updatedAt: '2026-05-13T09:00:00.000Z',
+    };
+    const store = createInMemoryActivityStore([originalActivity]);
+
+    const archived = await archiveActivity(store, {
+      actorRole: 'organizer',
+      activityId: originalActivity.id,
+      now: '2026-05-14T09:00:00.000Z',
+    });
+    const memberHomeActivities = await listHomeActivities(store, 'member');
+    const memberDetailActivity = await getVisibleActivityById(
+      store,
+      originalActivity.id,
+      'member',
+    );
+
+    assert.equal(archived.id, originalActivity.id);
+    assert.equal(archived.createdAt, originalActivity.createdAt);
+    assert.equal(archived.updatedAt, '2026-05-14T09:00:00.000Z');
+    assert.equal(archived.status, 'archived');
+    assert.equal(archived.title, originalActivity.title);
+    assert.equal(archived.summary, originalActivity.summary);
+    assert.equal(archived.type, originalActivity.type);
+    assert.equal(archived.visibility, originalActivity.visibility);
+    assert.equal(archived.startsAt, originalActivity.startsAt);
+    assert.equal(archived.registrationMode, originalActivity.registrationMode);
+    assert.equal(
+      archived.externalRegistrationUrl,
+      originalActivity.externalRegistrationUrl,
+    );
+    assert.equal(
+      archived.externalRegistrationLabel,
+      originalActivity.externalRegistrationLabel,
+    );
+    assert.equal(archived.proposalStatus, originalActivity.proposalStatus);
+    assert.equal(archived.proposedByUserId, originalActivity.proposedByUserId);
+    assert.equal(
+      archived.proposalSubmittedAt,
+      originalActivity.proposalSubmittedAt,
+    );
+    assert.equal(
+      archived.proposalReviewedAt,
+      originalActivity.proposalReviewedAt,
+    );
+    assert.equal(
+      archived.proposalReviewedByUserId,
+      originalActivity.proposalReviewedByUserId,
+    );
+    assert.equal(memberHomeActivities.length, 0);
+    assert.equal(memberDetailActivity, null);
+  });
+
+  it('blocks non-operators from archiving activities', async () => {
+    const originalActivity: Activity = {
+      id: 'activity-existing',
+      title: 'Campus Map Assistant',
+      summary: 'Prototype a Gemini powered campus navigation helper.',
+      type: 'project',
+      visibility: 'member',
+      status: 'published',
+      createdAt: '2026-05-12T09:00:00.000Z',
+      updatedAt: '2026-05-12T09:00:00.000Z',
+    };
+    const store = createInMemoryActivityStore([originalActivity]);
+
+    await assert.rejects(
+      archiveActivity(store, {
+        actorRole: 'member',
+        activityId: originalActivity.id,
+        now: '2026-05-14T09:00:00.000Z',
+      }),
+      /Only operators can archive activities/,
+    );
+
+    assert.deepEqual((await store.list())[0], originalActivity);
+  });
+
+  it('throws a clear error when archiving a missing activity', async () => {
+    const store = createInMemoryActivityStore();
+
+    await assert.rejects(
+      archiveActivity(store, {
+        actorRole: 'team_member',
+        activityId: 'activity-missing',
+        now: '2026-05-14T09:00:00.000Z',
+      }),
+      /Activity was not found: activity-missing/,
+    );
+  });
+
+  it('archives an already archived activity idempotently', async () => {
+    const originalActivity: Activity = {
+      id: 'activity-existing',
+      title: 'Campus Map Assistant',
+      summary: 'Prototype a Gemini powered campus navigation helper.',
+      type: 'project',
+      visibility: 'member',
+      status: 'archived',
+      createdAt: '2026-05-12T09:00:00.000Z',
+      updatedAt: '2026-05-13T09:00:00.000Z',
+    };
+    const store = createInMemoryActivityStore([originalActivity]);
+
+    const archived = await archiveActivity(store, {
+      actorRole: 'admin',
+      activityId: originalActivity.id,
+      now: '2026-05-14T09:00:00.000Z',
+    });
+    const activities = await store.list();
+
+    assert.equal(archived.id, originalActivity.id);
+    assert.equal(archived.status, 'archived');
+    assert.equal(archived.updatedAt, '2026-05-14T09:00:00.000Z');
+    assert.equal(activities.length, 1);
+    assert.deepEqual(activities[0], archived);
   });
 });
 

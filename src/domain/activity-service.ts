@@ -47,6 +47,12 @@ export type AcceptActivityProposalInput = {
   now: string;
 };
 
+export type ArchiveActivityInput = {
+  actorRole: UserRole;
+  activityId: string;
+  now: string;
+};
+
 export type UpdateActivityInput = {
   actorRole: UserRole;
   activityId: string;
@@ -129,12 +135,7 @@ export async function updateActivity(
     throw new Error('Only operators can update activities.');
   }
 
-  const activities = await store.list();
-  const activity = activities.find((current) => current.id === input.activityId);
-
-  if (!activity) {
-    throw new Error(`Activity was not found: ${input.activityId}`);
-  }
+  const activity = await findActivityOrThrow(store, input.activityId);
 
   return store.save({
     ...activity,
@@ -147,6 +148,23 @@ export async function updateActivity(
     registrationMode: input.registrationMode,
     externalRegistrationUrl: input.externalRegistrationUrl,
     externalRegistrationLabel: input.externalRegistrationLabel,
+    updatedAt: input.now,
+  });
+}
+
+export async function archiveActivity(
+  store: ActivityStore,
+  input: ArchiveActivityInput,
+): Promise<Activity> {
+  if (!operatorRoles.has(input.actorRole)) {
+    throw new Error('Only operators can archive activities.');
+  }
+
+  const activity = await findActivityOrThrow(store, input.activityId);
+
+  return store.save({
+    ...activity,
+    status: 'archived',
     updatedAt: input.now,
   });
 }
@@ -261,4 +279,18 @@ export async function getVisibleActivityById(
       (activity) => activity.id === activityId,
     ) ?? null
   );
+}
+
+async function findActivityOrThrow(
+  store: ActivityStore,
+  activityId: string,
+): Promise<Activity> {
+  const activities = await store.list();
+  const activity = activities.find((current) => current.id === activityId);
+
+  if (!activity) {
+    throw new Error(`Activity was not found: ${activityId}`);
+  }
+
+  return activity;
 }
