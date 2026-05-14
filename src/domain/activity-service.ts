@@ -111,6 +111,8 @@ export async function createActivity(
     throw new Error('Only operators can create official activities.');
   }
 
+  const registrationFields = getRegistrationFields(input);
+
   return store.create({
     id: `activity-${crypto.randomUUID()}`,
     title: input.title,
@@ -119,9 +121,7 @@ export async function createActivity(
     visibility: input.visibility,
     status: input.status,
     startsAt: input.startsAt,
-    registrationMode: input.registrationMode,
-    externalRegistrationUrl: input.externalRegistrationUrl,
-    externalRegistrationLabel: input.externalRegistrationLabel,
+    ...registrationFields,
     createdAt: input.now,
     updatedAt: input.now,
   });
@@ -136,6 +136,7 @@ export async function updateActivity(
   }
 
   const activity = await findActivityOrThrow(store, input.activityId);
+  const registrationFields = getRegistrationFields(input);
 
   return store.save({
     ...activity,
@@ -145,9 +146,7 @@ export async function updateActivity(
     visibility: input.visibility,
     status: input.status,
     startsAt: input.startsAt,
-    registrationMode: input.registrationMode,
-    externalRegistrationUrl: input.externalRegistrationUrl,
-    externalRegistrationLabel: input.externalRegistrationLabel,
+    ...registrationFields,
     updatedAt: input.now,
   });
 }
@@ -299,4 +298,30 @@ async function findActivityOrThrow(
   }
 
   return activity;
+}
+
+function getRegistrationFields(
+  input: Pick<
+    CreateActivityInput,
+    'externalRegistrationLabel' | 'externalRegistrationUrl' | 'registrationMode'
+  >,
+): Pick<
+  Activity,
+  'externalRegistrationLabel' | 'externalRegistrationUrl' | 'registrationMode'
+> {
+  const registrationMode = input.registrationMode;
+
+  if (registrationMode !== 'external' && registrationMode !== 'hybrid') {
+    return {
+      registrationMode,
+      externalRegistrationLabel: undefined,
+      externalRegistrationUrl: undefined,
+    };
+  }
+
+  return {
+    registrationMode,
+    externalRegistrationLabel: input.externalRegistrationLabel,
+    externalRegistrationUrl: input.externalRegistrationUrl,
+  };
 }

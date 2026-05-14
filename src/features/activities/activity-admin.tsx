@@ -345,6 +345,10 @@ export function ActivityAdmin() {
     await refreshDashboard();
   }
 
+  const usesExternalRegistration = isExternalRegistrationMode(
+    draft.registrationMode,
+  );
+
   return (
     <main className="page">
       <div className="container">
@@ -434,12 +438,25 @@ export function ActivityAdmin() {
                   <span>등록 방식</span>
                   <select
                     className="select"
-                    onChange={(event) =>
+                    onChange={(event) => {
+                      const registrationMode = event.target
+                        .value as ActivityRegistrationMode;
+
                       setDraft((current) => ({
                         ...current,
-                        registrationMode: event.target.value as ActivityRegistrationMode,
-                      }))
-                    }
+                        registrationMode,
+                        externalRegistrationLabel: isExternalRegistrationMode(
+                          registrationMode,
+                        )
+                          ? current.externalRegistrationLabel
+                          : '',
+                        externalRegistrationUrl: isExternalRegistrationMode(
+                          registrationMode,
+                        )
+                          ? current.externalRegistrationUrl
+                          : '',
+                      }));
+                    }}
                     value={draft.registrationMode}
                   >
                     <option value="internal">내부 신청</option>
@@ -449,37 +466,45 @@ export function ActivityAdmin() {
                   </select>
                 </label>
 
+                {usesExternalRegistration ? (
+                  <label className="field">
+                    <span>외부 등록 버튼 문구</span>
+                    <input
+                      className="input"
+                      onChange={(event) =>
+                        setDraft((current) => ({
+                          ...current,
+                          externalRegistrationLabel: event.target.value,
+                        }))
+                      }
+                      placeholder="예: gdg.community.dev 등록"
+                      value={draft.externalRegistrationLabel}
+                    />
+                  </label>
+                ) : null}
+              </div>
+
+              {usesExternalRegistration ? (
                 <label className="field">
-                  <span>외부 등록 버튼</span>
+                  <span>외부 등록 URL</span>
                   <input
                     className="input"
                     onChange={(event) =>
                       setDraft((current) => ({
                         ...current,
-                        externalRegistrationLabel: event.target.value,
+                        externalRegistrationUrl: event.target.value,
                       }))
                     }
-                    placeholder="예: gdg.community.dev 등록"
-                    value={draft.externalRegistrationLabel}
+                    placeholder="https://gdg.community.dev/..."
+                    type="url"
+                    value={draft.externalRegistrationUrl}
                   />
+                  <span className="helper-text">
+                    GDG 공식 행사, Build with AI, 외부 신청 폼처럼 홈페이지 밖에서
+                    신청해야 하는 활동에만 사용합니다.
+                  </span>
                 </label>
-              </div>
-
-              <label className="field">
-                <span>외부 등록 URL</span>
-                <input
-                  className="input"
-                  onChange={(event) =>
-                    setDraft((current) => ({
-                      ...current,
-                      externalRegistrationUrl: event.target.value,
-                    }))
-                  }
-                  placeholder="https://gdg.community.dev/..."
-                  type="url"
-                  value={draft.externalRegistrationUrl}
-                />
-              </label>
+              ) : null}
 
               <label className="field">
                 <span>운영진 메모 / 본문</span>
@@ -768,4 +793,8 @@ function toDateTimeLocalValue(value: string | undefined) {
 
   const offsetMs = date.getTimezoneOffset() * 60_000;
   return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+}
+
+function isExternalRegistrationMode(mode: ActivityRegistrationMode) {
+  return mode === 'external' || mode === 'hybrid';
 }

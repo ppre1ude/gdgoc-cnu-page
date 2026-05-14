@@ -216,6 +216,79 @@ describe('activity authoring flow', () => {
     assert.deepEqual(activities[0], updated);
   });
 
+  it('stores external registration fields only for external or hybrid registration', async () => {
+    const store = createInMemoryActivityStore();
+
+    const internalActivity = await createActivity(store, {
+      actorRole: 'team_member',
+      title: 'Internal Seminar',
+      summary: 'Registration happens inside the homepage.',
+      type: 'event',
+      visibility: 'member',
+      status: 'published',
+      registrationMode: 'internal',
+      externalRegistrationUrl: 'https://gdg.community.dev/events/unused',
+      externalRegistrationLabel: 'Should not be stored',
+      now: '2026-05-14T09:00:00.000Z',
+    });
+
+    const externalActivity = await createActivity(store, {
+      actorRole: 'team_member',
+      title: 'GDG Korea Event',
+      summary: 'Registration happens on gdg.community.dev.',
+      type: 'event',
+      visibility: 'public',
+      status: 'published',
+      registrationMode: 'external',
+      externalRegistrationUrl: 'https://gdg.community.dev/events/gdg-korea',
+      externalRegistrationLabel: 'gdg.community.dev 등록',
+      now: '2026-05-14T09:00:00.000Z',
+    });
+
+    assert.equal(internalActivity.externalRegistrationUrl, undefined);
+    assert.equal(internalActivity.externalRegistrationLabel, undefined);
+    assert.equal(
+      externalActivity.externalRegistrationUrl,
+      'https://gdg.community.dev/events/gdg-korea',
+    );
+    assert.equal(externalActivity.externalRegistrationLabel, 'gdg.community.dev 등록');
+  });
+
+  it('clears stale external registration fields when switching to internal registration', async () => {
+    const originalActivity: Activity = {
+      id: 'activity-external',
+      title: 'GDG Korea Event',
+      summary: 'Registration happens on gdg.community.dev.',
+      type: 'event',
+      visibility: 'public',
+      status: 'published',
+      registrationMode: 'hybrid',
+      externalRegistrationUrl: 'https://gdg.community.dev/events/gdg-korea',
+      externalRegistrationLabel: 'gdg.community.dev 등록',
+      createdAt: '2026-05-14T09:00:00.000Z',
+      updatedAt: '2026-05-14T09:00:00.000Z',
+    };
+    const store = createInMemoryActivityStore([originalActivity]);
+
+    const updated = await updateActivity(store, {
+      actorRole: 'team_member',
+      activityId: originalActivity.id,
+      title: originalActivity.title,
+      summary: originalActivity.summary,
+      type: originalActivity.type,
+      visibility: originalActivity.visibility,
+      status: originalActivity.status,
+      registrationMode: 'none',
+      externalRegistrationUrl: originalActivity.externalRegistrationUrl,
+      externalRegistrationLabel: originalActivity.externalRegistrationLabel,
+      now: '2026-05-14T10:00:00.000Z',
+    });
+
+    assert.equal(updated.registrationMode, 'none');
+    assert.equal(updated.externalRegistrationUrl, undefined);
+    assert.equal(updated.externalRegistrationLabel, undefined);
+  });
+
   it('blocks non-operators from updating activities', async () => {
     const originalActivity: Activity = {
       id: 'activity-existing',
