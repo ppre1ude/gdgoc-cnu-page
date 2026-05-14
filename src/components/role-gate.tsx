@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react';
 
+import { WdsNotice } from '@/components/wds-form-controls';
 import type { UserRole } from '@/domain/activity';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 
@@ -38,13 +39,13 @@ export function RoleGate({
           <h1 className="page-title">{title}</h1>
           <p className="page-lead">{description}</p>
           <section className="section section-compact">
-            <div className="notice">
+            <WdsNotice>
               <strong>현재 역할: {role}</strong>
-              <p className="helper-text" style={{ color: '#7a4d00', marginTop: 8 }}>
+              <p className="helper-text helper-text-caution section-offset-xs">
                 데모 환경에서는 상단의 Demo role 선택으로 권한별 화면을 확인할 수 있습니다.
                 실제 배포에서는 Firebase Auth와 저장된 사용자 역할을 기준으로 보호합니다.
               </p>
-            </div>
+            </WdsNotice>
           </section>
         </div>
       </main>

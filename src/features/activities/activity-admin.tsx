@@ -39,13 +39,16 @@ import {
 import { listVisibleActivities } from '@/domain/activity';
 import { ActivityCard } from '@/components/activity-card';
 import {
+  WdsBadge,
   WdsButton,
+  WdsEmptyState,
   WdsField,
   WdsInput,
   WdsSelect,
   WdsTextArea,
   type WdsSelectOption,
 } from '@/components/wds-form-controls';
+import { WdsSectionHeader } from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserActivityApplicationStore } from './browser-activity-application-store';
 import { createBrowserActivitySessionStore } from './browser-activity-session-store';
@@ -384,15 +387,15 @@ export function ActivityAdmin() {
           bridge에 저장합니다.
         </p>
 
-        <div className="dashboard-grid" style={{ marginTop: 28 }}>
+        <div className="dashboard-grid section-offset-lg">
           <section className="card">
             <form className="form" onSubmit={saveActivity}>
               <div className="badge-row">
-                <span className="badge badge-blue">
+                <WdsBadge tone="blue">
                   {editingActivityId ? 'Activity 수정' : 'Activity 생성'}
-                </span>
+                </WdsBadge>
                 {editingActivityId ? (
-                  <span className="badge">{editingActivityId}</span>
+                  <WdsBadge>{editingActivityId}</WdsBadge>
                 ) : null}
               </div>
               <WdsField label="제목">
@@ -527,10 +530,10 @@ export function ActivityAdmin() {
           <aside className="stack">
             <section className="card">
               <div className="badge-row">
-                <span className="badge badge-blue">AI Draft</span>
+                <WdsBadge tone="blue">AI Draft</WdsBadge>
               </div>
               {suggestion ? (
-                <div className="stack" style={{ marginTop: 14 }}>
+                <div className="stack section-offset-sm">
                   <p className="helper-text">카드 요약</p>
                   <p>{suggestion.cardSummary}</p>
                   <p className="helper-text">멤버용 문구</p>
@@ -539,9 +542,9 @@ export function ActivityAdmin() {
                   <p>{suggestion.publicCopy}</p>
                   <div className="badge-row">
                     {suggestion.suggestedTags.map((tag) => (
-                      <span className="badge" key={tag}>
+                      <WdsBadge key={tag}>
                         {tag}
-                      </span>
+                      </WdsBadge>
                     ))}
                   </div>
                   {suggestion.missingInfo.length > 0 ? (
@@ -554,7 +557,7 @@ export function ActivityAdmin() {
                   </WdsButton>
                 </div>
               ) : (
-                <p className="helper-text" style={{ marginTop: 14 }}>
+                <p className="helper-text section-offset-sm">
                   초안을 입력하고 AI 보조를 실행하면 요약과 문구 제안이 여기에
                   표시됩니다.
                 </p>
@@ -567,12 +570,11 @@ export function ActivityAdmin() {
             />
 
             <section className="stack">
-              <div className="section-header" style={{ marginBottom: 0 }}>
-                <div>
-                  <h2>Saved</h2>
-                  <p>운영진 관점에서 볼 수 있는 activity입니다.</p>
-                </div>
-              </div>
+              <WdsSectionHeader
+                description="운영진 관점에서 볼 수 있는 activity입니다."
+                flush
+                title="Saved"
+              />
               {activities.map((activity) => {
                 const session = sessionsByActivity[activity.id] ?? null;
 
@@ -628,12 +630,11 @@ function ProposalReviewQueue({
 }) {
   return (
     <section className="stack">
-      <div className="section-header" style={{ marginBottom: 0 }}>
-        <div>
-          <h2>Member Proposals</h2>
-          <p>멤버가 제출한 프로젝트 제안을 검토하고 공개 여부를 확정합니다.</p>
-        </div>
-      </div>
+      <WdsSectionHeader
+        description="멤버가 제출한 프로젝트 제안을 검토하고 공개 여부를 확정합니다."
+        flush
+        title="Member Proposals"
+      />
 
       {proposals.length > 0 ? (
         <div className="application-queue">
@@ -658,9 +659,7 @@ function ProposalReviewQueue({
           ))}
         </div>
       ) : (
-        <div className="application-queue application-queue-empty">
-          검토 대기 중인 프로젝트 제안이 없습니다.
-        </div>
+        <WdsEmptyState>검토 대기 중인 프로젝트 제안이 없습니다.</WdsEmptyState>
       )}
     </section>
   );
@@ -696,9 +695,7 @@ function ApplicationQueue({
 
   if (applications.length === 0) {
     return (
-      <div className="application-queue application-queue-empty">
-        아직 신청자가 없습니다.
-      </div>
+      <WdsEmptyState>아직 신청자가 없습니다.</WdsEmptyState>
     );
   }
 
@@ -730,7 +727,7 @@ function ApplicationQueue({
                 승인
               </WdsButton>
             ) : isAttended ? (
-              <span className="badge badge-green">출석 완료</span>
+              <WdsBadge tone="green">출석 완료</WdsBadge>
             ) : (
               <WdsButton
                 disabled={!session}
@@ -756,10 +753,10 @@ function AttendanceSummary({
 }) {
   return (
     <div className="attendance-summary">
-      <span className="badge">신청 {summary.appliedCount}</span>
-      <span className="badge badge-blue">승인 {summary.approvedCount}</span>
-      <span className="badge badge-green">참석 {summary.attendedCount}</span>
-      <span className="badge">파생 미참석 {summary.derivedAbsentCount}</span>
+      <WdsBadge>신청 {summary.appliedCount}</WdsBadge>
+      <WdsBadge tone="blue">승인 {summary.approvedCount}</WdsBadge>
+      <WdsBadge tone="green">참석 {summary.attendedCount}</WdsBadge>
+      <WdsBadge>파생 미참석 {summary.derivedAbsentCount}</WdsBadge>
     </div>
   );
 }

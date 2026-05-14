@@ -3,6 +3,7 @@ import {
   type Showcase,
   type ShowcaseKind,
 } from '@/domain/showcase';
+import { WdsBadge } from '@/components/wds-form-controls';
 
 const showcaseKindLabel: Record<ShowcaseKind, string> = {
   achievement: '성과',
@@ -18,13 +19,13 @@ export function ShowcaseCard({ showcase }: { showcase: Showcase }) {
       <ShowcaseMedia showcase={showcase} />
       <div className="showcase-card-body">
         <div className="badge-row">
-          <span className="badge badge-green">
+          <WdsBadge tone="green">
             {showcaseKindLabel[showcase.kind]}
-          </span>
+          </WdsBadge>
           {showcase.tags.slice(0, 2).map((tag) => (
-            <span className="badge" key={tag}>
+            <WdsBadge key={tag}>
               {tag}
-            </span>
+            </WdsBadge>
           ))}
         </div>
         <h3>{showcase.title}</h3>

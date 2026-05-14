@@ -7,6 +7,8 @@ import type { ChapterRecord } from '@/domain/chapter-record';
 import { getVisibleChapterRecordById } from '@/domain/chapter-record-service';
 import { getRecordKindLabel } from '@/components/chapter-record-card';
 import {
+  WdsBadge,
+  WdsEmptyState,
   WdsField,
   WdsLinkButton,
   WdsSelect,
@@ -69,7 +71,7 @@ export function RecordDetail({ recordId }: { recordId: string }) {
   return (
     <main className="page">
       <div className="container">
-        <div className="toolbar" style={{ marginBottom: 20 }}>
+        <div className="toolbar section-offset-md">
           <WdsLinkButton href="/member" size="small" tone="secondary">
             Member Home
           </WdsLinkButton>
@@ -82,8 +84,8 @@ export function RecordDetail({ recordId }: { recordId: string }) {
           <div className="access-panel">
             <div>
               <div className="badge-row">
-                <span className="badge badge-blue">Record Detail</span>
-                <span className="badge">{status}</span>
+                <WdsBadge tone="blue">Record Detail</WdsBadge>
+                <WdsBadge>{status}</WdsBadge>
               </div>
               <h2>{record ? record.title : '챕터 기록 상세'}</h2>
               <p>{message}</p>
@@ -100,17 +102,17 @@ export function RecordDetail({ recordId }: { recordId: string }) {
         </section>
 
         {!isLoaded ? (
-          <div className="empty">기록을 불러오는 중입니다.</div>
+          <WdsEmptyState>기록을 불러오는 중입니다.</WdsEmptyState>
         ) : record ? (
           <article className="activity-detail">
             <div className="activity-detail-main">
               <div className="badge-row">
-                <span className="badge badge-blue">
+                <WdsBadge tone="blue">
                   {getRecordKindLabel(record.kind)}
-                </span>
-                <span className="badge">{record.visibility}</span>
+                </WdsBadge>
+                <WdsBadge>{record.visibility}</WdsBadge>
                 {record.showcaseCandidate ? (
-                  <span className="badge badge-green">Showcase Candidate</span>
+                  <WdsBadge tone="green">Showcase Candidate</WdsBadge>
                 ) : null}
               </div>
 
@@ -148,10 +150,10 @@ export function RecordDetail({ recordId }: { recordId: string }) {
             </aside>
           </article>
         ) : (
-          <div className="empty">
+          <WdsEmptyState>
             현재 역할로 열람할 수 없는 기록입니다. 멤버 전용 기록은 승인된 멤버에게만
             표시됩니다.
-          </div>
+          </WdsEmptyState>
         )}
       </div>
     </main>

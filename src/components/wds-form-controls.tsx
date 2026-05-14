@@ -2,6 +2,10 @@
 
 import {
   Button,
+  ContentBadge,
+  FallbackView,
+  FallbackViewContent,
+  FallbackViewText,
   FormControl,
   FormField,
   FormLabel,
@@ -9,6 +13,7 @@ import {
   Option,
   OptionContent,
   Select,
+  SectionMessage,
   TextArea,
   TextButton,
   TextField,
@@ -17,8 +22,10 @@ import Link from 'next/link';
 import type { ComponentProps, ElementType, ReactNode } from 'react';
 
 import {
+  getWdsBadgePresentation,
   getWdsButtonPresentation,
   getWdsTextButtonPresentation,
+  type WdsBadgeTone,
   type WdsButtonTone,
   type WdsSelectOption,
 } from './wds-form-control-model';
@@ -60,6 +67,22 @@ type WdsFieldProps = {
   className?: string;
   label: ReactNode;
   message?: ReactNode;
+};
+
+type WdsBadgeProps = Omit<
+  ComponentProps<typeof ContentBadge>,
+  'accentColor' | 'color' | 'neutralColor' | 'variant'
+> & {
+  tone?: WdsBadgeTone;
+};
+
+type WdsNoticeProps = Omit<ComponentProps<typeof SectionMessage>, 'variant'> & {
+  tone?: 'info' | 'positive' | 'cautionary' | 'negative';
+};
+
+type WdsEmptyStateProps = {
+  children: ReactNode;
+  className?: string;
 };
 
 type WdsInputProps = ComponentProps<typeof TextField>;
@@ -149,6 +172,44 @@ export function WdsTextLinkButton({
   );
 }
 
+export function WdsBadge({
+  size = 'small',
+  tone = 'neutral',
+  ...props
+}: WdsBadgeProps) {
+  return (
+    <ContentBadge
+      {...getWdsBadgePresentation(tone)}
+      size={size}
+      {...props}
+    />
+  );
+}
+
+export function WdsNotice({
+  closeButton = false,
+  tone = 'cautionary',
+  ...props
+}: WdsNoticeProps) {
+  return (
+    <SectionMessage
+      closeButton={closeButton}
+      variant={tone}
+      {...props}
+    />
+  );
+}
+
+export function WdsEmptyState({ children, className }: WdsEmptyStateProps) {
+  return (
+    <FallbackView className={className} padding="compact" width="100%">
+      <FallbackViewContent>
+        <FallbackViewText description={children} />
+      </FallbackViewContent>
+    </FallbackView>
+  );
+}
+
 export function WdsField({
   children,
   className,
@@ -209,4 +270,4 @@ export function WdsSelect<Value extends string>({
   );
 }
 
-export type { WdsSelectOption };
+export type { WdsBadgeTone, WdsSelectOption };

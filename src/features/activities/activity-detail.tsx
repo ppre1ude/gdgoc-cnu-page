@@ -19,7 +19,9 @@ import {
   useAuthSession,
 } from '@/features/auth/auth-session-provider';
 import {
+  WdsBadge,
   WdsButton,
+  WdsEmptyState,
   WdsField,
   WdsLinkButton,
   WdsSelect,
@@ -179,7 +181,7 @@ export function ActivityDetail({ activityId }: { activityId: string }) {
   return (
     <main className="page">
       <div className="container">
-        <div className="toolbar" style={{ marginBottom: 20 }}>
+        <div className="toolbar section-offset-md">
           <WdsLinkButton href="/member" size="small" tone="secondary">
             Member Home
           </WdsLinkButton>
@@ -192,8 +194,8 @@ export function ActivityDetail({ activityId }: { activityId: string }) {
           <div className="access-panel">
             <div>
               <div className="badge-row">
-                <span className="badge badge-blue">Activity Detail</span>
-                <span className="badge">{status}</span>
+                <WdsBadge tone="blue">Activity Detail</WdsBadge>
+                <WdsBadge>{status}</WdsBadge>
               </div>
               <h2>{activity ? activity.title : '활동 상세'}</h2>
               <p>{message}</p>
@@ -210,20 +212,20 @@ export function ActivityDetail({ activityId }: { activityId: string }) {
         </section>
 
         {!isLoaded ? (
-          <div className="empty">활동 정보를 불러오는 중입니다.</div>
+          <WdsEmptyState>활동 정보를 불러오는 중입니다.</WdsEmptyState>
         ) : activity && registrationPolicy ? (
           <article className="activity-detail">
             <div className="activity-detail-main">
               <div className="badge-row">
-                <span className="badge badge-blue">
+                <WdsBadge tone="blue">
                   {activityTypeLabel[activity.type]}
-                </span>
-                <span className="badge">{visibilityLabel[activity.visibility]}</span>
-                <span className="badge">{registrationPolicy.registrationMode}</span>
+                </WdsBadge>
+                <WdsBadge>{visibilityLabel[activity.visibility]}</WdsBadge>
+                <WdsBadge>{registrationPolicy.registrationMode}</WdsBadge>
                 {applicationState ? (
-                  <span className="badge badge-green">
+                  <WdsBadge tone="green">
                     {applicationStateLabel[applicationState]}
-                  </span>
+                  </WdsBadge>
                 ) : null}
               </div>
 
@@ -290,10 +292,10 @@ export function ActivityDetail({ activityId }: { activityId: string }) {
             </aside>
           </article>
         ) : (
-          <div className="empty">
+          <WdsEmptyState>
             현재 역할로 열람할 수 없는 활동입니다. 멤버 전용 활동은 승인된
             멤버에게만 표시됩니다.
-          </div>
+          </WdsEmptyState>
         )}
       </div>
     </main>

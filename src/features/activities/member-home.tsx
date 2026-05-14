@@ -36,8 +36,11 @@ import { ActivityCard } from '@/components/activity-card';
 import { ChapterRecordCard } from '@/components/chapter-record-card';
 import { NoticeBoard } from '@/components/notice-board';
 import { ShowcaseCard } from '@/components/showcase-card';
+import { WdsSectionHeader } from '@/components/wds-layout-primitives';
 import {
+  WdsBadge,
   WdsButton,
+  WdsEmptyState,
   WdsField,
   WdsInput,
   WdsSelect,
@@ -359,8 +362,8 @@ export function MemberHome() {
           <div className="access-panel">
             <div>
               <div className="badge-row">
-                <span className="badge badge-blue">Demo Role</span>
-                <span className="badge">{access.status}</span>
+                <WdsBadge tone="blue">Demo Role</WdsBadge>
+                <WdsBadge>{access.status}</WdsBadge>
               </div>
               <h2>{getAccessPanelTitle(access?.status)}</h2>
               <p>{access.message}</p>
@@ -407,12 +410,10 @@ export function MemberHome() {
         ) : null}
 
         <section className="section section-compact">
-          <div className="section-header">
-            <div>
-              <h2>공지사항</h2>
-              <p>운영진이 고정한 중요한 공지를 먼저 보여줍니다.</p>
-            </div>
-          </div>
+          <WdsSectionHeader
+            description="운영진이 고정한 중요한 공지를 먼저 보여줍니다."
+            title="공지사항"
+          />
           <NoticeBoard notices={notices.slice(0, 6)} />
         </section>
 
@@ -420,9 +421,9 @@ export function MemberHome() {
 
         <ChapterRecordSection records={records.slice(0, 3)} />
 
-        <div className="grid grid-3" style={{ marginTop: 28 }}>
+        <div className="grid grid-3 section-offset-lg">
           <div className="card">
-            <span className="badge badge-green">Participation</span>
+            <WdsBadge tone="green">Participation</WdsBadge>
             <h3>
               {canApplyToActivities
                 ? `${activeApplicationCount}개 활동 참여 중`
@@ -435,7 +436,7 @@ export function MemberHome() {
             </p>
           </div>
           <div className="card">
-            <span className="badge badge-blue">Next Action</span>
+            <WdsBadge tone="blue">Next Action</WdsBadge>
             <h3>{activities.length}개 활동 열람 가능</h3>
             <p>Firebase 설정 전에는 localStorage bridge로 같은 흐름을 검증합니다.</p>
           </div>
@@ -499,7 +500,7 @@ function MemberProposalForm({
     <section className="section section-compact">
       <form className="card guest-profile-form" onSubmit={onSubmit}>
         <div>
-          <span className="badge badge-blue">Member Proposal</span>
+          <WdsBadge tone="blue">Member Proposal</WdsBadge>
           <h2>스터디 / 프로젝트 제안</h2>
           <p>
             멤버가 직접 스터디를 열거나 프로젝트 아이디어를 제안할 수 있습니다. 프로젝트는
@@ -573,7 +574,7 @@ function MemberRecordForm({
     <section className="section section-compact">
       <form className="card guest-profile-form" onSubmit={onSubmit}>
         <div>
-          <span className="badge badge-green">Chapter Record</span>
+          <WdsBadge tone="green">Chapter Record</WdsBadge>
           <h2>회고 / 리뷰 / 기술 노트 작성</h2>
           <p>
             Discord에 묻히기 쉬운 긴 글을 홈페이지 기록으로 남깁니다. 제출된 글은 운영진
@@ -658,7 +659,7 @@ function GuestProfileForm({
     <section className="section section-compact">
       <form className="card guest-profile-form" onSubmit={onSubmit}>
         <div>
-          <span className="badge badge-green">Guest Profile</span>
+          <WdsBadge tone="green">Guest Profile</WdsBadge>
           <h2>멤버 승인 요청 정보</h2>
           <p>
             운영진이 guest 계정을 member로 승인하기 전에 확인할 기본 정보를
@@ -745,15 +746,10 @@ function toGuestProfileForm(user: ChapterUser): GuestProfileFormState {
 function ShowcasePreviewSection({ showcases }: { showcases: Showcase[] }) {
   return (
     <section className="section section-compact">
-      <div className="section-header">
-        <div>
-          <h2>쇼케이스</h2>
-          <p>
-            최근 활동 성과, 회고, 프로젝트 결과를 activity와 분리된 아카이브로
-            모아 보여줍니다.
-          </p>
-        </div>
-      </div>
+      <WdsSectionHeader
+        description="최근 활동 성과, 회고, 프로젝트 결과를 activity와 분리된 아카이브로 모아 보여줍니다."
+        title="쇼케이스"
+      />
       {showcases.length > 0 ? (
         <div className="grid grid-3">
           {showcases.map((showcase) => (
@@ -761,7 +757,7 @@ function ShowcasePreviewSection({ showcases }: { showcases: Showcase[] }) {
           ))}
         </div>
       ) : (
-        <div className="empty">아직 표시할 쇼케이스가 없습니다.</div>
+        <WdsEmptyState>아직 표시할 쇼케이스가 없습니다.</WdsEmptyState>
       )}
     </section>
   );
@@ -770,14 +766,10 @@ function ShowcasePreviewSection({ showcases }: { showcases: Showcase[] }) {
 function ChapterRecordSection({ records }: { records: ChapterRecord[] }) {
   return (
     <section className="section section-compact">
-      <div className="section-header">
-        <div>
-          <h2>긴 글 기록</h2>
-          <p>
-            회고, 리뷰, 기술 노트처럼 Discord보다 오래 남겨야 하는 글을 모아 보여줍니다.
-          </p>
-        </div>
-      </div>
+      <WdsSectionHeader
+        description="회고, 리뷰, 기술 노트처럼 Discord보다 오래 남겨야 하는 글을 모아 보여줍니다."
+        title="긴 글 기록"
+      />
       {records.length > 0 ? (
         <div className="grid grid-3">
           {records.map((record) => (
@@ -785,7 +777,7 @@ function ChapterRecordSection({ records }: { records: ChapterRecord[] }) {
           ))}
         </div>
       ) : (
-        <div className="empty">아직 게시된 긴 글 기록이 없습니다.</div>
+        <WdsEmptyState>아직 게시된 긴 글 기록이 없습니다.</WdsEmptyState>
       )}
     </section>
   );
@@ -798,28 +790,20 @@ function MemberApplicationsSection({
 }) {
   return (
     <section className="section section-compact">
-      <div className="section-header">
-        <div>
-          <h2>내 신청 현황</h2>
-          <p>
-            내가 신청한 활동의 승인 상태와 다음 일정을 별도 목록으로 확인합니다.
-          </p>
-        </div>
-      </div>
+      <WdsSectionHeader
+        description="내가 신청한 활동의 승인 상태와 다음 일정을 별도 목록으로 확인합니다."
+        title="내 신청 현황"
+      />
       {summaries.length > 0 ? (
         <div className="application-queue">
           {summaries.map(({ activity, state }) => (
             <article className="application-row" key={activity.id}>
               <div>
                 <div className="badge-row">
-                  <span
-                    className={
-                      state === 'approved' ? 'badge badge-green' : 'badge badge-blue'
-                    }
-                  >
+                  <WdsBadge tone={state === 'approved' ? 'green' : 'blue'}>
                     {getApplicationStateLabel(state)}
-                  </span>
-                  <span className="badge">{activity.type}</span>
+                  </WdsBadge>
+                  <WdsBadge>{activity.type}</WdsBadge>
                 </div>
                 <strong>{activity.title}</strong>
                 <p className="helper-text">
@@ -837,7 +821,7 @@ function MemberApplicationsSection({
           ))}
         </div>
       ) : (
-        <div className="empty">아직 신청 중인 활동이 없습니다.</div>
+        <WdsEmptyState>아직 신청 중인 활동이 없습니다.</WdsEmptyState>
       )}
     </section>
   );
@@ -860,12 +844,7 @@ function ActivitySection({
 }) {
   return (
     <section className="section">
-      <div className="section-header">
-        <div>
-          <h2>{title}</h2>
-          <p>{description}</p>
-        </div>
-      </div>
+      <WdsSectionHeader description={description} title={title} />
       {activities.length > 0 ? (
         <div className="grid grid-3">
           {activities.map((activity) => (
@@ -879,7 +858,7 @@ function ActivitySection({
           ))}
         </div>
       ) : (
-        <div className="empty">아직 표시할 활동이 없습니다.</div>
+        <WdsEmptyState>아직 표시할 활동이 없습니다.</WdsEmptyState>
       )}
     </section>
   );

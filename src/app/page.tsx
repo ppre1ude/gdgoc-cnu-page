@@ -15,9 +15,6 @@ export default function PublicHomePage() {
         aria-labelledby="public-home-title"
         className="onboarding-hero"
       >
-        <div className="onboarding-ribbon ribbon-blue" aria-hidden="true">
-          <span>Connect</span>
-        </div>
         <div className="onboarding-ribbon ribbon-red" aria-hidden="true">
           <span>Impact</span>
         </div>
@@ -26,15 +23,6 @@ export default function PublicHomePage() {
         </div>
         <div className="onboarding-ribbon ribbon-green" aria-hidden="true">
           <span>Community</span>
-        </div>
-        <div className="onboarding-ribbon ribbon-blue-short" aria-hidden="true">
-          <span>AI</span>
-        </div>
-        <div className="onboarding-ribbon ribbon-red-short" aria-hidden="true">
-          <span>Build</span>
-        </div>
-        <div className="onboarding-ribbon ribbon-yellow-wide" aria-hidden="true">
-          <span>Learn</span>
         </div>
         <div className="onboarding-ribbon-arc ribbon-arc-green" aria-hidden="true" />
         <div className="onboarding-ribbon-arc ribbon-arc-blue" aria-hidden="true" />
@@ -46,16 +34,16 @@ export default function PublicHomePage() {
               <span>Build with AI</span>
             </div>
             <h1 id="public-home-title">
-              <span>기술로 배우고</span>
-              <span>연결하며</span>
-              <span>커뮤니티에</span>
-              <span>임팩트를 만듭니다</span>
+              <span>배우고, 만들고,</span>
+              <span>나누는</span>
+              <span>학생 개발자</span>
+              <span>커뮤니티</span>
             </h1>
             <p>
-              <span>Connect, Learn, Grow를 경험하며</span>
-              <span>워크숍과 프로젝트로</span>
-              <span>기술을 실천하는 커뮤니티입니다.</span>
-              <span>성장의 힘은 지역 커뮤니티로 이어집니다.</span>
+              <span>GDGoC CNU는 Google 기술과 AI를 함께 실험하며,</span>
+              <span>워크숍과 프로젝트를 통해</span>
+              <span>배움을 실제 결과로 연결합니다.</span>
+              <span>서로의 성장을 돕고 그 경험을 커뮤니티에 나눕니다.</span>
             </p>
             <div className="hero-actions">
               <WdsLinkButton href="/member" tone="primary">
@@ -110,11 +98,11 @@ export default function PublicHomePage() {
         <div className="container campaign-bridge-grid">
           <div>
             <span className="badge badge-blue">GDGoC CNU Values</span>
-            <h2 id="values-title">Connect, Learn, Grow로 만드는 커뮤니티 임팩트</h2>
+            <h2 id="values-title">함께 배우고, 프로젝트로 성장하는 방식</h2>
           </div>
           <p>
-            GDGoC CNU는 기술을 배우는 학생들이 서로 연결되고, 실제 프로젝트로
-            성장하며, 그 경험을 다시 커뮤니티에 나누는 장을 만듭니다.
+            연결은 배움의 시작이고, 실습은 성장의 속도가 됩니다. GDGoC CNU는
+            함께 만든 결과를 다시 커뮤니티의 자산으로 남깁니다.
           </p>
           <div
             aria-label="GDGoC CNU의 가치와 활동 흐름"
@@ -165,26 +153,25 @@ export default function PublicHomePage() {
         <div className="container grid grid-3">
           <div className="card">
             <span className="badge badge-blue">Connect</span>
-            <h3>사람과 기회를 연결합니다</h3>
+            <h3>함께할 사람을 만납니다</h3>
             <p>
-              학교 안팎의 개발자, 멘토, 파트너와 만나며 더 넓은 네트워크를
-              만듭니다.
+              학교 안팎의 동료, 멘토, 파트너와 연결되어 더 넓은 개발자
+              네트워크를 만듭니다.
             </p>
           </div>
           <div className="card">
             <span className="badge">Learn</span>
-            <h3>함께 배우는 워크숍을 엽니다</h3>
+            <h3>실습으로 기술을 익힙니다</h3>
             <p>
-              최신 기술을 혼자 공부하는 데서 멈추지 않고, 서로 설명하고
-              실습하며 익힙니다.
+              Google 기술과 AI를 직접 다루고, 서로 설명하며 배움을 공유합니다.
             </p>
           </div>
           <div className="card">
             <span className="badge badge-green">Grow</span>
-            <h3>프로젝트로 성장합니다</h3>
+            <h3>프로젝트로 경험을 쌓습니다</h3>
             <p>
-              배운 내용을 실제 결과물로 만들며 전문성과 커뮤니티 학습 경험을
-              함께 키웁니다.
+              아이디어를 작은 결과물로 구현하며 협업과 문제 해결 경험을
+              쌓습니다.
             </p>
           </div>
         </div>

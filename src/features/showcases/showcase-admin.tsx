@@ -14,6 +14,7 @@ import {
   WdsTextArea,
   type WdsSelectOption,
 } from '@/components/wds-form-controls';
+import { WdsSectionHeader } from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserShowcaseStore } from './browser-showcase-store';
 import { seedShowcases } from './seed-showcases';
@@ -121,7 +122,7 @@ export function ShowcaseAdmin() {
           등록합니다.
         </p>
 
-        <div className="dashboard-grid" style={{ marginTop: 28 }}>
+        <div className="dashboard-grid section-offset-lg">
           <section className="card">
             <form className="form" onSubmit={saveShowcase}>
               <div className="grid grid-2">
@@ -273,12 +274,11 @@ export function ShowcaseAdmin() {
           </section>
 
           <aside className="stack">
-            <div className="section-header" style={{ marginBottom: 0 }}>
-              <div>
-                <h2>Saved Showcases</h2>
-                <p>운영진 관점에서 볼 수 있는 최신 쇼케이스입니다.</p>
-              </div>
-            </div>
+            <WdsSectionHeader
+              description="운영진 관점에서 볼 수 있는 최신 쇼케이스입니다."
+              flush
+              title="Saved Showcases"
+            />
             {showcases.map((showcase) => (
               <ShowcaseCard key={showcase.id} showcase={showcase} />
             ))}

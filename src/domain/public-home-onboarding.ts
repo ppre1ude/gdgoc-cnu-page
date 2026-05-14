@@ -33,51 +33,55 @@ export const onboardingPosterPipeline = [
 export const onboardingValueProcess: OnboardingValueProcessStep[] = [
   {
     accent: 'blue',
-    detail: '동료, 멘토, 파트너와 만나 성장의 방향을 넓힙니다.',
+    detail:
+      '학교 안팎의 동료, 멘토, 파트너와 연결되어 더 넓은 개발자 네트워크를 만듭니다.',
     kicker: 'Network',
     label: 'Connect',
-    title: '사람과 기회를 연결합니다.',
+    title: '함께할 사람을 만납니다.',
   },
   {
     accent: 'yellow',
-    detail: '최신 기술을 실습하고 서로 설명하며 배움을 공유합니다.',
+    detail:
+      '워크숍과 핸즈온에서 Google 기술과 AI를 직접 다루고 서로 설명하며 배움을 공유합니다.',
     kicker: 'Workshop',
     label: 'Learn',
-    title: '워크숍으로 함께 배웁니다.',
+    title: '실습으로 기술을 익힙니다.',
   },
   {
     accent: 'red',
-    detail: '아이디어를 실제 결과물로 만들며 전문성과 네트워크 성장을 키웁니다.',
+    detail:
+      '아이디어를 작은 프로젝트로 구현하며 협업과 문제 해결 경험을 쌓습니다.',
     kicker: 'Project',
     label: 'Grow',
-    title: '프로젝트로 성장합니다.',
+    title: '프로젝트로 경험을 쌓습니다.',
   },
   {
     accent: 'green',
-    detail: '성장의 경험을 학교와 지역 커뮤니티에 다시 나눕니다.',
+    detail:
+      '프로젝트와 기록을 공유해 배움이 다음 커뮤니티 활동의 출발점이 되게 합니다.',
     kicker: 'Community',
     label: 'Impact',
-    title: '커뮤니티로 확장합니다.',
+    title: '배운 것을 커뮤니티에 나눕니다.',
   },
 ];
 
 export const onboardingBrandPoints: OnboardingBrandPoint[] = [
   {
     detail:
-      '학생들이 기술을 통해 성장하고, 다시 자신의 커뮤니티에 영향을 만들 수 있도록 돕습니다.',
+      '학생들이 기술로 성장하고, 그 성장이 학교와 지역 커뮤니티의 변화로 이어지도록 돕습니다.',
     label: 'Goal',
     value: 'Impact & Empower',
   },
   {
     detail:
-      '워크숍을 열고 프로젝트를 만들며, 배운 내용을 실제 결과물로 연결합니다.',
+      '워크숍, 테크톡, 핸즈온, 프로젝트를 통해 배움을 실행 가능한 경험으로 바꿉니다.',
     label: 'Roles',
     value: 'Workshops & Projects',
   },
   {
     detail:
-      '전문성, 네트워크, 커뮤니티 학습을 함께 키우는 성장 환경을 제공합니다.',
+      '전문성, 협업 경험, 네트워크를 함께 키우며 서로 배우는 문화를 만듭니다.',
     label: 'Benefits',
-    value: 'Growth & Community',
+    value: 'Growth & Network',
   },
 ];

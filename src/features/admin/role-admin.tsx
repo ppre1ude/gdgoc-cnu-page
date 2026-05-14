@@ -10,10 +10,12 @@ import {
   formatKoreanDateTime,
 } from '@/lib/format-korean-date-time';
 import {
+  WdsBadge,
   WdsButton,
   WdsField,
   WdsSelect,
 } from '@/components/wds-form-controls';
+import { WdsSectionHeader } from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserChapterUserStore } from '../users/browser-chapter-user-store';
 import { seedChapterUsers } from '../users/seed-chapter-users';
@@ -170,7 +172,7 @@ export function RoleAdmin() {
         <section className="section section-compact">
           <div className="grid grid-2">
             <div className="card">
-              <span className="badge badge-blue">Role Policy</span>
+              <WdsBadge tone="blue">Role Policy</WdsBadge>
               <h2>역할 변경은 admin만 수행</h2>
               <p>
                 team_member는 guest를 member로 승인할 수 있지만, 일반 역할 변경은 admin
@@ -178,7 +180,7 @@ export function RoleAdmin() {
               </p>
             </div>
             <div className="card">
-              <span className="badge badge-green">Audit Log</span>
+              <WdsBadge tone="green">Audit Log</WdsBadge>
               <h2>{roleChangeLogs.length}건 기록됨</h2>
               <p>
                 모든 역할 변경은 actor, target, 이전 역할, 다음 역할, 변경 시각과 함께
@@ -188,14 +190,13 @@ export function RoleAdmin() {
           </div>
         </section>
 
-        <div className="dashboard-grid" style={{ marginTop: 18 }}>
+        <div className="dashboard-grid section-offset-md">
           <section className="stack">
-            <div className="section-header" style={{ marginBottom: 0 }}>
-              <div>
-                <h2>사용자 역할</h2>
-                <p>{message}</p>
-              </div>
-            </div>
+            <WdsSectionHeader
+              description={message}
+              flush
+              title="사용자 역할"
+            />
 
             <div className="member-approval-list">
               {users.map((user) => {
@@ -206,10 +207,10 @@ export function RoleAdmin() {
                   <article className="member-approval-row" key={user.id}>
                     <div>
                       <div className="badge-row">
-                        <span className="badge">{getRoleLabel(user.role)}</span>
-                        <span className="badge">{formatKoreanDate(user.createdAt)} 가입</span>
+                        <WdsBadge>{getRoleLabel(user.role)}</WdsBadge>
+                        <WdsBadge>{formatKoreanDate(user.createdAt)} 가입</WdsBadge>
                         {user.department ? (
-                          <span className="badge badge-blue">{user.department}</span>
+                          <WdsBadge tone="blue">{user.department}</WdsBadge>
                         ) : null}
                       </div>
                       <strong>{user.displayName}</strong>
@@ -251,7 +252,7 @@ export function RoleAdmin() {
 
           <aside className="stack">
             <div className="card">
-              <span className="badge badge-blue">Role Guide</span>
+              <WdsBadge tone="blue">Role Guide</WdsBadge>
               <h2>권한 설명</h2>
               <dl className="profile-summary-list">
                 {accountRoles.map((role) => (
@@ -264,7 +265,7 @@ export function RoleAdmin() {
             </div>
 
             <div className="card">
-              <span className="badge badge-green">Recent Logs</span>
+              <WdsBadge tone="green">Recent Logs</WdsBadge>
               <h2>최근 변경</h2>
               {roleChangeLogs.length > 0 ? (
                 <dl className="profile-summary-list">

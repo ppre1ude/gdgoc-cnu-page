@@ -11,6 +11,7 @@ import {
 } from '@/domain/notice-service';
 import { NoticeBoard } from '@/components/notice-board';
 import {
+  WdsBadge,
   WdsButton,
   WdsField,
   WdsInput,
@@ -18,6 +19,7 @@ import {
   WdsTextArea,
   type WdsSelectOption,
 } from '@/components/wds-form-controls';
+import { WdsSectionHeader } from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserNoticeStore } from './browser-notice-store';
 import { seedNotices } from './seed-notices';
@@ -153,15 +155,15 @@ export function NoticeAdmin() {
           노출합니다.
         </p>
 
-        <div className="dashboard-grid" style={{ marginTop: 28 }}>
+        <div className="dashboard-grid section-offset-lg">
           <section className="card">
             <form className="form" onSubmit={saveNotice}>
               <div className="badge-row">
-                <span className="badge badge-blue">
+                <WdsBadge tone="blue">
                   {editingNoticeId ? '공지 수정' : '공지 생성'}
-                </span>
+                </WdsBadge>
                 {editingNoticeId ? (
-                  <span className="badge">{editingNoticeId}</span>
+                  <WdsBadge>{editingNoticeId}</WdsBadge>
                 ) : null}
               </div>
 
@@ -243,12 +245,11 @@ export function NoticeAdmin() {
           </section>
 
           <aside className="stack">
-            <div className="section-header" style={{ marginBottom: 0 }}>
-              <div>
-                <h2>Saved Notices</h2>
-                <p>멤버 홈에 노출되는 순서대로 표시합니다.</p>
-              </div>
-            </div>
+            <WdsSectionHeader
+              description="멤버 홈에 노출되는 순서대로 표시합니다."
+              flush
+              title="Saved Notices"
+            />
             <NoticeBoard
               notices={notices}
               renderActions={(notice) => (

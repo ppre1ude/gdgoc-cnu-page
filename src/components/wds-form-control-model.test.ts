@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 
 import {
   findWdsSelectLabel,
+  getWdsBadgePresentation,
   getWdsButtonPresentation,
   getWdsTextButtonPresentation,
   type WdsSelectOption,
@@ -33,6 +34,24 @@ describe('WDS form control model', () => {
     });
     assert.deepEqual(getWdsTextButtonPresentation('ghost'), {
       color: 'assistive',
+    });
+  });
+
+  it('maps app badge tones to WDS content badge presentation props', () => {
+    assert.deepEqual(getWdsBadgePresentation('neutral'), {
+      color: 'neutral',
+      neutralColor: 'semantic.label.alternative',
+      variant: 'outlined',
+    });
+    assert.deepEqual(getWdsBadgePresentation('blue'), {
+      accentColor: 'semantic.accent.foreground.blue',
+      color: 'accent',
+      variant: 'outlined',
+    });
+    assert.deepEqual(getWdsBadgePresentation('green'), {
+      accentColor: 'semantic.accent.foreground.green',
+      color: 'accent',
+      variant: 'outlined',
     });
   });
 

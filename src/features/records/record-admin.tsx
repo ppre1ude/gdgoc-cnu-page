@@ -17,12 +17,14 @@ import {
 import { ChapterRecordCard } from '@/components/chapter-record-card';
 import {
   WdsButton,
+  WdsEmptyState,
   WdsField,
   WdsInput,
   WdsSelect,
   WdsTextArea,
   type WdsSelectOption,
 } from '@/components/wds-form-controls';
+import { WdsSectionHeader } from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserChapterRecordStore } from './browser-chapter-record-store';
 import { seedChapterRecords } from './seed-chapter-records';
@@ -136,7 +138,7 @@ export function RecordAdmin() {
           회고, 리뷰, 기술 노트처럼 긴 글로 남겨야 하는 챕터 기록을 검토하고 게시합니다.
         </p>
 
-        <div className="dashboard-grid" style={{ marginTop: 28 }}>
+        <div className="dashboard-grid section-offset-lg">
           <section className="card">
             <form className="form" onSubmit={submitRecord}>
               <div className="grid grid-2">
@@ -247,12 +249,11 @@ export function RecordAdmin() {
 
           <aside className="stack">
             <section className="stack">
-              <div className="section-header" style={{ marginBottom: 0 }}>
-                <div>
-                  <h2>Pending Review</h2>
-                  <p>멤버가 제출한 기록을 검토하고 게시합니다.</p>
-                </div>
-              </div>
+              <WdsSectionHeader
+                description="멤버가 제출한 기록을 검토하고 게시합니다."
+                flush
+                title="Pending Review"
+              />
               {pendingRecords.length > 0 ? (
                 <div className="application-queue">
                   {pendingRecords.map((record) => (
@@ -283,19 +284,16 @@ export function RecordAdmin() {
                   ))}
                 </div>
               ) : (
-                <div className="application-queue application-queue-empty">
-                  검토 대기 중인 기록이 없습니다.
-                </div>
+                <WdsEmptyState>검토 대기 중인 기록이 없습니다.</WdsEmptyState>
               )}
             </section>
 
             <section className="stack">
-              <div className="section-header" style={{ marginBottom: 0 }}>
-                <div>
-                  <h2>Published Records</h2>
-                  <p>현재 멤버 홈에 노출되는 최신 기록입니다.</p>
-                </div>
-              </div>
+              <WdsSectionHeader
+                description="현재 멤버 홈에 노출되는 최신 기록입니다."
+                flush
+                title="Published Records"
+              />
               {publishedRecords.map((record) => (
                 <ChapterRecordCard key={record.id} record={record} />
               ))}

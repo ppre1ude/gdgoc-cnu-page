@@ -1,4 +1,4 @@
-import { WdsTextLinkButton } from '@/components/wds-form-controls';
+import { WdsBadge, WdsTextLinkButton } from '@/components/wds-form-controls';
 import type { ChapterRecord } from '@/domain/chapter-record';
 import { formatKoreanDate } from '@/lib/format-korean-date-time';
 
@@ -6,22 +6,22 @@ export function ChapterRecordCard({ record }: { record: ChapterRecord }) {
   return (
     <article className="card">
       <div className="badge-row">
-        <span className="badge badge-blue">{getRecordKindLabel(record.kind)}</span>
-        <span className="badge">{record.visibility}</span>
+        <WdsBadge tone="blue">{getRecordKindLabel(record.kind)}</WdsBadge>
+        <WdsBadge>{record.visibility}</WdsBadge>
         {record.showcaseCandidate ? (
-          <span className="badge badge-green">Showcase Candidate</span>
+          <WdsBadge tone="green">Showcase Candidate</WdsBadge>
         ) : null}
       </div>
       <h3>{record.title}</h3>
       <p>{record.summary}</p>
-      <div className="badge-row" style={{ marginTop: 14 }}>
+      <div className="badge-row section-offset-sm">
         {record.tags.map((tag) => (
-          <span className="badge" key={tag}>
+          <WdsBadge key={tag}>
             {tag}
-          </span>
+          </WdsBadge>
         ))}
       </div>
-      <p className="helper-text" style={{ marginTop: 14 }}>
+      <p className="helper-text section-offset-sm">
         {record.authorUserId}
         {record.publishedAt ? ` / ${formatKoreanDate(record.publishedAt)}` : ''}
       </p>

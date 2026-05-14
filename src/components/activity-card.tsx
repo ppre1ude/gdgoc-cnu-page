@@ -4,6 +4,7 @@ import {
 } from '@/domain/activity';
 import {
   WdsButton,
+  WdsBadge,
   WdsLinkButton,
   WdsTextLinkButton,
 } from '@/components/wds-form-controls';
@@ -59,23 +60,23 @@ export function ActivityCard({
   return (
     <article className="card">
       <div className="badge-row">
-        <span className="badge badge-blue">{activityTypeLabel[activity.type]}</span>
-        <span className="badge">{visibilityLabel[activity.visibility]}</span>
+        <WdsBadge tone="blue">{activityTypeLabel[activity.type]}</WdsBadge>
+        <WdsBadge>{visibilityLabel[activity.visibility]}</WdsBadge>
         {registrationPolicy.registrationMode !== 'internal' ? (
-          <span className="badge">
+          <WdsBadge>
             {registrationModeLabel[registrationPolicy.registrationMode]}
-          </span>
+          </WdsBadge>
         ) : null}
         {applicationState ? (
-          <span className="badge badge-green">
+          <WdsBadge tone="green">
             {applicationStateLabel[applicationState]}
-          </span>
+          </WdsBadge>
         ) : null}
       </div>
       <h3>{activity.title}</h3>
       <p>{activity.summary}</p>
       {activity.startsAt ? (
-        <p className="helper-text" style={{ marginTop: 14 }}>
+        <p className="helper-text section-offset-sm">
           {formatKoreanDateTime(activity.startsAt)}
         </p>
       ) : null}
