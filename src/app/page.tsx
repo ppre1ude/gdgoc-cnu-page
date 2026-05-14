@@ -3,6 +3,7 @@ import {
   onboardingBrandPoints,
   onboardingPosterPipeline,
   onboardingValueBadges,
+  onboardingValueProcess,
 } from '@/domain/public-home-onboarding';
 import { PublicActivitySection } from '@/features/activities/public-activity-section';
 import { PublicShowcaseSection } from '@/features/showcases/public-showcase-section';
@@ -14,10 +15,29 @@ export default function PublicHomePage() {
         aria-labelledby="public-home-title"
         className="onboarding-hero"
       >
-        <div className="onboarding-ribbon ribbon-blue" aria-hidden="true" />
-        <div className="onboarding-ribbon ribbon-red" aria-hidden="true" />
-        <div className="onboarding-ribbon ribbon-yellow" aria-hidden="true" />
-        <div className="onboarding-ribbon ribbon-green" aria-hidden="true" />
+        <div className="onboarding-ribbon ribbon-blue" aria-hidden="true">
+          <span>Connect</span>
+        </div>
+        <div className="onboarding-ribbon ribbon-red" aria-hidden="true">
+          <span>Impact</span>
+        </div>
+        <div className="onboarding-ribbon ribbon-yellow" aria-hidden="true">
+          <span>Workshop</span>
+        </div>
+        <div className="onboarding-ribbon ribbon-green" aria-hidden="true">
+          <span>Community</span>
+        </div>
+        <div className="onboarding-ribbon ribbon-blue-short" aria-hidden="true">
+          <span>AI</span>
+        </div>
+        <div className="onboarding-ribbon ribbon-red-short" aria-hidden="true">
+          <span>Build</span>
+        </div>
+        <div className="onboarding-ribbon ribbon-yellow-wide" aria-hidden="true">
+          <span>Learn</span>
+        </div>
+        <div className="onboarding-ribbon-arc ribbon-arc-green" aria-hidden="true" />
+        <div className="onboarding-ribbon-arc ribbon-arc-blue" aria-hidden="true" />
 
         <div className="container onboarding-hero-grid">
           <div className="onboarding-copy">
@@ -41,8 +61,9 @@ export default function PublicHomePage() {
               <WdsLinkButton href="/member" tone="primary">
                 멤버로 참여하기
               </WdsLinkButton>
-              <WdsLinkButton href="#showcase" tone="secondary">
-                활동 살펴보기
+              {/* TODO: 지원 플로우가 정해지면 /apply 페이지 또는 Google Form URL로 연결합니다. */}
+              <WdsLinkButton href="#apply-todo" tone="secondary">
+                지원하기
               </WdsLinkButton>
             </div>
           </div>
@@ -81,17 +102,46 @@ export default function PublicHomePage() {
         </div>
       </section>
 
-      <section className="section campaign-bridge">
+      <section
+        aria-labelledby="values-title"
+        className="section campaign-bridge reveal-on-scroll"
+        id="values"
+      >
         <div className="container campaign-bridge-grid">
           <div>
             <span className="badge badge-blue">GDGoC CNU Values</span>
-            <h2>Connect, Learn, Grow로 만드는 커뮤니티 임팩트</h2>
+            <h2 id="values-title">Connect, Learn, Grow로 만드는 커뮤니티 임팩트</h2>
           </div>
           <p>
             GDGoC CNU는 기술을 배우는 학생들이 서로 연결되고, 실제 프로젝트로
             성장하며, 그 경험을 다시 커뮤니티에 나누는 장을 만듭니다.
           </p>
-          <div className="onboarding-proof-list" role="list">
+          <div
+            aria-label="GDGoC CNU의 가치와 활동 흐름"
+            className="value-process-panel"
+          >
+            <span className="value-process-label">Our Way</span>
+            <div className="value-process-steps">
+              {onboardingValueProcess.map((step, index) => (
+                <article
+                  className={`value-process-step value-process-step-${step.accent}`}
+                  key={step.label}
+                  tabIndex={0}
+                >
+                  <span className="value-process-index">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <div>
+                    <span className="value-process-kicker">{step.kicker}</span>
+                    <h3>{step.label}</h3>
+                  </div>
+                  <p>{step.title}</p>
+                  <small>{step.detail}</small>
+                </article>
+              ))}
+            </div>
+          </div>
+          <div className="onboarding-proof-list brand-proof-list" role="list">
             {onboardingBrandPoints.map((point) => (
               <div
                 className="onboarding-proof-item"
