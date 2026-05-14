@@ -23,6 +23,13 @@ export type ActivityDraftSuggestionSelection = Partial<
   Record<'cardSummary' | 'memberCopy' | 'publicCopy' | 'suggestedTags', boolean>
 >;
 
+export type ActivityDraftAssistantProvider = 'gemini' | 'local-fallback';
+
+export type ActivityDraftAssistantResult = {
+  provider: ActivityDraftAssistantProvider;
+  warning?: string;
+};
+
 export function createActivityDraftSuggestion(
   draft: OperatorActivityDraft,
 ): ActivityDraftSuggestion {
@@ -85,6 +92,28 @@ export function applyActivityDraftSuggestion(
   }
 
   return nextDraft;
+}
+
+export function describeActivityDraftAssistantResult(
+  result: ActivityDraftAssistantResult,
+): string {
+  if (result.provider === 'gemini') {
+    return 'Gemini 제안을 불러왔습니다.';
+  }
+
+  if (result.warning) {
+    return `Gemini 호출이 실패해 local fallback 제안을 사용했습니다. ${result.warning}`;
+  }
+
+  return 'Gemini 키가 없어 local fallback 제안을 사용했습니다.';
+}
+
+export function describeActivityDraftAssistantError(error: unknown): string {
+  if (error instanceof Error && error.message) {
+    return `AI 작성 보조를 불러오지 못했습니다. ${error.message}`;
+  }
+
+  return 'AI 작성 보조를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

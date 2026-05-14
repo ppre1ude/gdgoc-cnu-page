@@ -5,6 +5,8 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import {
   applyActivityDraftSuggestion,
   type ActivityDraftSuggestion,
+  describeActivityDraftAssistantError,
+  describeActivityDraftAssistantResult,
   type OperatorActivityDraft,
 } from '@/domain/ai-draft';
 import type {
@@ -155,25 +157,32 @@ export function ActivityAdmin() {
     setIsSuggesting(true);
     setMessage('AI가 활동 문구를 정리하는 중입니다.');
 
-    const response = await fetch('/api/ai/activity-draft', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: draft.title,
-        body: draft.body,
-        type: draft.type,
-        visibility: draft.visibility,
-      } satisfies OperatorActivityDraft),
-    });
-    const payload = (await response.json()) as AiResponse;
+    try {
+      const response = await fetch('/api/ai/activity-draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: draft.title,
+          body: draft.body,
+          type: draft.type,
+          visibility: draft.visibility,
+        } satisfies OperatorActivityDraft),
+      });
 
-    setSuggestion(payload.suggestion);
-    setMessage(
-      payload.provider === 'gemini'
-        ? 'Gemini 제안을 불러왔습니다.'
-        : 'Gemini 키가 없어 local fallback 제안을 사용했습니다.',
-    );
-    setIsSuggesting(false);
+      if (!response.ok) {
+        throw new Error(`AI assistant request failed with ${response.status}.`);
+      }
+
+      const payload = (await response.json()) as AiResponse;
+
+      setSuggestion(payload.suggestion);
+      setMessage(describeActivityDraftAssistantResult(payload));
+    } catch (error) {
+      setSuggestion(null);
+      setMessage(describeActivityDraftAssistantError(error));
+    } finally {
+      setIsSuggesting(false);
+    }
   }
 
   function applySuggestion() {
