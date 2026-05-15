@@ -56,7 +56,7 @@ const activityVisibilityRank: Record<ActivityVisibility, number> = {
   operator: 2,
 };
 
-const defaultExternalRegistrationLabel = '공식 등록 페이지';
+const externalRegistrationLabel = '바로가기';
 
 export function listVisibleActivities(
   activities: Activity[],
@@ -90,10 +90,7 @@ export function getActivityRegistrationPolicy(
     registrationMode,
     canApplyInternally,
     externalRegistrationUrl,
-    externalRegistrationLabel:
-      externalRegistrationUrl && activity.externalRegistrationLabel?.trim()
-        ? activity.externalRegistrationLabel.trim()
-        : defaultExternalRegistrationLabel,
+    externalRegistrationLabel,
   };
 }
 

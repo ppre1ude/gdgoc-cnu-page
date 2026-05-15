@@ -9,6 +9,22 @@ import {
   formatKoreanDate,
   formatKoreanDateTime,
 } from '@/lib/format-korean-date-time';
+import {
+  WdsBadge,
+  WdsButton,
+  WdsField,
+  WdsSelect,
+} from '@/components/wds-form-controls';
+import {
+  WdsActionRow,
+  WdsBadgeGroup,
+  WdsDashboardLayout,
+  WdsPageHeader,
+  WdsResponsiveGrid,
+  WdsSectionHeader,
+  WdsStack,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserChapterUserStore } from '../users/browser-chapter-user-store';
 import { seedChapterUsers } from '../users/seed-chapter-users';
@@ -155,42 +171,40 @@ export function RoleAdmin() {
   return (
     <main className="page">
       <div className="container">
-        <p className="eyebrow">Operator Dashboard</p>
-        <h1 className="page-title">Role Admin</h1>
-        <p className="page-lead">
-          가입한 사용자의 역할을 조정하고, 운영진 승격과 alumni 전환 같은 권한 변경 이력을
-          추적합니다.
-        </p>
+        <WdsPageHeader
+          description="가입한 사용자의 역할을 조정하고, 운영진 승격과 alumni 전환 같은 권한 변경 이력을 추적합니다."
+          eyebrow="Operator Dashboard"
+          title="Role Admin"
+        />
 
         <section className="section section-compact">
-          <div className="grid grid-2">
-            <div className="card">
-              <span className="badge badge-blue">Role Policy</span>
+          <WdsResponsiveGrid columns={2}>
+            <WdsSurfaceCard>
+              <WdsBadge tone="blue">Role Policy</WdsBadge>
               <h2>역할 변경은 admin만 수행</h2>
               <p>
                 team_member는 guest를 member로 승인할 수 있지만, 일반 역할 변경은 admin
                 전용 흐름으로 분리했습니다.
               </p>
-            </div>
-            <div className="card">
-              <span className="badge badge-green">Audit Log</span>
+            </WdsSurfaceCard>
+            <WdsSurfaceCard>
+              <WdsBadge tone="green">Audit Log</WdsBadge>
               <h2>{roleChangeLogs.length}건 기록됨</h2>
               <p>
                 모든 역할 변경은 actor, target, 이전 역할, 다음 역할, 변경 시각과 함께
                 저장됩니다.
               </p>
-            </div>
-          </div>
+            </WdsSurfaceCard>
+          </WdsResponsiveGrid>
         </section>
 
-        <div className="dashboard-grid" style={{ marginTop: 18 }}>
-          <section className="stack">
-            <div className="section-header" style={{ marginBottom: 0 }}>
-              <div>
-                <h2>사용자 역할</h2>
-                <p>{message}</p>
-              </div>
-            </div>
+        <WdsDashboardLayout offset="md">
+          <WdsStack as="section">
+            <WdsSectionHeader
+              description={message}
+              flush
+              title="사용자 역할"
+            />
 
             <div className="member-approval-list">
               {users.map((user) => {
@@ -200,13 +214,13 @@ export function RoleAdmin() {
                 return (
                   <article className="member-approval-row" key={user.id}>
                     <div>
-                      <div className="badge-row">
-                        <span className="badge">{getRoleLabel(user.role)}</span>
-                        <span className="badge">{formatKoreanDate(user.createdAt)} 가입</span>
+                      <WdsBadgeGroup>
+                        <WdsBadge>{getRoleLabel(user.role)}</WdsBadge>
+                        <WdsBadge>{formatKoreanDate(user.createdAt)} 가입</WdsBadge>
                         {user.department ? (
-                          <span className="badge badge-blue">{user.department}</span>
+                          <WdsBadge tone="blue">{user.department}</WdsBadge>
                         ) : null}
-                      </div>
+                      </WdsBadgeGroup>
                       <strong>{user.displayName}</strong>
                       <p>{user.email}</p>
                       <p className="helper-text">
@@ -215,44 +229,38 @@ export function RoleAdmin() {
                       </p>
                     </div>
 
-                    <div className="toolbar">
-                      <label className="field demo-role-field">
-                        <span>변경할 역할</span>
-                        <select
-                          className="select"
-                          onChange={(event) =>
+                    <WdsActionRow align="flex-end">
+                      <WdsField className="demo-role-field" label="변경할 역할">
+                        <WdsSelect
+                          onValueChange={(nextRole) =>
                             setSelectedRoles((current) => ({
                               ...current,
-                              [user.id]: event.target.value as AccountRole,
+                              [user.id]: nextRole,
                             }))
                           }
+                          options={accountRoles}
                           value={selectedRole}
-                        >
-                          {accountRoles.map((role) => (
-                            <option key={role.value} value={role.value}>
-                              {role.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <button
-                        className="button button-primary button-small"
+                        />
+                      </WdsField>
+                      <WdsButton
                         disabled={isPending || selectedRole === user.role}
                         onClick={() => requestRoleChange(user)}
+                        size="small"
+                        tone="primary"
                         type="button"
                       >
                         {isPending ? '변경 중' : '역할 변경'}
-                      </button>
-                    </div>
+                      </WdsButton>
+                    </WdsActionRow>
                   </article>
                 );
               })}
             </div>
-          </section>
+          </WdsStack>
 
-          <aside className="stack">
-            <div className="card">
-              <span className="badge badge-blue">Role Guide</span>
+          <WdsStack as="aside">
+            <WdsSurfaceCard>
+              <WdsBadge tone="blue">Role Guide</WdsBadge>
               <h2>권한 설명</h2>
               <dl className="profile-summary-list">
                 {accountRoles.map((role) => (
@@ -262,10 +270,10 @@ export function RoleAdmin() {
                   </div>
                 ))}
               </dl>
-            </div>
+            </WdsSurfaceCard>
 
-            <div className="card">
-              <span className="badge badge-green">Recent Logs</span>
+            <WdsSurfaceCard>
+              <WdsBadge tone="green">Recent Logs</WdsBadge>
               <h2>최근 변경</h2>
               {roleChangeLogs.length > 0 ? (
                 <dl className="profile-summary-list">
@@ -282,9 +290,9 @@ export function RoleAdmin() {
               ) : (
                 <p className="helper-text">아직 역할 변경 기록이 없습니다.</p>
               )}
-            </div>
-          </aside>
-        </div>
+            </WdsSurfaceCard>
+          </WdsStack>
+        </WdsDashboardLayout>
       </div>
     </main>
   );

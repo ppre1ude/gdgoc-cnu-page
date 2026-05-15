@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { ShowcaseCard } from '@/components/showcase-card';
+import { WdsEmptyState } from '@/components/wds-form-controls';
+import {
+  WdsResponsiveGrid,
+  WdsSectionHeader,
+} from '@/components/wds-layout-primitives';
 import type { Showcase } from '@/domain/showcase';
 import { listVisibleShowcases } from '@/domain/showcase';
 import { listHomeShowcases } from '@/domain/showcase-service';
@@ -24,24 +29,20 @@ export function PublicShowcaseSection() {
   }, [store]);
 
   return (
-    <section className="section">
+    <section className="section" id="showcase">
       <div className="container">
-        <div className="section-header">
-          <div>
-            <h2>Showcase</h2>
-            <p>
-              GDGoC CNU가 Build with AI와 챕터 활동에서 남긴 결과와 기록입니다.
-            </p>
-          </div>
-        </div>
+        <WdsSectionHeader
+          description="GDGoC CNU가 Build with AI와 챕터 활동에서 남긴 결과와 기록입니다."
+          title="Showcase"
+        />
         {showcases.length > 0 ? (
-          <div className="grid grid-3">
+          <WdsResponsiveGrid columns={3}>
             {showcases.slice(0, 3).map((showcase) => (
               <ShowcaseCard key={showcase.id} showcase={showcase} />
             ))}
-          </div>
+          </WdsResponsiveGrid>
         ) : (
-          <div className="empty">아직 공개할 쇼케이스가 없습니다.</div>
+          <WdsEmptyState>아직 공개할 쇼케이스가 없습니다.</WdsEmptyState>
         )}
       </div>
     </section>

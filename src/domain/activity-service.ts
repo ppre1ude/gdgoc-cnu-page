@@ -26,7 +26,6 @@ export type CreateActivityInput = {
   startsAt?: string;
   registrationMode?: ActivityRegistrationMode;
   externalRegistrationUrl?: string;
-  externalRegistrationLabel?: string;
   now: string;
 };
 
@@ -64,7 +63,6 @@ export type UpdateActivityInput = {
   startsAt?: string;
   registrationMode?: ActivityRegistrationMode;
   externalRegistrationUrl?: string;
-  externalRegistrationLabel?: string;
   now: string;
 };
 
@@ -111,17 +109,17 @@ export async function createActivity(
     throw new Error('Only operators can create official activities.');
   }
 
+  const registrationFields = getRegistrationFields(input);
+  const contentFields = getRequiredActivityContentFields(input);
+
   return store.create({
     id: `activity-${crypto.randomUUID()}`,
-    title: input.title,
-    summary: input.summary,
+    ...contentFields,
     type: input.type,
     visibility: input.visibility,
     status: input.status,
     startsAt: input.startsAt,
-    registrationMode: input.registrationMode,
-    externalRegistrationUrl: input.externalRegistrationUrl,
-    externalRegistrationLabel: input.externalRegistrationLabel,
+    ...registrationFields,
     createdAt: input.now,
     updatedAt: input.now,
   });
@@ -136,18 +134,27 @@ export async function updateActivity(
   }
 
   const activity = await findActivityOrThrow(store, input.activityId);
+  const contentFields = getRequiredActivityContentFields(input);
+  const registrationFields = getRegistrationFields({
+    registrationMode: input.registrationMode ?? activity.registrationMode,
+    externalRegistrationUrl:
+      input.externalRegistrationUrl ?? activity.externalRegistrationUrl,
+  });
+  const {
+    externalRegistrationLabel: _legacyExternalRegistrationLabel,
+    externalRegistrationUrl: _legacyExternalRegistrationUrl,
+    registrationMode: _legacyRegistrationMode,
+    ...activityWithoutRegistrationFields
+  } = activity;
 
   return store.save({
-    ...activity,
-    title: input.title,
-    summary: input.summary,
+    ...activityWithoutRegistrationFields,
+    ...contentFields,
     type: input.type,
     visibility: input.visibility,
     status: input.status,
     startsAt: input.startsAt,
-    registrationMode: input.registrationMode,
-    externalRegistrationUrl: input.externalRegistrationUrl,
-    externalRegistrationLabel: input.externalRegistrationLabel,
+    ...registrationFields,
     updatedAt: input.now,
   });
 }
@@ -178,11 +185,11 @@ export async function proposeMemberActivity(
   }
 
   const isStudy = input.type === 'study';
+  const contentFields = getRequiredActivityContentFields(input);
 
   return store.create({
     id: `activity-${crypto.randomUUID()}`,
-    title: input.title,
-    summary: input.summary,
+    ...contentFields,
     type: input.type,
     visibility: isStudy ? 'member' : 'operator',
     status: isStudy ? 'published' : 'draft',
@@ -299,4 +306,57 @@ async function findActivityOrThrow(
   }
 
   return activity;
+}
+
+function getRegistrationFields(
+  input: Pick<
+    CreateActivityInput,
+    'externalRegistrationUrl' | 'registrationMode'
+  >,
+): Partial<Pick<Activity, 'externalRegistrationUrl' | 'registrationMode'>> {
+  const registrationMode = input.registrationMode;
+
+  if (!registrationMode) {
+    return {};
+  }
+
+  if (registrationMode !== 'external' && registrationMode !== 'hybrid') {
+    return {
+      registrationMode,
+    };
+  }
+
+  const externalRegistrationUrl = input.externalRegistrationUrl?.trim();
+
+  if (!externalRegistrationUrl) {
+    throw new Error(
+      'External registration URL is required for external or hybrid activities.',
+    );
+  }
+
+  return {
+    registrationMode,
+    externalRegistrationUrl,
+  };
+}
+
+function getRequiredActivityContentFields(input: {
+  title: string;
+  summary: string;
+}) {
+  const title = input.title.trim();
+  const summary = input.summary.trim();
+
+  if (!title) {
+    throw new Error('Activity title is required.');
+  }
+
+  if (!summary) {
+    throw new Error('Activity summary is required.');
+  }
+
+  return {
+    title,
+    summary,
+  };
 }

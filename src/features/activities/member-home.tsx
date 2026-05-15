@@ -28,11 +28,33 @@ import {
   applyForActivity,
   cancelApplicationForActivity,
   getApplicationStateByActivity,
+  listMemberApplicationSummaries,
+  type MemberApplicationSummary,
 } from '@/domain/activity-participation-service';
+import { formatKoreanDateTime } from '@/lib/format-korean-date-time';
 import { ActivityCard } from '@/components/activity-card';
 import { ChapterRecordCard } from '@/components/chapter-record-card';
 import { NoticeBoard } from '@/components/notice-board';
 import { ShowcaseCard } from '@/components/showcase-card';
+import {
+  WdsBadgeGroup,
+  WdsFormActions,
+  WdsPageHeader,
+  WdsResponsiveGrid,
+  WdsSectionHeader,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
+import {
+  WdsBadge,
+  WdsButton,
+  WdsEmptyState,
+  WdsField,
+  WdsInput,
+  WdsSelect,
+  WdsTextArea,
+  WdsTextLinkButton,
+  type WdsSelectOption,
+} from '@/components/wds-form-controls';
 import {
   demoRoleOptions,
   useAuthSession,
@@ -97,6 +119,23 @@ const defaultMemberRecord: MemberRecordFormState = {
   kind: 'retrospective',
   tags: '',
 };
+
+const demoRoleSelectOptions: readonly WdsSelectOption<UserRole>[] =
+  demoRoleOptions.map((role) => ({
+    label: role,
+    value: role,
+  }));
+
+const activityProposalTypeOptions = [
+  { label: 'Study', value: 'study' },
+  { label: 'Project', value: 'project' },
+] satisfies readonly WdsSelectOption<ActivityProposalType>[];
+
+const chapterRecordKindOptions = [
+  { label: 'Retrospective', value: 'retrospective' },
+  { label: 'Review', value: 'review' },
+  { label: 'Technical Note', value: 'technical_note' },
+] satisfies readonly WdsSelectOption<ChapterRecordKind>[];
 
 export function MemberHome() {
   const {
@@ -214,7 +253,7 @@ export function MemberHome() {
 
   async function handleCancel(activity: Activity) {
     const confirmed = window.confirm(
-      '정말 취소하시겠습니까? 이 결정은 되돌릴 수 없습니다.',
+      '정말 취소하시겠습니까? 승인된 신청을 취소하면 다시 신청 시 운영진 승인을 다시 받아야 합니다.',
     );
 
     if (!confirmed) {
@@ -308,6 +347,10 @@ export function MemberHome() {
   const activeApplicationCount = Object.values(applicationStates).filter(
     (state) => state === 'applied' || state === 'approved',
   ).length;
+  const memberApplicationSummaries = listMemberApplicationSummaries(
+    activities,
+    applicationStates,
+  );
   const access = describeMemberHomeAccess(role);
   const canApplyToActivities = Boolean(access?.canApplyToActivities);
   const canProposeActivities = canApplyToActivities;
@@ -315,38 +358,35 @@ export function MemberHome() {
   return (
     <main className="page">
       <div className="container">
-        <p className="eyebrow">Member Home</p>
-        <h1 className="page-title">지금 우리 챕터에서 진행 중인 활동</h1>
-        <p className="page-lead">
-          공지, 이벤트, 스터디, 프로젝트를 한 화면에서 확인하는 멤버용 홈입니다.
-          현재 데모는 activity 데이터를 Firebase 또는 localStorage bridge에서 읽습니다.
-        </p>
+        <WdsPageHeader
+          description="공지, 이벤트, 스터디, 프로젝트를 한 화면에서 확인하는 멤버용 홈입니다. 현재 데모는 activity 데이터를 Firebase 또는 localStorage bridge에서 읽습니다."
+          eyebrow="Member Home"
+          title="지금 우리 챕터에서 진행 중인 활동"
+        />
 
         <section className="section section-compact">
           <div className="access-panel">
             <div>
-              <div className="badge-row">
-                <span className="badge badge-blue">Demo Role</span>
-                <span className="badge">{access.status}</span>
-              </div>
+              <WdsBadgeGroup>
+                <WdsBadge tone="blue">
+                  {isFirebaseConfigured ? '현재 역할' : 'Demo Role'}
+                </WdsBadge>
+                <WdsBadge>{access.status}</WdsBadge>
+              </WdsBadgeGroup>
               <h2>{getAccessPanelTitle(access?.status)}</h2>
               <p>{access.message}</p>
             </div>
-            <label className="field demo-role-field">
-              <span>{isFirebaseConfigured ? '현재 역할' : 'Demo 역할'}</span>
-              <select
-                className="select"
+            <WdsField
+              className="demo-role-field"
+              label={isFirebaseConfigured ? '현재 역할' : 'Demo 역할'}
+            >
+              <WdsSelect
                 disabled={authStatus !== 'demo'}
-                onChange={(event) => changeDemoRole(event.target.value as UserRole)}
+                onValueChange={changeDemoRole}
+                options={demoRoleSelectOptions}
                 value={role}
-              >
-                {demoRoleOptions.map((role) => (
-                  <option key={role} value={role}>
-                    {role}
-                  </option>
-                ))}
-              </select>
-            </label>
+              />
+            </WdsField>
           </div>
         </section>
 
@@ -378,12 +418,10 @@ export function MemberHome() {
         ) : null}
 
         <section className="section section-compact">
-          <div className="section-header">
-            <div>
-              <h2>공지사항</h2>
-              <p>운영진이 고정한 중요한 공지를 먼저 보여줍니다.</p>
-            </div>
-          </div>
+          <WdsSectionHeader
+            description="운영진이 고정한 중요한 공지를 먼저 보여줍니다."
+            title="공지사항"
+          />
           <NoticeBoard notices={notices.slice(0, 6)} />
         </section>
 
@@ -391,9 +429,9 @@ export function MemberHome() {
 
         <ChapterRecordSection records={records.slice(0, 3)} />
 
-        <div className="grid grid-3" style={{ marginTop: 28 }}>
-          <div className="card">
-            <span className="badge badge-green">Participation</span>
+        <WdsResponsiveGrid columns={3} offset="lg">
+          <WdsSurfaceCard>
+            <WdsBadge tone="green">Participation</WdsBadge>
             <h3>
               {canApplyToActivities
                 ? `${activeApplicationCount}개 활동 참여 중`
@@ -404,13 +442,17 @@ export function MemberHome() {
                 ? '참여 신청을 누르면 이 숫자와 카드 상태가 바로 바뀝니다.'
                 : access?.message ?? '역할 정보를 확인한 뒤 신청 가능 여부를 표시합니다.'}
             </p>
-          </div>
-          <div className="card">
-            <span className="badge badge-blue">Next Action</span>
+          </WdsSurfaceCard>
+          <WdsSurfaceCard>
+            <WdsBadge tone="blue">Next Action</WdsBadge>
             <h3>{activities.length}개 활동 열람 가능</h3>
             <p>Firebase 설정 전에는 localStorage bridge로 같은 흐름을 검증합니다.</p>
-          </div>
-        </div>
+          </WdsSurfaceCard>
+        </WdsResponsiveGrid>
+
+        {canApplyToActivities ? (
+          <MemberApplicationsSection summaries={memberApplicationSummaries} />
+        ) : null}
 
         <ActivitySection
           activities={upcoming}
@@ -464,9 +506,14 @@ function MemberProposalForm({
 
   return (
     <section className="section section-compact">
-      <form className="card guest-profile-form" onSubmit={onSubmit}>
+      <WdsSurfaceCard
+        as="form"
+        className="guest-profile-form"
+        onSubmit={onSubmit}
+        sx={{ display: 'grid', gap: '18px' }}
+      >
         <div>
-          <span className="badge badge-blue">Member Proposal</span>
+          <WdsBadge tone="blue">Member Proposal</WdsBadge>
           <h2>스터디 / 프로젝트 제안</h2>
           <p>
             멤버가 직접 스터디를 열거나 프로젝트 아이디어를 제안할 수 있습니다. 프로젝트는
@@ -474,58 +521,48 @@ function MemberProposalForm({
           </p>
         </div>
 
-        <div className="grid grid-2">
-          <label className="field">
-            <span>활동 유형</span>
-            <select
-              className="select"
-              onChange={(event) =>
-                updateField('type', event.target.value as ActivityProposalType)
-              }
+        <WdsResponsiveGrid columns={2}>
+          <WdsField label="활동 유형">
+            <WdsSelect
+              onValueChange={(nextValue) => updateField('type', nextValue)}
+              options={activityProposalTypeOptions}
               value={value.type}
-            >
-              <option value="study">Study</option>
-              <option value="project">Project</option>
-            </select>
-          </label>
-          <label className="field">
-            <span>일정</span>
-            <input
-              className="input"
+            />
+          </WdsField>
+          <WdsField label="일정">
+            <WdsInput
               onChange={(event) => updateField('startsAt', event.target.value)}
               type="datetime-local"
               value={value.startsAt}
             />
-          </label>
-        </div>
+          </WdsField>
+        </WdsResponsiveGrid>
 
-        <label className="field">
-          <span>제목</span>
-          <input
-            className="input"
+        <WdsField label="제목">
+          <WdsInput
             onChange={(event) => updateField('title', event.target.value)}
             required
             value={value.title}
           />
-        </label>
+        </WdsField>
 
-        <label className="field">
-          <span>요약</span>
-          <textarea
-            className="textarea"
+        <WdsField label="요약">
+          <WdsTextArea
             onChange={(event) => updateField('summary', event.target.value)}
             required
             value={value.summary}
           />
-        </label>
+        </WdsField>
 
-        <div className="form-footer">
-          <p className="helper-text">{message}</p>
-          <button className="button button-primary" type="submit">
-            제안 제출
-          </button>
-        </div>
-      </form>
+        <WdsFormActions
+          actions={
+            <WdsButton tone="primary" type="submit">
+              제안 제출
+            </WdsButton>
+          }
+          helper={message}
+        />
+      </WdsSurfaceCard>
     </section>
   );
 }
@@ -550,9 +587,14 @@ function MemberRecordForm({
 
   return (
     <section className="section section-compact">
-      <form className="card guest-profile-form" onSubmit={onSubmit}>
+      <WdsSurfaceCard
+        as="form"
+        className="guest-profile-form"
+        onSubmit={onSubmit}
+        sx={{ display: 'grid', gap: '18px' }}
+      >
         <div>
-          <span className="badge badge-green">Chapter Record</span>
+          <WdsBadge tone="green">Chapter Record</WdsBadge>
           <h2>회고 / 리뷰 / 기술 노트 작성</h2>
           <p>
             Discord에 묻히기 쉬운 긴 글을 홈페이지 기록으로 남깁니다. 제출된 글은 운영진
@@ -560,69 +602,56 @@ function MemberRecordForm({
           </p>
         </div>
 
-        <div className="grid grid-2">
-          <label className="field">
-            <span>기록 유형</span>
-            <select
-              className="select"
-              onChange={(event) =>
-                updateField('kind', event.target.value as ChapterRecordKind)
-              }
+        <WdsResponsiveGrid columns={2}>
+          <WdsField label="기록 유형">
+            <WdsSelect
+              onValueChange={(nextValue) => updateField('kind', nextValue)}
+              options={chapterRecordKindOptions}
               value={value.kind}
-            >
-              <option value="retrospective">Retrospective</option>
-              <option value="review">Review</option>
-              <option value="technical_note">Technical Note</option>
-            </select>
-          </label>
-          <label className="field">
-            <span>태그</span>
-            <input
-              className="input"
+            />
+          </WdsField>
+          <WdsField label="태그">
+            <WdsInput
               onChange={(event) => updateField('tags', event.target.value)}
               placeholder="Gemini, Firebase"
               value={value.tags}
             />
-          </label>
-        </div>
+          </WdsField>
+        </WdsResponsiveGrid>
 
-        <label className="field">
-          <span>제목</span>
-          <input
-            className="input"
+        <WdsField label="제목">
+          <WdsInput
             onChange={(event) => updateField('title', event.target.value)}
             required
             value={value.title}
           />
-        </label>
+        </WdsField>
 
-        <label className="field">
-          <span>요약</span>
-          <textarea
-            className="textarea"
+        <WdsField label="요약">
+          <WdsTextArea
             onChange={(event) => updateField('summary', event.target.value)}
             required
             value={value.summary}
           />
-        </label>
+        </WdsField>
 
-        <label className="field">
-          <span>본문</span>
-          <textarea
-            className="textarea"
+        <WdsField label="본문">
+          <WdsTextArea
             onChange={(event) => updateField('body', event.target.value)}
             required
             value={value.body}
           />
-        </label>
+        </WdsField>
 
-        <div className="form-footer">
-          <p className="helper-text">{message}</p>
-          <button className="button button-primary" type="submit">
-            기록 제출
-          </button>
-        </div>
-      </form>
+        <WdsFormActions
+          actions={
+            <WdsButton tone="primary" type="submit">
+              기록 제출
+            </WdsButton>
+          }
+          helper={message}
+        />
+      </WdsSurfaceCard>
     </section>
   );
 }
@@ -650,9 +679,14 @@ function GuestProfileForm({
 
   return (
     <section className="section section-compact">
-      <form className="card guest-profile-form" onSubmit={onSubmit}>
+      <WdsSurfaceCard
+        as="form"
+        className="guest-profile-form"
+        onSubmit={onSubmit}
+        sx={{ display: 'grid', gap: '18px' }}
+      >
         <div>
-          <span className="badge badge-green">Guest Profile</span>
+          <WdsBadge tone="green">Guest Profile</WdsBadge>
           <h2>멤버 승인 요청 정보</h2>
           <p>
             운영진이 guest 계정을 member로 승인하기 전에 확인할 기본 정보를
@@ -660,80 +694,68 @@ function GuestProfileForm({
           </p>
         </div>
 
-        <div className="grid grid-2">
-          <label className="field">
-            <span>이름</span>
-            <input
-              className="input"
+        <WdsResponsiveGrid columns={2}>
+          <WdsField label="이름">
+            <WdsInput
               onChange={(event) => updateField('displayName', event.target.value)}
               required
               value={value.displayName}
             />
-          </label>
-          <label className="field">
-            <span>이메일</span>
-            <input
-              className="input"
+          </WdsField>
+          <WdsField label="이메일">
+            <WdsInput
               onChange={(event) => updateField('email', event.target.value)}
               required
               type="email"
               value={value.email}
             />
-          </label>
-          <label className="field">
-            <span>학과</span>
-            <input
-              className="input"
+          </WdsField>
+          <WdsField label="학과">
+            <WdsInput
               onChange={(event) => updateField('department', event.target.value)}
               placeholder="예: 컴퓨터융합학부"
               value={value.department}
             />
-          </label>
-          <label className="field">
-            <span>기수 또는 학년</span>
-            <input
-              className="input"
+          </WdsField>
+          <WdsField label="기수 또는 학년">
+            <WdsInput
               onChange={(event) => updateField('cohort', event.target.value)}
               placeholder="예: 3기, 2학년"
               value={value.cohort}
             />
-          </label>
-          <label className="field">
-            <span>학번</span>
-            <input
-              className="input"
+          </WdsField>
+          <WdsField label="학번">
+            <WdsInput
               onChange={(event) => updateField('studentId', event.target.value)}
               value={value.studentId}
             />
-          </label>
-          <label className="field">
-            <span>관심 분야</span>
-            <input
-              className="input"
+          </WdsField>
+          <WdsField label="관심 분야">
+            <WdsInput
               onChange={(event) => updateField('interests', event.target.value)}
               placeholder="예: Firebase, Gemini, 프론트엔드"
               value={value.interests}
             />
-          </label>
-        </div>
+          </WdsField>
+        </WdsResponsiveGrid>
 
-        <label className="field">
-          <span>참여 동기</span>
-          <textarea
-            className="textarea"
+        <WdsField label="참여 동기">
+          <WdsTextArea
             onChange={(event) => updateField('motivation', event.target.value)}
             placeholder="GDGoC CNU에서 하고 싶은 활동을 적어주세요."
             value={value.motivation}
           />
-        </label>
+        </WdsField>
 
-        <div className="form-footer">
-          <p className="helper-text">{message}</p>
-          <button className="button button-primary" type="submit">
-            승인 요청 정보 저장
-          </button>
-        </div>
-      </form>
+        <WdsFormActions
+          actions={
+            <WdsButton tone="primary" type="submit">
+              승인 요청 정보 저장
+            </WdsButton>
+          }
+          helper={message}
+        />
+      </WdsSurfaceCard>
     </section>
   );
 }
@@ -753,23 +775,18 @@ function toGuestProfileForm(user: ChapterUser): GuestProfileFormState {
 function ShowcasePreviewSection({ showcases }: { showcases: Showcase[] }) {
   return (
     <section className="section section-compact">
-      <div className="section-header">
-        <div>
-          <h2>쇼케이스</h2>
-          <p>
-            최근 활동 성과, 회고, 프로젝트 결과를 activity와 분리된 아카이브로
-            모아 보여줍니다.
-          </p>
-        </div>
-      </div>
+      <WdsSectionHeader
+        description="최근 활동 성과, 회고, 프로젝트 결과를 activity와 분리된 아카이브로 모아 보여줍니다."
+        title="쇼케이스"
+      />
       {showcases.length > 0 ? (
-        <div className="grid grid-3">
+        <WdsResponsiveGrid columns={3}>
           {showcases.map((showcase) => (
             <ShowcaseCard key={showcase.id} showcase={showcase} />
           ))}
-        </div>
+        </WdsResponsiveGrid>
       ) : (
-        <div className="empty">아직 표시할 쇼케이스가 없습니다.</div>
+        <WdsEmptyState>아직 표시할 쇼케이스가 없습니다.</WdsEmptyState>
       )}
     </section>
   );
@@ -778,22 +795,62 @@ function ShowcasePreviewSection({ showcases }: { showcases: Showcase[] }) {
 function ChapterRecordSection({ records }: { records: ChapterRecord[] }) {
   return (
     <section className="section section-compact">
-      <div className="section-header">
-        <div>
-          <h2>긴 글 기록</h2>
-          <p>
-            회고, 리뷰, 기술 노트처럼 Discord보다 오래 남겨야 하는 글을 모아 보여줍니다.
-          </p>
-        </div>
-      </div>
+      <WdsSectionHeader
+        description="회고, 리뷰, 기술 노트처럼 Discord보다 오래 남겨야 하는 글을 모아 보여줍니다."
+        title="긴 글 기록"
+      />
       {records.length > 0 ? (
-        <div className="grid grid-3">
+        <WdsResponsiveGrid columns={3}>
           {records.map((record) => (
             <ChapterRecordCard key={record.id} record={record} />
           ))}
+        </WdsResponsiveGrid>
+      ) : (
+        <WdsEmptyState>아직 게시된 긴 글 기록이 없습니다.</WdsEmptyState>
+      )}
+    </section>
+  );
+}
+
+function MemberApplicationsSection({
+  summaries,
+}: {
+  summaries: MemberApplicationSummary[];
+}) {
+  return (
+    <section className="section section-compact">
+      <WdsSectionHeader
+        description="내가 신청한 활동의 승인 상태와 다음 일정을 별도 목록으로 확인합니다."
+        title="내 신청 현황"
+      />
+      {summaries.length > 0 ? (
+        <div className="application-queue">
+          {summaries.map(({ activity, state }) => (
+            <article className="application-row" key={activity.id}>
+              <div>
+                <WdsBadgeGroup>
+                  <WdsBadge tone={state === 'approved' ? 'green' : 'blue'}>
+                    {getApplicationStateLabel(state)}
+                  </WdsBadge>
+                  <WdsBadge>{activity.type}</WdsBadge>
+                </WdsBadgeGroup>
+                <strong>{activity.title}</strong>
+                <p className="helper-text">
+                  {activity.startsAt
+                    ? formatKoreanDateTime(activity.startsAt)
+                    : '일정 미정'}
+                </p>
+              </div>
+              <WdsTextLinkButton
+                href={`/activities/${encodeURIComponent(activity.id)}`}
+              >
+                자세히
+              </WdsTextLinkButton>
+            </article>
+          ))}
         </div>
       ) : (
-        <div className="empty">아직 게시된 긴 글 기록이 없습니다.</div>
+        <WdsEmptyState>아직 신청 중인 활동이 없습니다.</WdsEmptyState>
       )}
     </section>
   );
@@ -816,14 +873,9 @@ function ActivitySection({
 }) {
   return (
     <section className="section">
-      <div className="section-header">
-        <div>
-          <h2>{title}</h2>
-          <p>{description}</p>
-        </div>
-      </div>
+      <WdsSectionHeader description={description} title={title} />
       {activities.length > 0 ? (
-        <div className="grid grid-3">
+        <WdsResponsiveGrid columns={3}>
           {activities.map((activity) => (
             <ActivityCard
               activity={activity}
@@ -833,9 +885,9 @@ function ActivitySection({
               onCancel={onCancel}
             />
           ))}
-        </div>
+        </WdsResponsiveGrid>
       ) : (
-        <div className="empty">아직 표시할 활동이 없습니다.</div>
+        <WdsEmptyState>아직 표시할 활동이 없습니다.</WdsEmptyState>
       )}
     </section>
   );
@@ -861,6 +913,15 @@ function getAccessPanelTitle(status?: string) {
       return '멤버 홈 이용 가능';
     default:
       return '역할 확인 중';
+  }
+}
+
+function getApplicationStateLabel(state: ActivityApplicationState) {
+  switch (state) {
+    case 'applied':
+      return '운영진 승인 대기 중';
+    case 'approved':
+      return '승인됨';
   }
 }
 

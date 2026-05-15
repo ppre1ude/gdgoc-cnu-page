@@ -52,24 +52,24 @@ describe('getActivityRegistrationPolicy', () => {
       registrationMode: 'internal',
       canApplyInternally: true,
       externalRegistrationUrl: undefined,
-      externalRegistrationLabel: '공식 등록 페이지',
+      externalRegistrationLabel: '바로가기',
     });
   });
 
-  it('uses external registration only for external mode', () => {
+  it('uses a fixed external CTA label for external mode', () => {
     const activity: Activity = {
       ...baseActivity,
       visibility: 'public',
       registrationMode: 'external',
       externalRegistrationUrl: 'https://gdg.community.dev/events/example',
-      externalRegistrationLabel: 'GDG 이벤트 등록',
+      externalRegistrationLabel: '123',
     };
 
     assert.deepEqual(getActivityRegistrationPolicy(activity), {
       registrationMode: 'external',
       canApplyInternally: false,
       externalRegistrationUrl: 'https://gdg.community.dev/events/example',
-      externalRegistrationLabel: 'GDG 이벤트 등록',
+      externalRegistrationLabel: '바로가기',
     });
   });
 
@@ -85,7 +85,7 @@ describe('getActivityRegistrationPolicy', () => {
       registrationMode: 'hybrid',
       canApplyInternally: true,
       externalRegistrationUrl: 'https://forms.gle/example',
-      externalRegistrationLabel: '공식 등록 페이지',
+      externalRegistrationLabel: '바로가기',
     });
   });
 
@@ -102,7 +102,7 @@ describe('getActivityRegistrationPolicy', () => {
       registrationMode: 'none',
       canApplyInternally: false,
       externalRegistrationUrl: undefined,
-      externalRegistrationLabel: '공식 등록 페이지',
+      externalRegistrationLabel: '바로가기',
     });
   });
 });

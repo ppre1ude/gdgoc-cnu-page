@@ -3,6 +3,11 @@ import {
   type Showcase,
   type ShowcaseKind,
 } from '@/domain/showcase';
+import { WdsBadge } from '@/components/wds-form-controls';
+import {
+  WdsBadgeGroup,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 
 const showcaseKindLabel: Record<ShowcaseKind, string> = {
   achievement: '성과',
@@ -11,22 +16,28 @@ const showcaseKindLabel: Record<ShowcaseKind, string> = {
   gallery: '갤러리',
 };
 
+const showcaseSurfaceSx = {
+  display: 'block',
+  overflow: 'hidden',
+  padding: 0,
+};
+
 export function ShowcaseCard({ showcase }: { showcase: Showcase }) {
   const safeHref = getSafeShowcaseHref(showcase.href);
   const content = (
     <>
       <ShowcaseMedia showcase={showcase} />
       <div className="showcase-card-body">
-        <div className="badge-row">
-          <span className="badge badge-green">
+        <WdsBadgeGroup>
+          <WdsBadge tone="green">
             {showcaseKindLabel[showcase.kind]}
-          </span>
+          </WdsBadge>
           {showcase.tags.slice(0, 2).map((tag) => (
-            <span className="badge" key={tag}>
+            <WdsBadge key={tag}>
               {tag}
-            </span>
+            </WdsBadge>
           ))}
-        </div>
+        </WdsBadgeGroup>
         <h3>{showcase.title}</h3>
         <p>{showcase.summary}</p>
       </div>
@@ -35,13 +46,26 @@ export function ShowcaseCard({ showcase }: { showcase: Showcase }) {
 
   if (safeHref) {
     return (
-      <a className="card showcase-card" href={safeHref}>
+      <WdsSurfaceCard
+        as="a"
+        className="showcase-card"
+        href={safeHref}
+        sx={showcaseSurfaceSx}
+      >
         {content}
-      </a>
+      </WdsSurfaceCard>
     );
   }
 
-  return <article className="card showcase-card">{content}</article>;
+  return (
+    <WdsSurfaceCard
+      as="article"
+      className="showcase-card"
+      sx={showcaseSurfaceSx}
+    >
+      {content}
+    </WdsSurfaceCard>
+  );
 }
 
 function ShowcaseMedia({ showcase }: { showcase: Showcase }) {

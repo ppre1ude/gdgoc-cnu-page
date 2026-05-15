@@ -1,9 +1,19 @@
-import Link from 'next/link';
-
 import {
   type Activity,
   getActivityRegistrationPolicy,
 } from '@/domain/activity';
+import {
+  WdsActionRow,
+  WdsBadgeGroup,
+  WdsOffset,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
+import {
+  WdsButton,
+  WdsBadge,
+  WdsLinkButton,
+  WdsTextLinkButton,
+} from '@/components/wds-form-controls';
 import type { ActivityApplicationState } from '@/domain/activity-application';
 import { formatKoreanDateTime } from '@/lib/format-korean-date-time';
 
@@ -54,64 +64,69 @@ export function ActivityCard({
     onCancel && (applicationState === 'applied' || applicationState === 'approved');
 
   return (
-    <article className="card">
-      <div className="badge-row">
-        <span className="badge badge-blue">{activityTypeLabel[activity.type]}</span>
-        <span className="badge">{visibilityLabel[activity.visibility]}</span>
+    <WdsSurfaceCard as="article">
+      <WdsBadgeGroup>
+        <WdsBadge tone="blue">{activityTypeLabel[activity.type]}</WdsBadge>
+        <WdsBadge>{visibilityLabel[activity.visibility]}</WdsBadge>
         {registrationPolicy.registrationMode !== 'internal' ? (
-          <span className="badge">
+          <WdsBadge>
             {registrationModeLabel[registrationPolicy.registrationMode]}
-          </span>
+          </WdsBadge>
         ) : null}
         {applicationState ? (
-          <span className="badge badge-green">
+          <WdsBadge tone="green">
             {applicationStateLabel[applicationState]}
-          </span>
+          </WdsBadge>
         ) : null}
-      </div>
+      </WdsBadgeGroup>
       <h3>{activity.title}</h3>
       <p>{activity.summary}</p>
       {activity.startsAt ? (
-        <p className="helper-text" style={{ marginTop: 14 }}>
-          {formatKoreanDateTime(activity.startsAt)}
-        </p>
+        <WdsOffset offset="sm">
+          <p className="helper-text">
+            {formatKoreanDateTime(activity.startsAt)}
+          </p>
+        </WdsOffset>
       ) : null}
-      <div className="card-actions">
-        <Link
-          className="button button-ghost button-small"
+      <WdsActionRow offset="sm">
+        <WdsTextLinkButton
           href={`/activities/${encodeURIComponent(activity.id)}`}
         >
           자세히
-        </Link>
+        </WdsTextLinkButton>
         {registrationPolicy.externalRegistrationUrl ? (
-          <a
-            className="button button-secondary button-small"
+          <WdsLinkButton
+            external
             href={registrationPolicy.externalRegistrationUrl}
             rel="noreferrer"
+            size="small"
             target="_blank"
+            tone="secondary"
           >
             {registrationPolicy.externalRegistrationLabel}
-          </a>
+          </WdsLinkButton>
         ) : null}
         {canApply ? (
-          <button
-            className="button button-primary button-small"
+          <WdsButton
             onClick={() => onApply(activity)}
+            size="small"
+            tone="primary"
             type="button"
           >
             참여 신청
-          </button>
+          </WdsButton>
         ) : null}
         {canCancel ? (
-          <button
-            className="button button-secondary button-small"
+          <WdsButton
             onClick={() => onCancel(activity)}
+            size="small"
+            tone="secondary"
             type="button"
           >
             신청 취소
-          </button>
+          </WdsButton>
         ) : null}
-      </div>
-    </article>
+      </WdsActionRow>
+    </WdsSurfaceCard>
   );
 }

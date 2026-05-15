@@ -7,6 +7,14 @@ import {
   approveGuestToMember,
   listPendingGuestUsers,
 } from '@/domain/chapter-user-service';
+import { WdsBadge, WdsButton, WdsEmptyState } from '@/components/wds-form-controls';
+import {
+  WdsBadgeGroup,
+  WdsOffset,
+  WdsResponsiveGrid,
+  WdsSectionHeader,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { formatKoreanDate } from '@/lib/format-korean-date-time';
 import { createBrowserChapterUserStore } from '../users/browser-chapter-user-store';
@@ -59,65 +67,62 @@ export function MemberApprovalPanel() {
 
   return (
     <section className="section section-compact">
-      <div className="section-header">
-        <div>
-          <h2>멤버 승인</h2>
-          <p>
-            운영진이 guest 계정을 member로 승격하는 기본 권한 흐름입니다.
-          </p>
-        </div>
-      </div>
+      <WdsSectionHeader
+        description="운영진이 guest 계정을 member로 승격하는 기본 권한 흐름입니다."
+        title="멤버 승인"
+      />
 
-      <div className="grid grid-2">
-        <div className="card">
-          <span className="badge badge-green">Approval Queue</span>
+      <WdsResponsiveGrid columns={2}>
+        <WdsSurfaceCard>
+          <WdsBadge tone="green">Approval Queue</WdsBadge>
           <h3>{pendingUsers.length}명 승인 대기</h3>
           <p>{message}</p>
-        </div>
-        <div className="card">
-          <span className="badge badge-blue">Role Logs</span>
+        </WdsSurfaceCard>
+        <WdsSurfaceCard>
+          <WdsBadge tone="blue">Role Logs</WdsBadge>
           <h3>{roleChangeLogs.length}건 기록됨</h3>
           <p>
             승인 작업은 actor, target, 이전 role, 다음 role과 함께 저장됩니다.
           </p>
-        </div>
-      </div>
+        </WdsSurfaceCard>
+      </WdsResponsiveGrid>
 
-      <div className="member-approval-list" style={{ marginTop: 16 }}>
+      <WdsOffset className="member-approval-list" offset="sm">
         {pendingUsers.length > 0 ? (
           pendingUsers.map((user) => (
             <article className="member-approval-row" key={user.id}>
               <div>
-                <div className="badge-row">
-                  <span className="badge">Guest</span>
-                  <span className="badge">
+                <WdsBadgeGroup>
+                  <WdsBadge>Guest</WdsBadge>
+                  <WdsBadge>
                     {formatKoreanDate(user.createdAt)} 가입
-                  </span>
+                  </WdsBadge>
                   {user.profileSubmittedAt ? (
-                    <span className="badge badge-blue">
+                    <WdsBadge tone="blue">
                       {formatKoreanDate(user.profileSubmittedAt)} 제출
-                    </span>
+                    </WdsBadge>
                   ) : (
-                    <span className="badge">프로필 미제출</span>
+                    <WdsBadge>프로필 미제출</WdsBadge>
                   )}
-                </div>
+                </WdsBadgeGroup>
                 <strong>{user.displayName}</strong>
                 <p>{user.email}</p>
                 <GuestProfileSummary user={user} />
               </div>
-              <button
-                className="button button-primary button-small"
+              <WdsButton
                 onClick={() => approveUser(user)}
+                size="small"
+                tone="primary"
                 type="button"
               >
                 member 승인
-              </button>
+              </WdsButton>
             </article>
           ))
         ) : (
-          <div className="empty">승인 대기 중인 guest가 없습니다.</div>
+          <WdsEmptyState>승인 대기 중인 guest가 없습니다.</WdsEmptyState>
         )}
-      </div>
+      </WdsOffset>
     </section>
   );
 }

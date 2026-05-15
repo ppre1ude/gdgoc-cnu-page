@@ -15,6 +15,15 @@ import {
   type LowParticipationMember,
   type OperatorAnalytics,
 } from '@/domain/operator-analytics';
+import { WdsBadge } from '@/components/wds-form-controls';
+import {
+  WdsDashboardLayout,
+  WdsOffset,
+  WdsResponsiveGrid,
+  WdsSectionHeader,
+  WdsStack,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserActivityApplicationStore } from '../activities/browser-activity-application-store';
 import { createBrowserActivitySessionStore } from '../activities/browser-activity-session-store';
@@ -92,17 +101,12 @@ export function OperatorAnalyticsPanel() {
 
   return (
     <section className="section section-compact">
-      <div className="section-header">
-        <div>
-          <h2>운영 지표</h2>
-          <p>
-            신청, 승인, 세션 출석 데이터를 합쳐 참여율과 미참석 위험을 운영진
-            관점에서 확인합니다.
-          </p>
-        </div>
-      </div>
+      <WdsSectionHeader
+        description="신청, 승인, 세션 출석 데이터를 합쳐 참여율과 미참석 위험을 운영진 관점에서 확인합니다."
+        title="운영 지표"
+      />
 
-      <div className="grid grid-3">
+      <WdsResponsiveGrid columns={3}>
         <AnalyticsCard
           description="member, team_member, organizer, admin을 포함하고 alumni는 제외합니다."
           label="Active Members"
@@ -143,15 +147,15 @@ export function OperatorAnalyticsPanel() {
           label="Capacity Fill"
           title={`${analytics.upcomingActivityCapacityFillRate}% 충원율`}
         />
-      </div>
+      </WdsResponsiveGrid>
 
-      <div className="analytics-dashboard-grid">
+      <WdsDashboardLayout offset="sm" sidebarWidth="minmax(280px, 0.75fr)">
         <ActivityFunnels funnels={analytics.activityFunnels} />
-        <div className="stack">
+        <WdsStack>
           <ActivityTypeRates rates={analytics.activityTypeAttendanceRates} />
           <LowParticipationList members={analytics.lowParticipationMembers} />
-        </div>
-      </div>
+        </WdsStack>
+      </WdsDashboardLayout>
     </section>
   );
 }
@@ -189,11 +193,11 @@ function AnalyticsCard({
   title: string;
 }) {
   return (
-    <div className="card">
-      <span className="badge badge-blue">{label}</span>
+    <WdsSurfaceCard>
+      <WdsBadge tone="blue">{label}</WdsBadge>
       <h3>{title}</h3>
       <p>{description}</p>
-    </div>
+    </WdsSurfaceCard>
   );
 }
 
@@ -203,8 +207,8 @@ function ActivityFunnels({
   funnels: ActivityParticipationFunnel[];
 }) {
   return (
-    <div className="card">
-      <span className="badge badge-green">Activity Funnel</span>
+    <WdsSurfaceCard>
+      <WdsBadge tone="green">Activity Funnel</WdsBadge>
       <h3>활동별 참여 흐름</h3>
       {funnels.length > 0 ? (
         <div className="analytics-list">
@@ -228,11 +232,13 @@ function ActivityFunnels({
           ))}
         </div>
       ) : (
-        <p className="helper-text" style={{ marginTop: 12 }}>
-          일정이 있는 activity가 생기면 활동별 funnel이 표시됩니다.
-        </p>
+        <WdsOffset offset="sm">
+          <p className="helper-text">
+            일정이 있는 activity가 생기면 활동별 funnel이 표시됩니다.
+          </p>
+        </WdsOffset>
       )}
-    </div>
+    </WdsSurfaceCard>
   );
 }
 
@@ -242,8 +248,8 @@ function ActivityTypeRates({
   rates: ActivityTypeAttendanceRate[];
 }) {
   return (
-    <div className="card">
-      <span className="badge badge-blue">Type Rates</span>
+    <WdsSurfaceCard>
+      <WdsBadge tone="blue">Type Rates</WdsBadge>
       <h3>유형별 참석률</h3>
       {rates.length > 0 ? (
         <div className="analytics-list">
@@ -268,11 +274,13 @@ function ActivityTypeRates({
           ))}
         </div>
       ) : (
-        <p className="helper-text" style={{ marginTop: 12 }}>
-          종료된 세션의 승인/출석 데이터가 쌓이면 유형별 참석률이 표시됩니다.
-        </p>
+        <WdsOffset offset="sm">
+          <p className="helper-text">
+            종료된 세션의 승인/출석 데이터가 쌓이면 유형별 참석률이 표시됩니다.
+          </p>
+        </WdsOffset>
       )}
-    </div>
+    </WdsSurfaceCard>
   );
 }
 
@@ -282,8 +290,8 @@ function LowParticipationList({
   members: LowParticipationMember[];
 }) {
   return (
-    <div className="card">
-      <span className="badge">Follow-up</span>
+    <WdsSurfaceCard>
+      <WdsBadge>Follow-up</WdsBadge>
       <h3>낮은 참여 멤버</h3>
       {members.length > 0 ? (
         <div className="analytics-list">
@@ -302,10 +310,12 @@ function LowParticipationList({
           ))}
         </div>
       ) : (
-        <p className="helper-text" style={{ marginTop: 12 }}>
-          최근 종료 세션에서 반복 미참석이 감지된 활동 멤버가 없습니다.
-        </p>
+        <WdsOffset offset="sm">
+          <p className="helper-text">
+            최근 종료 세션에서 반복 미참석이 감지된 활동 멤버가 없습니다.
+          </p>
+        </WdsOffset>
       )}
-    </div>
+    </WdsSurfaceCard>
   );
 }

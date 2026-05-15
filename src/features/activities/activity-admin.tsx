@@ -38,12 +38,34 @@ import {
 } from '@/domain/activity-service';
 import { listVisibleActivities } from '@/domain/activity';
 import { ActivityCard } from '@/components/activity-card';
+import {
+  WdsBadge,
+  WdsButton,
+  WdsEmptyState,
+  WdsField,
+  WdsInput,
+  WdsSelect,
+  WdsTextArea,
+  type WdsSelectOption,
+} from '@/components/wds-form-controls';
+import {
+  WdsActionRow,
+  WdsBadgeGroup,
+  WdsDashboardLayout,
+  WdsOffset,
+  WdsPageHeader,
+  WdsResponsiveGrid,
+  WdsSectionHeader,
+  WdsStack,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserActivityApplicationStore } from './browser-activity-application-store';
 import { createBrowserActivitySessionStore } from './browser-activity-session-store';
 import { createBrowserActivityStore } from './browser-activity-store';
 import { createBrowserSessionAttendanceStore } from './browser-session-attendance-store';
-import { seedActivities } from './seed-activities';
+import { toOptionalActivityStartIso } from './activity-admin-model';
+import { officialBuildWithAiEventUrl, seedActivities } from './seed-activities';
 
 type AiResponse = {
   provider: 'gemini' | 'local-fallback';
@@ -53,7 +75,6 @@ type AiResponse = {
 
 type ActivityDraftFormState = {
   body: string;
-  externalRegistrationLabel: string;
   externalRegistrationUrl: string;
   registrationMode: ActivityRegistrationMode;
   startsAt: string;
@@ -72,11 +93,31 @@ const initialDraft: ActivityDraftFormState = {
   status: 'published' as ActivityStatus,
   startsAt: '2026-05-16T04:00',
   registrationMode: 'hybrid' as ActivityRegistrationMode,
-  externalRegistrationUrl: 'https://gdg.community.dev/',
-  externalRegistrationLabel: 'gdg.community.dev 등록',
+  externalRegistrationUrl: officialBuildWithAiEventUrl,
 };
 
 const operatorRoles = new Set(['team_member', 'organizer', 'admin']);
+
+const activityTypeOptions: WdsSelectOption<ActivityType>[] = [
+  { label: 'Event', value: 'event' },
+  { label: 'Study', value: 'study' },
+  { label: 'Project', value: 'project' },
+  { label: 'Challenge', value: 'challenge' },
+  { label: 'Social', value: 'social' },
+];
+
+const activityVisibilityOptions: WdsSelectOption<ActivityVisibility>[] = [
+  { label: 'Public', value: 'public' },
+  { label: 'Member', value: 'member' },
+  { label: 'Operator', value: 'operator' },
+];
+
+const registrationModeOptions: WdsSelectOption<ActivityRegistrationMode>[] = [
+  { label: '내부 신청', value: 'internal' },
+  { label: '외부 등록', value: 'external' },
+  { label: '내부 신청 + 외부 등록', value: 'hybrid' },
+  { label: '정보 안내만', value: 'none' },
+];
 
 export function ActivityAdmin() {
   const { role, userId } = useAuthSession();
@@ -219,44 +260,46 @@ export function ActivityAdmin() {
   async function saveActivity(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const now = new Date().toISOString();
-    const activityFields = {
-      actorRole: role,
-      title: draft.title,
-      summary: draft.body,
-      type: draft.type,
-      visibility: draft.visibility,
-      status: draft.status,
-      startsAt: draft.startsAt ? new Date(draft.startsAt).toISOString() : undefined,
-      registrationMode: draft.registrationMode,
-      externalRegistrationUrl: draft.externalRegistrationUrl.trim() || undefined,
-      externalRegistrationLabel: draft.externalRegistrationLabel.trim() || undefined,
-      now,
-    };
+    try {
+      const now = new Date().toISOString();
+      const activityFields = {
+        actorRole: role,
+        title: draft.title,
+        summary: draft.body,
+        type: draft.type,
+        visibility: draft.visibility,
+        status: draft.status,
+        startsAt: toOptionalActivityStartIso(draft.startsAt),
+        registrationMode: draft.registrationMode,
+        externalRegistrationUrl: draft.externalRegistrationUrl.trim() || undefined,
+        now,
+      };
 
-    const savedActivity = editingActivityId
-      ? await updateActivity(store, {
-        ...activityFields,
-        activityId: editingActivityId,
-      })
-      : await createActivity(store, activityFields);
-    await loadOrSyncDefaultActivitySession(sessionStore, savedActivity);
-    setMessage(
-      editingActivityId
-        ? 'Activity가 수정되었습니다. Member Home에서 바로 확인할 수 있습니다.'
-        : 'Activity가 저장되었습니다. Member Home에서 바로 확인할 수 있습니다.',
-    );
-    setDraft(initialDraft);
-    setEditingActivityId(null);
-    setSuggestion(null);
-    await refreshDashboard();
+      const savedActivity = editingActivityId
+        ? await updateActivity(store, {
+          ...activityFields,
+          activityId: editingActivityId,
+        })
+        : await createActivity(store, activityFields);
+      await loadOrSyncDefaultActivitySession(sessionStore, savedActivity);
+      setMessage(
+        editingActivityId
+          ? 'Activity가 수정되었습니다. Member Home에서 바로 확인할 수 있습니다.'
+          : 'Activity가 저장되었습니다. Member Home에서 바로 확인할 수 있습니다.',
+      );
+      setDraft(initialDraft);
+      setEditingActivityId(null);
+      setSuggestion(null);
+      await refreshDashboard();
+    } catch (error) {
+      setMessage(describeActivitySaveError(error));
+    }
   }
 
   function startEditing(activity: Activity) {
     setEditingActivityId(activity.id);
     setDraft({
       body: activity.summary,
-      externalRegistrationLabel: activity.externalRegistrationLabel ?? '',
       externalRegistrationUrl: activity.externalRegistrationUrl ?? '',
       registrationMode: activity.registrationMode ?? 'internal',
       startsAt: toDateTimeLocalValue(activity.startsAt),
@@ -345,253 +388,237 @@ export function ActivityAdmin() {
     await refreshDashboard();
   }
 
+  const usesExternalRegistration = isExternalRegistrationMode(
+    draft.registrationMode,
+  );
+
   return (
     <main className="page">
       <div className="container">
-        <p className="eyebrow">Operator Dashboard</p>
-        <h1 className="page-title">Activity Admin</h1>
-        <p className="page-lead">
-          운영진이 활동 초안을 쓰고, Gemini 보조를 확인하고, Firebase 또는 demo
-          bridge에 저장합니다.
-        </p>
+        <WdsPageHeader
+          description="운영진이 활동 초안을 쓰고, Gemini 보조를 확인하고, Firebase 또는 demo bridge에 저장합니다."
+          eyebrow="Operator Dashboard"
+          title="Activity Admin"
+        />
 
-        <div className="dashboard-grid" style={{ marginTop: 28 }}>
-          <section className="card">
+        <WdsDashboardLayout offset="lg">
+          <WdsSurfaceCard as="section">
             <form className="form" onSubmit={saveActivity}>
-              <div className="badge-row">
-                <span className="badge badge-blue">
+              <WdsBadgeGroup>
+                <WdsBadge tone="blue">
                   {editingActivityId ? 'Activity 수정' : 'Activity 생성'}
-                </span>
+                </WdsBadge>
                 {editingActivityId ? (
-                  <span className="badge">{editingActivityId}</span>
+                  <WdsBadge>{editingActivityId}</WdsBadge>
                 ) : null}
-              </div>
-              <label className="field">
-                <span>제목</span>
-                <input
-                  className="input"
+              </WdsBadgeGroup>
+              <WdsField label="제목">
+                <WdsInput
                   onChange={(event) =>
                     setDraft((current) => ({ ...current, title: event.target.value }))
                   }
+                  required
                   value={draft.title}
                 />
-              </label>
+              </WdsField>
 
-              <div className="grid grid-2">
-                <label className="field">
-                  <span>유형</span>
-                  <select
-                    className="select"
-                    onChange={(event) =>
+              <WdsResponsiveGrid columns={2}>
+                <WdsField label="유형">
+                  <WdsSelect
+                    onValueChange={(type) =>
                       setDraft((current) => ({
                         ...current,
-                        type: event.target.value as ActivityType,
+                        type,
                       }))
                     }
+                    options={activityTypeOptions}
                     value={draft.type}
-                  >
-                    <option value="event">Event</option>
-                    <option value="study">Study</option>
-                    <option value="project">Project</option>
-                    <option value="challenge">Challenge</option>
-                    <option value="social">Social</option>
-                  </select>
-                </label>
+                  />
+                </WdsField>
 
-                <label className="field">
-                  <span>공개 범위</span>
-                  <select
-                    className="select"
-                    onChange={(event) =>
+                <WdsField label="공개 범위">
+                  <WdsSelect
+                    onValueChange={(visibility) =>
                       setDraft((current) => ({
                         ...current,
-                        visibility: event.target.value as ActivityVisibility,
+                        visibility,
                       }))
                     }
+                    options={activityVisibilityOptions}
                     value={draft.visibility}
-                  >
-                    <option value="public">Public</option>
-                    <option value="member">Member</option>
-                    <option value="operator">Operator</option>
-                  </select>
-                </label>
-              </div>
+                  />
+                </WdsField>
+              </WdsResponsiveGrid>
 
-              <label className="field">
-                <span>일정</span>
-                <input
-                  className="input"
+              <WdsField label="일정">
+                <WdsInput
                   onChange={(event) =>
                     setDraft((current) => ({ ...current, startsAt: event.target.value }))
                   }
                   type="datetime-local"
                   value={draft.startsAt}
                 />
-              </label>
+              </WdsField>
 
-              <div className="grid grid-2">
-                <label className="field">
-                  <span>등록 방식</span>
-                  <select
-                    className="select"
-                    onChange={(event) =>
+              <WdsResponsiveGrid columns={2}>
+                <WdsField label="등록 방식">
+                  <WdsSelect
+                    onValueChange={(registrationMode) => {
                       setDraft((current) => ({
                         ...current,
-                        registrationMode: event.target.value as ActivityRegistrationMode,
-                      }))
-                    }
+                        registrationMode,
+                        externalRegistrationUrl: isExternalRegistrationMode(
+                          registrationMode,
+                        )
+                          ? current.externalRegistrationUrl
+                          : '',
+                      }));
+                    }}
+                    options={registrationModeOptions}
                     value={draft.registrationMode}
-                  >
-                    <option value="internal">내부 신청</option>
-                    <option value="external">외부 등록</option>
-                    <option value="hybrid">내부 신청 + 외부 등록</option>
-                    <option value="none">정보 안내만</option>
-                  </select>
-                </label>
+                  />
+                </WdsField>
+              </WdsResponsiveGrid>
 
-                <label className="field">
-                  <span>외부 등록 버튼</span>
-                  <input
-                    className="input"
+              {usesExternalRegistration ? (
+                <WdsField
+                  label="외부 등록 URL"
+                  message={
+                    <>
+                      GDG 공식 행사, Build with AI, 외부 신청 폼처럼 홈페이지 밖에서
+                      신청해야 하는 활동에만 사용합니다. 카드 CTA는 "바로가기"로
+                      고정됩니다.
+                    </>
+                  }
+                >
+                  <WdsInput
                     onChange={(event) =>
                       setDraft((current) => ({
                         ...current,
-                        externalRegistrationLabel: event.target.value,
+                        externalRegistrationUrl: event.target.value,
                       }))
                     }
-                    placeholder="예: gdg.community.dev 등록"
-                    value={draft.externalRegistrationLabel}
+                    placeholder="https://gdg.community.dev/..."
+                    required={usesExternalRegistration}
+                    type="url"
+                    value={draft.externalRegistrationUrl}
                   />
-                </label>
-              </div>
+                </WdsField>
+              ) : null}
 
-              <label className="field">
-                <span>외부 등록 URL</span>
-                <input
-                  className="input"
-                  onChange={(event) =>
-                    setDraft((current) => ({
-                      ...current,
-                      externalRegistrationUrl: event.target.value,
-                    }))
-                  }
-                  placeholder="https://gdg.community.dev/..."
-                  type="url"
-                  value={draft.externalRegistrationUrl}
-                />
-              </label>
-
-              <label className="field">
-                <span>운영진 메모 / 본문</span>
-                <textarea
-                  className="textarea"
+              <WdsField label="운영진 메모 / 본문">
+                <WdsTextArea
                   onChange={(event) =>
                     setDraft((current) => ({ ...current, body: event.target.value }))
                   }
+                  required
                   value={draft.body}
                 />
-              </label>
+              </WdsField>
 
-              <div className="toolbar">
-                <button
-                  className="button button-secondary"
+              <WdsActionRow>
+                <WdsButton
                   disabled={isSuggesting}
                   onClick={requestSuggestion}
+                  tone="secondary"
                   type="button"
                 >
                   {isSuggesting ? 'AI 작성 중' : 'AI로 문구 정리'}
-                </button>
-                <button className="button button-primary" type="submit">
+                </WdsButton>
+                <WdsButton tone="primary" type="submit">
                   {editingActivityId ? 'Activity 수정' : 'Activity 저장'}
-                </button>
-              </div>
+                </WdsButton>
+              </WdsActionRow>
               {editingActivityId ? (
-                <div className="toolbar">
-                  <button
-                    className="button button-secondary"
+                <WdsActionRow>
+                  <WdsButton
                     onClick={cancelEditing}
+                    tone="secondary"
                     type="button"
                   >
                     수정 취소
-                  </button>
-                </div>
+                  </WdsButton>
+                </WdsActionRow>
               ) : null}
-              <p className="helper-text">{message}</p>
+              <p className="helper-text" aria-live="polite">{message}</p>
             </form>
-          </section>
+          </WdsSurfaceCard>
 
-          <aside className="stack">
-            <section className="card">
-              <div className="badge-row">
-                <span className="badge badge-blue">AI Draft</span>
-              </div>
+          <WdsStack as="aside">
+            <WdsSurfaceCard as="section">
+              <WdsBadgeGroup>
+                <WdsBadge tone="blue">AI Draft</WdsBadge>
+              </WdsBadgeGroup>
               {suggestion ? (
-                <div className="stack" style={{ marginTop: 14 }}>
+                <WdsStack offset="sm">
                   <p className="helper-text">카드 요약</p>
                   <p>{suggestion.cardSummary}</p>
                   <p className="helper-text">멤버용 문구</p>
                   <p>{suggestion.memberCopy}</p>
                   <p className="helper-text">공개용 문구</p>
                   <p>{suggestion.publicCopy}</p>
-                  <div className="badge-row">
+                  <WdsBadgeGroup>
                     {suggestion.suggestedTags.map((tag) => (
-                      <span className="badge" key={tag}>
+                      <WdsBadge key={tag}>
                         {tag}
-                      </span>
+                      </WdsBadge>
                     ))}
-                  </div>
+                  </WdsBadgeGroup>
                   {suggestion.missingInfo.length > 0 ? (
                     <p className="helper-text">
                       보완 필요: {suggestion.missingInfo.join(', ')}
                     </p>
                   ) : null}
-                  <button className="button button-ghost" onClick={applySuggestion} type="button">
+                  <WdsButton onClick={applySuggestion} tone="ghost" type="button">
                     제안 적용
-                  </button>
-                </div>
+                  </WdsButton>
+                </WdsStack>
               ) : (
-                <p className="helper-text" style={{ marginTop: 14 }}>
-                  초안을 입력하고 AI 보조를 실행하면 요약과 문구 제안이 여기에
-                  표시됩니다.
-                </p>
+                <WdsOffset offset="sm">
+                  <p className="helper-text">
+                    초안을 입력하고 AI 보조를 실행하면 요약과 문구 제안이 여기에
+                    표시됩니다.
+                  </p>
+                </WdsOffset>
               )}
-            </section>
+            </WdsSurfaceCard>
 
             <ProposalReviewQueue
               onApprove={approveProposal}
               proposals={pendingProposals}
             />
 
-            <section className="stack">
-              <div className="section-header" style={{ marginBottom: 0 }}>
-                <div>
-                  <h2>Saved</h2>
-                  <p>운영진 관점에서 볼 수 있는 activity입니다.</p>
-                </div>
-              </div>
+            <WdsStack as="section">
+              <WdsSectionHeader
+                description="운영진 관점에서 볼 수 있는 activity입니다."
+                flush
+                title="Saved"
+              />
               {activities.map((activity) => {
                 const session = sessionsByActivity[activity.id] ?? null;
 
                 return (
-                  <div className="stack" key={activity.id}>
+                  <WdsStack key={activity.id}>
                     <ActivityCard activity={activity} />
-                    <div className="toolbar">
-                      <button
-                        className="button button-secondary button-small"
+                    <WdsActionRow>
+                      <WdsButton
                         disabled={editingActivityId === activity.id}
                         onClick={() => startEditing(activity)}
+                        size="small"
+                        tone="secondary"
                         type="button"
                       >
                         {editingActivityId === activity.id ? '수정 중' : '수정'}
-                      </button>
-                      <button
-                        className="button button-ghost button-small"
+                      </WdsButton>
+                      <WdsButton
                         onClick={() => void archiveSavedActivity(activity)}
+                        size="small"
+                        tone="ghost"
                         type="button"
                       >
                         아카이브
-                      </button>
-                    </div>
+                      </WdsButton>
+                    </WdsActionRow>
                     <ApplicationQueue
                       activity={activity}
                       applications={applicationsByActivity[activity.id] ?? []}
@@ -602,12 +629,12 @@ export function ActivityAdmin() {
                       onMarkAttended={markAttended}
                       session={session}
                     />
-                  </div>
+                  </WdsStack>
                 );
               })}
-            </section>
-          </aside>
-        </div>
+            </WdsStack>
+          </WdsStack>
+        </WdsDashboardLayout>
       </div>
     </main>
   );
@@ -621,13 +648,12 @@ function ProposalReviewQueue({
   proposals: Activity[];
 }) {
   return (
-    <section className="stack">
-      <div className="section-header" style={{ marginBottom: 0 }}>
-        <div>
-          <h2>Member Proposals</h2>
-          <p>멤버가 제출한 프로젝트 제안을 검토하고 공개 여부를 확정합니다.</p>
-        </div>
-      </div>
+    <WdsStack as="section">
+      <WdsSectionHeader
+        description="멤버가 제출한 프로젝트 제안을 검토하고 공개 여부를 확정합니다."
+        flush
+        title="Member Proposals"
+      />
 
       {proposals.length > 0 ? (
         <div className="application-queue">
@@ -640,22 +666,21 @@ function ProposalReviewQueue({
                 </div>
                 <p className="helper-text">{proposal.summary}</p>
               </div>
-              <button
-                className="button button-primary button-small"
+              <WdsButton
                 onClick={() => onApprove(proposal)}
+                size="small"
+                tone="primary"
                 type="button"
               >
                 승인
-              </button>
+              </WdsButton>
             </div>
           ))}
         </div>
       ) : (
-        <div className="application-queue application-queue-empty">
-          검토 대기 중인 프로젝트 제안이 없습니다.
-        </div>
+        <WdsEmptyState>검토 대기 중인 프로젝트 제안이 없습니다.</WdsEmptyState>
       )}
-    </section>
+    </WdsStack>
   );
 }
 
@@ -689,9 +714,7 @@ function ApplicationQueue({
 
   if (applications.length === 0) {
     return (
-      <div className="application-queue application-queue-empty">
-        아직 신청자가 없습니다.
-      </div>
+      <WdsEmptyState>아직 신청자가 없습니다.</WdsEmptyState>
     );
   }
 
@@ -714,24 +737,26 @@ function ApplicationQueue({
               </div>
             </div>
             {application.state === 'applied' ? (
-              <button
-                className="button button-primary button-small"
+              <WdsButton
                 onClick={() => onApprove(application)}
+                size="small"
+                tone="primary"
                 type="button"
               >
                 승인
-              </button>
+              </WdsButton>
             ) : isAttended ? (
-              <span className="badge badge-green">출석 완료</span>
+              <WdsBadge tone="green">출석 완료</WdsBadge>
             ) : (
-              <button
-                className="button button-secondary button-small"
+              <WdsButton
                 disabled={!session}
                 onClick={() => onMarkAttended(activity, application)}
+                size="small"
+                tone="secondary"
                 type="button"
               >
                 출석 처리
-              </button>
+              </WdsButton>
             )}
           </div>
         );
@@ -747,10 +772,10 @@ function AttendanceSummary({
 }) {
   return (
     <div className="attendance-summary">
-      <span className="badge">신청 {summary.appliedCount}</span>
-      <span className="badge badge-blue">승인 {summary.approvedCount}</span>
-      <span className="badge badge-green">참석 {summary.attendedCount}</span>
-      <span className="badge">파생 미참석 {summary.derivedAbsentCount}</span>
+      <WdsBadge>신청 {summary.appliedCount}</WdsBadge>
+      <WdsBadge tone="blue">승인 {summary.approvedCount}</WdsBadge>
+      <WdsBadge tone="green">참석 {summary.attendedCount}</WdsBadge>
+      <WdsBadge>파생 미참석 {summary.derivedAbsentCount}</WdsBadge>
     </div>
   );
 }
@@ -768,4 +793,34 @@ function toDateTimeLocalValue(value: string | undefined) {
 
   const offsetMs = date.getTimezoneOffset() * 60_000;
   return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+}
+
+function isExternalRegistrationMode(mode: ActivityRegistrationMode) {
+  return mode === 'external' || mode === 'hybrid';
+}
+
+function describeActivitySaveError(error: unknown) {
+  const fallbackMessage = 'Activity를 저장하지 못했습니다. 입력값을 확인한 뒤 다시 시도하세요.';
+
+  if (!(error instanceof Error)) {
+    return fallbackMessage;
+  }
+
+  if (error.message.includes('Activity title is required')) {
+    return 'Activity를 저장하려면 제목을 입력해야 합니다.';
+  }
+
+  if (error.message.includes('Activity summary is required')) {
+    return 'Activity를 저장하려면 운영진 메모 / 본문을 입력해야 합니다.';
+  }
+
+  if (error.message.includes('External registration URL is required')) {
+    return '외부 등록 또는 내부 신청 + 외부 등록 방식에는 외부 등록 URL이 필요합니다.';
+  }
+
+  if (error.message.includes('Activity start date is invalid')) {
+    return 'Activity ?쇱젙???щ컮瑜??좎쭨 / ?쒓컙?쇰줈 ?낅젰?댁빞 ?⑸땲??';
+  }
+
+  return `${fallbackMessage} ${error.message}`;
 }

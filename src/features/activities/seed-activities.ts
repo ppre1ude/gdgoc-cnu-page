@@ -1,5 +1,8 @@
 import type { Activity } from '@/domain/activity';
 
+export const officialBuildWithAiEventUrl =
+  'https://gdg.community.dev/events/details/google-gdg-on-campus-chonnam-national-university-gwangju-south-korea-presents-build-with-ai-prompt-to-product/';
+
 export const seedActivities: Activity[] = [
   {
     id: 'seed-bwai',
@@ -11,8 +14,7 @@ export const seedActivities: Activity[] = [
     status: 'published',
     startsAt: '2026-05-16T04:00:00.000Z',
     registrationMode: 'hybrid',
-    externalRegistrationUrl: 'https://gdg.community.dev/',
-    externalRegistrationLabel: 'gdg.community.dev 등록',
+    externalRegistrationUrl: officialBuildWithAiEventUrl,
     createdAt: '2026-05-11T09:00:00.000Z',
     updatedAt: '2026-05-11T09:00:00.000Z',
   },

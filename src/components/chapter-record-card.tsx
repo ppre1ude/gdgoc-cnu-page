@@ -1,40 +1,46 @@
-import Link from 'next/link';
-
+import { WdsBadge, WdsTextLinkButton } from '@/components/wds-form-controls';
+import {
+  WdsActionRow,
+  WdsBadgeGroup,
+  WdsOffset,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 import type { ChapterRecord } from '@/domain/chapter-record';
 import { formatKoreanDate } from '@/lib/format-korean-date-time';
 
 export function ChapterRecordCard({ record }: { record: ChapterRecord }) {
   return (
-    <article className="card">
-      <div className="badge-row">
-        <span className="badge badge-blue">{getRecordKindLabel(record.kind)}</span>
-        <span className="badge">{record.visibility}</span>
+    <WdsSurfaceCard as="article">
+      <WdsBadgeGroup>
+        <WdsBadge tone="blue">{getRecordKindLabel(record.kind)}</WdsBadge>
+        <WdsBadge>{record.visibility}</WdsBadge>
         {record.showcaseCandidate ? (
-          <span className="badge badge-green">Showcase Candidate</span>
+          <WdsBadge tone="green">Showcase Candidate</WdsBadge>
         ) : null}
-      </div>
+      </WdsBadgeGroup>
       <h3>{record.title}</h3>
       <p>{record.summary}</p>
-      <div className="badge-row" style={{ marginTop: 14 }}>
+      <WdsBadgeGroup offset="sm">
         {record.tags.map((tag) => (
-          <span className="badge" key={tag}>
+          <WdsBadge key={tag}>
             {tag}
-          </span>
+          </WdsBadge>
         ))}
-      </div>
-      <p className="helper-text" style={{ marginTop: 14 }}>
-        {record.authorUserId}
-        {record.publishedAt ? ` / ${formatKoreanDate(record.publishedAt)}` : ''}
-      </p>
-      <div className="card-actions">
-        <Link
-          className="button button-ghost button-small"
+      </WdsBadgeGroup>
+      <WdsOffset offset="sm">
+        <p className="helper-text">
+          {record.authorUserId}
+          {record.publishedAt ? ` / ${formatKoreanDate(record.publishedAt)}` : ''}
+        </p>
+      </WdsOffset>
+      <WdsActionRow offset="sm">
+        <WdsTextLinkButton
           href={`/records/${encodeURIComponent(record.id)}`}
         >
           자세히
-        </Link>
-      </div>
-    </article>
+        </WdsTextLinkButton>
+      </WdsActionRow>
+    </WdsSurfaceCard>
   );
 }
 

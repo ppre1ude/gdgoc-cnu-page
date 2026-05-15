@@ -6,6 +6,17 @@ import {
   createDemoEnvironmentReadiness,
   type DemoEnvironmentItem,
 } from '@/domain/demo-environment';
+import {
+  WdsBadge,
+  WdsNotice,
+  type WdsBadgeTone,
+} from '@/components/wds-form-controls';
+import {
+  WdsOffset,
+  WdsResponsiveGrid,
+  WdsSectionHeader,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 
 type EnvironmentStatusResponse = {
@@ -74,63 +85,63 @@ export function DemoEnvironmentPanel() {
 
   return (
     <section className="section section-compact">
-      <div className="section-header">
-        <div>
-          <h2>Demo Environment</h2>
-          <p>
-            발표 전에 Firebase, Auth, Gemini 연결 상태를 값 노출 없이 확인합니다.
-          </p>
-        </div>
-        <span className="badge badge-blue">
-          {overallLabels[readiness.overallStatus]}
-        </span>
-      </div>
+      <WdsSectionHeader
+        description="발표 전에 Firebase, Auth, Gemini 연결 상태를 값 노출 없이 확인합니다."
+        title="Demo Environment"
+        trailingContent={
+          <WdsBadge tone="blue">
+            {overallLabels[readiness.overallStatus]}
+          </WdsBadge>
+        }
+      />
 
-      <div className="grid grid-3">
+      <WdsResponsiveGrid columns={3}>
         {readiness.items.map((item) => (
-          <article className="card" key={item.id}>
-            <span className={getBadgeClassName(item.status)}>
+          <WdsSurfaceCard as="article" key={item.id}>
+            <WdsBadge tone={getStatusBadgeTone(item.status)}>
               {statusLabels[item.status]}
-            </span>
+            </WdsBadge>
             <h3>{item.label}</h3>
             <p>{item.description}</p>
-          </article>
+          </WdsSurfaceCard>
         ))}
-      </div>
+      </WdsResponsiveGrid>
 
-      <div className="notice" style={{ marginTop: 16 }}>
-        <strong>다음 준비물</strong>
-        {readiness.requiredActions.length > 0 ? (
-          <ul className="helper-list">
-            {readiness.requiredActions.map((action) => (
-              <li key={action}>{action}</li>
-            ))}
-            {environmentStatus.missingFirebaseKeys.length > 0 ? (
-              <li>
-                Firebase 누락 환경 변수:{' '}
-                {environmentStatus.missingFirebaseKeys.join(', ')}
-              </li>
-            ) : null}
-          </ul>
-        ) : (
-          <p className="helper-text" style={{ color: '#7a4d00', marginTop: 8 }}>
-            필수 환경 설정이 준비되어 있습니다. 현재 Gemini 모델은{' '}
-            {environmentStatus.geminiModel}입니다.
-          </p>
-        )}
-      </div>
+      <WdsOffset offset="sm">
+        <WdsNotice>
+          <strong>다음 준비물</strong>
+          {readiness.requiredActions.length > 0 ? (
+            <ul className="helper-list">
+              {readiness.requiredActions.map((action) => (
+                <li key={action}>{action}</li>
+              ))}
+              {environmentStatus.missingFirebaseKeys.length > 0 ? (
+                <li>
+                  Firebase 누락 환경 변수:{' '}
+                  {environmentStatus.missingFirebaseKeys.join(', ')}
+                </li>
+              ) : null}
+            </ul>
+          ) : (
+            <p className="helper-text helper-text-caution">
+              필수 환경 설정이 준비되어 있습니다. 현재 Gemini 모델은{' '}
+              {environmentStatus.geminiModel}입니다.
+            </p>
+          )}
+        </WdsNotice>
+      </WdsOffset>
     </section>
   );
 }
 
-function getBadgeClassName(status: DemoEnvironmentItem['status']) {
+function getStatusBadgeTone(status: DemoEnvironmentItem['status']): WdsBadgeTone {
   if (status === 'ready' || status === 'demo_ready') {
-    return 'badge badge-green';
+    return 'green';
   }
 
   if (status === 'fallback_ready') {
-    return 'badge badge-blue';
+    return 'blue';
   }
 
-  return 'badge';
+  return 'caution';
 }

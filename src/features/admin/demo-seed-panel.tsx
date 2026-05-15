@@ -13,6 +13,13 @@ import {
 import type { Notice } from '@/domain/notice';
 import type { Showcase } from '@/domain/showcase';
 import { loadOrSyncDefaultActivitySession } from '@/domain/activity-session';
+import { WdsBadge, WdsButton, WdsNotice } from '@/components/wds-form-controls';
+import {
+  WdsOffset,
+  WdsResponsiveGrid,
+  WdsSectionHeader,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 import { formatKoreanDateTime } from '@/lib/format-korean-date-time';
 import { getFirestoreDb, hasFirebaseConfig } from '@/lib/firebase/client';
 import { createBrowserActivityStore } from '@/features/activities/browser-activity-store';
@@ -101,77 +108,81 @@ export function DemoSeedPanel() {
 
   return (
     <section className="section section-compact">
-      <div className="section-header">
-        <div>
-          <h2>Demo Data</h2>
-          <p>
+      <WdsSectionHeader
+        description={
+          <>
             발표 전에 seed 데이터를 안전하게 채웁니다. Firebase 연결 전에는 전체
             local demo bridge를, Firebase 연결 후에는 rules가 허용하는 운영
             콘텐츠를 Firestore에 저장합니다.
-          </p>
-        </div>
-        <button
-          className="button button-primary"
-          disabled={isSeeding}
-          onClick={seedDemoData}
-          type="button"
-        >
-          {isSeeding ? '채우는 중' : 'Demo 데이터 채우기'}
-        </button>
-      </div>
+          </>
+        }
+        title="Demo Data"
+        trailingContent={
+          <WdsButton
+            disabled={isSeeding}
+            onClick={seedDemoData}
+            tone="primary"
+            type="button"
+          >
+            {isSeeding ? '채우는 중' : 'Demo 데이터 채우기'}
+          </WdsButton>
+        }
+      />
 
-      <div className="notice">
+      <WdsNotice>
         <strong>{hasFirebaseConfig() ? 'Firestore seed 모드' : 'Local demo bridge 모드'}</strong>
-        <p className="helper-text" style={{ color: '#7a4d00', marginTop: 8 }}>
+        <p className="helper-text helper-text-caution">
           {message}
         </p>
         {hasFirebaseConfig() ? (
-          <p className="helper-text" style={{ color: '#7a4d00', marginTop: 8 }}>
+          <p className="helper-text helper-text-caution">
             Firestore 모드에서는 activities, notices, showcases와 기본 sessions를
             채웁니다. chapterUsers와 chapterRecords는 보안 규칙상 로그인/승인
             흐름 또는 수동 bootstrap으로 준비합니다.
           </p>
         ) : null}
-      </div>
+      </WdsNotice>
 
       {summary ? (
-        <div className="grid grid-3" style={{ marginTop: 16 }}>
-          <article className="card">
-            <span className="badge badge-green">Created</span>
+        <WdsResponsiveGrid columns={3} offset="sm">
+          <WdsSurfaceCard as="article">
+            <WdsBadge tone="green">Created</WdsBadge>
             <h3>{createdCount}개 문서 추가</h3>
             <p>
               이미 존재하지 않는 seed id만 저장했습니다. 기존 문서 내용은
               유지됩니다.
             </p>
-          </article>
-          <article className="card">
-            <span className="badge badge-blue">Skipped</span>
+          </WdsSurfaceCard>
+          <WdsSurfaceCard as="article">
+            <WdsBadge tone="blue">Skipped</WdsBadge>
             <h3>{skippedCount}개 문서 유지</h3>
             <p>같은 seed id가 이미 있으면 다시 쓰지 않습니다.</p>
-          </article>
-          <article className="card">
-            <span className="badge">Sessions</span>
+          </WdsSurfaceCard>
+          <WdsSurfaceCard as="article">
+            <WdsBadge>Sessions</WdsBadge>
             <h3>{summary.sessionSyncCount}개 기본 세션 확인</h3>
             <p>일정이 있는 seed activity에 기본 출석 세션을 연결했습니다.</p>
-          </article>
-        </div>
+          </WdsSurfaceCard>
+        </WdsResponsiveGrid>
       ) : null}
 
       {summary ? (
-        <div className="notice" style={{ marginTop: 16 }}>
-          <strong>
-            {summary.mode === 'firestore' ? 'Firestore' : 'localStorage'} seed 결과 ·{' '}
-            {formatKoreanDateTime(summary.completedAt)}
-          </strong>
-          <ul className="helper-list">
-            {summary.results.map((result) => (
-              <li key={result.collection}>
-                {result.collection}: 추가 {result.createdIds.length}개, 유지{' '}
-                {result.skippedIds.length}개
-              </li>
-            ))}
-          </ul>
-        </div>
+        <WdsOffset offset="sm">
+          <WdsNotice>
+            <strong>
+              {summary.mode === 'firestore' ? 'Firestore' : 'localStorage'} seed 결과 ·{' '}
+              {formatKoreanDateTime(summary.completedAt)}
+            </strong>
+            <ul className="helper-list">
+              {summary.results.map((result) => (
+                <li key={result.collection}>
+                  {result.collection}: 추가 {result.createdIds.length}개, 유지{' '}
+                  {result.skippedIds.length}개
+                </li>
+              ))}
+            </ul>
+          </WdsNotice>
+        </WdsOffset>
       ) : null}
     </section>
   );

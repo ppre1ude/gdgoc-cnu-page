@@ -1,3 +1,4 @@
+import type { Activity } from './activity.ts';
 import {
   applyToActivity,
   approveActivityApplication,
@@ -33,6 +34,11 @@ export type ApproveApplicationForActivityInput = {
   activityId: string;
   userId: string;
   now: string;
+};
+
+export type MemberApplicationSummary = {
+  activity: Activity;
+  state: ActivityApplicationState;
 };
 
 export function createInMemoryActivityApplicationStore(
@@ -152,4 +158,31 @@ export async function getCancelledActivityIdsByUser(
   return applications
     .filter((application) => Boolean(application.cancelledAt))
     .map((application) => application.activityId);
+}
+
+export function listMemberApplicationSummaries(
+  activities: Activity[],
+  applicationStates: Record<string, ActivityApplicationState>,
+): MemberApplicationSummary[] {
+  return activities
+    .flatMap((activity) => {
+      const state = applicationStates[activity.id];
+
+      return state ? [{ activity, state }] : [];
+    })
+    .sort((a, b) => {
+      if (!a.activity.startsAt || !b.activity.startsAt) {
+        if (a.activity.startsAt) {
+          return -1;
+        }
+
+        if (b.activity.startsAt) {
+          return 1;
+        }
+
+        return a.activity.title.localeCompare(b.activity.title);
+      }
+
+      return a.activity.startsAt.localeCompare(b.activity.startsAt);
+    });
 }

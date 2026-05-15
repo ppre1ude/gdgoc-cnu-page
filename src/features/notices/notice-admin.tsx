@@ -10,6 +10,25 @@ import {
   updateNotice,
 } from '@/domain/notice-service';
 import { NoticeBoard } from '@/components/notice-board';
+import {
+  WdsBadge,
+  WdsButton,
+  WdsField,
+  WdsInput,
+  WdsSelect,
+  WdsTextArea,
+  type WdsSelectOption,
+} from '@/components/wds-form-controls';
+import {
+  WdsActionRow,
+  WdsBadgeGroup,
+  WdsDashboardLayout,
+  WdsPageHeader,
+  WdsResponsiveGrid,
+  WdsSectionHeader,
+  WdsStack,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserNoticeStore } from './browser-notice-store';
 import { seedNotices } from './seed-notices';
@@ -29,6 +48,18 @@ const initialDraft: NoticeDraftFormState = {
   status: 'published',
   pinned: true,
 };
+
+const noticeVisibilityOptions = [
+  { value: 'public', label: 'Public' },
+  { value: 'member', label: 'Member' },
+  { value: 'operator', label: 'Operator' },
+] satisfies readonly WdsSelectOption<NoticeVisibility>[];
+
+const noticeStatusOptions = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'published', label: 'Published' },
+  { value: 'archived', label: 'Archived' },
+] satisfies readonly WdsSelectOption<NoticeStatus>[];
 
 export function NoticeAdmin() {
   const { role } = useAuthSession();
@@ -126,86 +157,71 @@ export function NoticeAdmin() {
   return (
     <main className="page">
       <div className="container">
-        <p className="eyebrow">Operator Dashboard</p>
-        <h1 className="page-title">Notice Admin</h1>
-        <p className="page-lead">
-          운영진이 공지사항을 등록하고, pinned 상태와 공개 범위를 관리해 멤버 홈 상단에
-          노출합니다.
-        </p>
+        <WdsPageHeader
+          description="운영진이 공지사항을 등록하고, pinned 상태와 공개 범위를 관리해 멤버 홈 상단에 노출합니다."
+          eyebrow="Operator Dashboard"
+          title="Notice Admin"
+        />
 
-        <div className="dashboard-grid" style={{ marginTop: 28 }}>
-          <section className="card">
+        <WdsDashboardLayout offset="lg">
+          <WdsSurfaceCard as="section">
             <form className="form" onSubmit={saveNotice}>
-              <div className="badge-row">
-                <span className="badge badge-blue">
+              <WdsBadgeGroup>
+                <WdsBadge tone="blue">
                   {editingNoticeId ? '공지 수정' : '공지 생성'}
-                </span>
+                </WdsBadge>
                 {editingNoticeId ? (
-                  <span className="badge">{editingNoticeId}</span>
+                  <WdsBadge>{editingNoticeId}</WdsBadge>
                 ) : null}
-              </div>
+              </WdsBadgeGroup>
 
-              <label className="field">
-                <span>제목</span>
-                <input
-                  className="input"
+              <WdsField label="제목">
+                <WdsInput
                   onChange={(event) =>
                     setDraft((current) => ({ ...current, title: event.target.value }))
                   }
                   required
                   value={draft.title}
                 />
-              </label>
+              </WdsField>
 
-              <label className="field">
-                <span>본문</span>
-                <textarea
-                  className="textarea"
+              <WdsField label="본문">
+                <WdsTextArea
                   onChange={(event) =>
                     setDraft((current) => ({ ...current, body: event.target.value }))
                   }
                   required
                   value={draft.body}
                 />
-              </label>
+              </WdsField>
 
-              <div className="grid grid-2">
-                <label className="field">
-                  <span>공개 범위</span>
-                  <select
-                    className="select"
-                    onChange={(event) =>
+              <WdsResponsiveGrid columns={2}>
+                <WdsField label="공개 범위">
+                  <WdsSelect
+                    onValueChange={(visibility) =>
                       setDraft((current) => ({
                         ...current,
-                        visibility: event.target.value as NoticeVisibility,
+                        visibility,
                       }))
                     }
+                    options={noticeVisibilityOptions}
                     value={draft.visibility}
-                  >
-                    <option value="public">Public</option>
-                    <option value="member">Member</option>
-                    <option value="operator">Operator</option>
-                  </select>
-                </label>
+                  />
+                </WdsField>
 
-                <label className="field">
-                  <span>상태</span>
-                  <select
-                    className="select"
-                    onChange={(event) =>
+                <WdsField label="상태">
+                  <WdsSelect
+                    onValueChange={(status) =>
                       setDraft((current) => ({
                         ...current,
-                        status: event.target.value as NoticeStatus,
+                        status,
                       }))
                     }
+                    options={noticeStatusOptions}
                     value={draft.status}
-                  >
-                    <option value="draft">Draft</option>
-                    <option value="published">Published</option>
-                    <option value="archived">Archived</option>
-                  </select>
-                </label>
-              </div>
+                  />
+                </WdsField>
+              </WdsResponsiveGrid>
 
               <label className="checkbox-field">
                 <input
@@ -218,55 +234,56 @@ export function NoticeAdmin() {
                 <span>상단 고정</span>
               </label>
 
-              <div className="toolbar">
-                <button className="button button-primary" type="submit">
+              <WdsActionRow>
+                <WdsButton tone="primary" type="submit">
                   {editingNoticeId ? '공지 수정' : '공지 저장'}
-                </button>
+                </WdsButton>
                 {editingNoticeId ? (
-                  <button
-                    className="button button-secondary"
+                  <WdsButton
                     onClick={cancelEditing}
+                    tone="secondary"
                     type="button"
                   >
                     수정 취소
-                  </button>
+                  </WdsButton>
                 ) : null}
-              </div>
+              </WdsActionRow>
               <p className="helper-text">{message}</p>
             </form>
-          </section>
+          </WdsSurfaceCard>
 
-          <aside className="stack">
-            <div className="section-header" style={{ marginBottom: 0 }}>
-              <div>
-                <h2>Saved Notices</h2>
-                <p>멤버 홈에 노출되는 순서대로 표시합니다.</p>
-              </div>
-            </div>
+          <WdsStack as="aside">
+            <WdsSectionHeader
+              description="멤버 홈에 노출되는 순서대로 표시합니다."
+              flush
+              title="Saved Notices"
+            />
             <NoticeBoard
               notices={notices}
               renderActions={(notice) => (
-                <div className="toolbar">
-                  <button
-                    className="button button-secondary button-small"
+                <WdsActionRow>
+                  <WdsButton
                     disabled={editingNoticeId === notice.id}
                     onClick={() => startEditing(notice)}
+                    size="small"
+                    tone="secondary"
                     type="button"
                   >
                     {editingNoticeId === notice.id ? '수정 중' : '수정'}
-                  </button>
-                  <button
-                    className="button button-ghost button-small"
+                  </WdsButton>
+                  <WdsButton
                     onClick={() => void archiveSavedNotice(notice)}
+                    size="small"
+                    tone="ghost"
                     type="button"
                   >
                     아카이브
-                  </button>
-                </div>
+                  </WdsButton>
+                </WdsActionRow>
               )}
             />
-          </aside>
-        </div>
+          </WdsStack>
+        </WdsDashboardLayout>
       </div>
     </main>
   );

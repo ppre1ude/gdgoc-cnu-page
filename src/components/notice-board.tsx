@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { WdsBadge, WdsEmptyState } from '@/components/wds-form-controls';
 import type { Notice } from '@/domain/notice';
 import { formatKoreanDate } from '@/lib/format-korean-date-time';
 
@@ -19,7 +20,7 @@ export function NoticeBoard({
   renderActions?: (notice: Notice) => ReactNode;
 }) {
   if (notices.length === 0) {
-    return <div className="empty">{emptyMessage}</div>;
+    return <WdsEmptyState>{emptyMessage}</WdsEmptyState>;
   }
 
   return (
@@ -49,9 +50,9 @@ export function NoticeBoard({
         >
           <div className="notice-board-cell notice-board-status" role="cell">
             {notice.pinned ? (
-              <span className="badge badge-green">Pinned</span>
+              <WdsBadge tone="green">Pinned</WdsBadge>
             ) : (
-              <span className="badge">Notice</span>
+              <WdsBadge>Notice</WdsBadge>
             )}
           </div>
           <div className="notice-board-cell notice-board-title" role="cell">
@@ -59,7 +60,7 @@ export function NoticeBoard({
             <p>{notice.body}</p>
           </div>
           <div className="notice-board-cell" role="cell">
-            <span className="badge">{visibilityLabel[notice.visibility]}</span>
+            <WdsBadge>{visibilityLabel[notice.visibility]}</WdsBadge>
           </div>
           <div className="notice-board-cell notice-board-date" role="cell">
             {formatKoreanDate(notice.updatedAt)}
