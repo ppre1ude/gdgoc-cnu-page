@@ -4,6 +4,8 @@ Status: Draft ready for implementation planning
 Date: 2026-05-11
 Owner: GDGoC CNU 운영진
 
+University identity: CNU means Chonnam National University, 전남대학교. Public copy must not refer to CNU as 충남대학교, Chungnam National University, or 충남대.
+
 ## Problem Statement
 
 GDGoC CNU needs a homepage that works as the official, structured hub for chapter activity.
@@ -13,6 +15,7 @@ Today, activity information is fragmented across Notion, Discord, gdg.community.
 The chapter needs a single place where:
 
 - External visitors can quickly understand that GDGoC CNU is active, credible, and worth joining.
+- 전남대학교 students who are seeing GDGoC CNU for the first time can understand that the chapter is a trusted student developer community connected to the Google Developers ecosystem.
 - Logged-in members can check the calendar, important notices, active studies/projects, open applications, and their own upcoming commitments without needing admin permissions.
 - Operators can register and manage activities without editing static pages manually.
 - Participation can be tracked well enough to improve operations and member engagement.
@@ -140,6 +143,8 @@ This means the prototype should not be judged complete because an admin can crea
 ### Public Visitor
 
 1. As an unauthenticated visitor, I want to understand what GDGoC CNU is within the first screen so that I can decide whether this chapter is relevant to me.
+
+   Onboarding should communicate the GDGoC goal and value system: impact students and empower them to impact their communities through technology; values are Connect, Learn, and Grow; roles are hosting workshops and building projects; benefits are professional growth, network growth, and community learning.
 
 2. As an unauthenticated visitor, I want to see recent or upcoming public activities so that the chapter feels active and concrete, not like a static club brochure.
 

@@ -1,17 +1,28 @@
 import { WdsBadge, WdsLinkButton } from '@/components/wds-form-controls';
 import {
-  WdsResponsiveGrid,
-  WdsSurfaceCard,
-} from '@/components/wds-layout-primitives';
-import {
   onboardingBrandPoints,
-  onboardingPosterPipeline,
+  onboardingDetailSections,
   onboardingValueBadges,
-  onboardingValueProcess,
 } from '@/domain/public-home-onboarding';
 import { getLoginHref, getPublicOnboardingHref } from '@/domain/auth-flow';
 import { PublicActivitySection } from '@/features/activities/public-activity-section';
+import {
+  YonseiBannerTextAnimation,
+  YonseiDeveloperBannerDoodle,
+} from '@/features/onboarding/yonsei-developer-banner';
 import { PublicShowcaseSection } from '@/features/showcases/public-showcase-section';
+
+const googleLogoLetters = [
+  { className: 'google-letter-blue', value: 'G' },
+  { className: 'google-letter-red', value: 'D' },
+  { className: 'google-letter-yellow', value: 'G' },
+  { className: 'google-letter-blue', value: 'o' },
+  { className: 'google-letter-green', value: 'C' },
+  { className: 'google-letter-space', value: ' ' },
+  { className: 'google-letter-blue', value: 'C' },
+  { className: 'google-letter-red', value: 'N' },
+  { className: 'google-letter-yellow', value: 'U' },
+] as const;
 
 export default function PublicHomePage() {
   return (
@@ -20,77 +31,49 @@ export default function PublicHomePage() {
         aria-labelledby="public-home-title"
         className="onboarding-hero"
       >
-        <div className="onboarding-ribbon ribbon-red" aria-hidden="true">
-          <span>Impact</span>
-        </div>
-        <div className="onboarding-ribbon ribbon-yellow" aria-hidden="true">
-          <span>Workshop</span>
-        </div>
-        <div className="onboarding-ribbon ribbon-green" aria-hidden="true">
-          <span>Community</span>
-        </div>
-        <div className="onboarding-ribbon-arc ribbon-arc-green" aria-hidden="true" />
-        <div className="onboarding-ribbon-arc ribbon-arc-blue" aria-hidden="true" />
-
-        <div className="container onboarding-hero-grid">
-          <div className="onboarding-copy">
-            <div className="onboarding-kicker" aria-label="캠페인">
-              <span>GDGoC CNU</span>
-              <span>Build with AI</span>
-            </div>
-            <h1 id="public-home-title">
-              <span>배우고, 만들고,</span>
-              <span>나누는</span>
-              <span>학생 개발자</span>
-              <span>커뮤니티</span>
-            </h1>
-            <p>
-              <span>GDGoC CNU는 Google 기술과 AI를 함께 실험하며,</span>
-              <span>워크숍과 프로젝트를 통해</span>
-              <span>배움을 실제 결과로 연결합니다.</span>
-              <span>서로의 성장을 돕고 그 경험을 커뮤니티에 나눕니다.</span>
-            </p>
-            <div className="hero-actions">
-              <WdsLinkButton href={getPublicOnboardingHref()} tone="primary">
-                멤버로 참여하기
-              </WdsLinkButton>
-              <WdsLinkButton href={getLoginHref('/member')} tone="secondary">
-                로그인하기
-              </WdsLinkButton>
-            </div>
-          </div>
-
-          <aside className="campaign-poster" aria-label="Build with AI 온보딩 포스터">
-            <div className="poster-grain" aria-hidden="true" />
-            <div className="poster-orbit poster-orbit-blue" aria-hidden="true" />
-            <div className="poster-orbit poster-orbit-green" aria-hidden="true" />
-            <div className="poster-head">
-              <span className="poster-sticker">Impact students</span>
-              <span className="poster-year">CNU Chapter</span>
-            </div>
-            <div className="poster-title-block">
-              <span>Build</span>
-              <span>with AI</span>
-            </div>
-            <div className="poster-tools" aria-label="챕터 가치">
-              {onboardingValueBadges.map((badge) => (
-                <span
-                  className={`poster-tool poster-tool-${badge.accent}`}
-                  key={badge.label}
+        <div className="container onboarding-hero-shell">
+          <div className="onboarding-hero-grid">
+            <div className="onboarding-copy">
+              <h1 id="public-home-title">
+                <YonseiBannerTextAnimation delaySeconds={0.1}>
+                  We are
+                </YonseiBannerTextAnimation>
+                <YonseiBannerTextAnimation
+                  aria-label="GDGoC CNU"
+                  className="google-logo-word"
+                  delaySeconds={0.4}
                 >
-                  {badge.label}
-                </span>
-              ))}
+                  {googleLogoLetters.map((letter, index) => (
+                    <span
+                      aria-hidden="true"
+                      className={`google-letter ${letter.className}`}
+                      key={`${letter.value}-${index}`}
+                    >
+                      {letter.value === ' ' ? '\u00A0' : letter.value}
+                    </span>
+                  ))}
+                </YonseiBannerTextAnimation>
+                <YonseiBannerTextAnimation delaySeconds={0.6}>
+                  Developers.
+                </YonseiBannerTextAnimation>
+              </h1>
+              <p>
+                GDGoC CNU는 Google Developers 생태계와 연결된 전남대학교 학생 개발자 커뮤니티입니다.
+                우리는 학생들이 서로 연결되고, 함께 배우고, 프로젝트로 성장하며
+                기술로 커뮤니티에 임팩트를 만들도록 돕습니다.
+              </p>
+              <div className="hero-actions">
+                <WdsLinkButton href={getPublicOnboardingHref()} tone="primary">
+                  멤버로 참여하기
+                </WdsLinkButton>
+                <WdsLinkButton href={getLoginHref('/member')} tone="secondary">
+                  로그인하기
+                </WdsLinkButton>
+              </div>
             </div>
-            <div className="poster-flow" aria-label="GDGoC CNU 성장 흐름">
-              {onboardingPosterPipeline.map((step, index) => (
-                <div className="poster-flow-step" key={step}>
-                  <span>{String(index + 1).padStart(2, '0')}</span>
-                  <strong>{step}</strong>
-                </div>
-              ))}
-            </div>
-          </aside>
+
+            <YonseiDeveloperBannerDoodle />
+          </div>
         </div>
       </section>
 
@@ -99,39 +82,104 @@ export default function PublicHomePage() {
         className="section campaign-bridge reveal-on-scroll"
         id="values"
       >
-        <div className="container campaign-bridge-grid">
-          <div>
-            <WdsBadge tone="blue">GDGoC CNU Values</WdsBadge>
-            <h2 id="values-title">함께 배우고, 프로젝트로 성장하는 방식</h2>
+        <div className="container">
+          <div className="developer-intro-head">
+            <WdsBadge tone="green">GDGoC CNU Values</WdsBadge>
+            <h2 id="values-title">Impact, Connect, Learn, Grow로 시작합니다.</h2>
+            <p>
+              GDGoC CNU는 Google Developers 생태계와 연결된 전남대학교 학생 개발자 커뮤니티입니다.
+              우리는 학생에게 임팩트를 만들고, 학생이 기술로 커뮤니티에 다시
+              임팩트를 만들도록 돕습니다.
+            </p>
           </div>
+
+          <div className="onboarding-jam-grid" role="list">
+            {onboardingValueBadges.map((badge, index) => (
+              <a
+                className={`onboarding-jam-card onboarding-jam-card-${badge.accent}`}
+                href={`#${badge.targetId}`}
+                key={badge.label}
+                role="listitem"
+              >
+                <span className="onboarding-jam-index">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <span className="onboarding-jam-symbol">{badge.symbol}</span>
+                <strong>{badge.label}</strong>
+                <p>{badge.description}</p>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="section onboarding-section-intro">
+        <div className="container">
+          <h2>Section Introduction.</h2>
           <p>
-            연결은 배움의 시작이고, 실습은 성장의 속도가 됩니다. GDGoC CNU는
-            함께 만든 결과를 다시 커뮤니티의 자산으로 남깁니다.
+            각 단계는 처음 방문한 전남대학교 학생이 이해해야 하는 가치 단위로
+            나뉩니다. 연결하고, 배우고, 성장하는 흐름이 워크숍과 프로젝트
+            활동으로 이어집니다.
           </p>
-          <div
-            aria-label="GDGoC CNU의 가치와 활동 흐름"
-            className="value-process-panel"
-          >
-            <span className="value-process-label">Our Way</span>
-            <div className="value-process-steps">
-              {onboardingValueProcess.map((step, index) => (
-                <article
-                  className={`value-process-step value-process-step-${step.accent}`}
-                  key={step.label}
-                >
-                  <span className="value-process-index">
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                  <div>
-                    <span className="value-process-kicker">{step.kicker}</span>
-                    <h3>{step.label}</h3>
-                  </div>
-                  <p>{step.title}</p>
-                  <small>{step.detail}</small>
-                </article>
-              ))}
+        </div>
+      </section>
+
+      {onboardingDetailSections.map((section) => (
+        <section
+          className={`onboarding-detail-section onboarding-detail-section-${section.accent}`}
+          id={section.targetId}
+          key={section.targetId}
+        >
+          <div className="container onboarding-detail-grid">
+            <aside className="onboarding-detail-outline">
+              <span>{section.order}</span>
+              <h2>{section.title}</h2>
+              <p>{section.description}</p>
+            </aside>
+
+            <div className="onboarding-detail-body">
+              <div className="onboarding-detail-block">
+                <span>{section.kicker}</span>
+                <h3>What we do</h3>
+                <ul>
+                  {section.bullets.map((bullet) => (
+                    <li key={bullet}>{bullet}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="onboarding-tool-panel">
+                <h3>How it shows up</h3>
+                <div className="onboarding-tool-list">
+                  {section.tools.map((tool) => (
+                    <span key={tool}>{tool}</span>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
+        </section>
+      ))}
+
+      <section className="section onboarding-outcome-band">
+        <div className="container onboarding-outcome-grid">
+          <div className="onboarding-outcome-copy">
+            <WdsBadge tone="blue">GDGoC CNU Values</WdsBadge>
+            <h2>참여자가 남기고 가야 할 것</h2>
+            <p>
+              온보딩은 이벤트 소개에서 끝나지 않습니다. 다음 활동으로 이어질 수
+              있는 사람, 결과물, 기록을 만드는 것이 목표입니다.
+            </p>
+            <div className="hero-actions">
+              <WdsLinkButton href={getPublicOnboardingHref()} tone="primary">
+                가입 정보 제출하기
+              </WdsLinkButton>
+              <WdsLinkButton href="#activities" tone="secondary">
+                공개 활동 보기
+              </WdsLinkButton>
+            </div>
+          </div>
+
           <div className="onboarding-proof-list brand-proof-list" role="list">
             {onboardingBrandPoints.map((point) => (
               <div
@@ -150,35 +198,9 @@ export default function PublicHomePage() {
 
       <PublicShowcaseSection />
 
-      <PublicActivitySection />
-
-      <section className="section">
-        <WdsResponsiveGrid className="container" columns={3}>
-          <WdsSurfaceCard as="article">
-            <WdsBadge tone="blue">Connect</WdsBadge>
-            <h3>함께할 사람을 만납니다</h3>
-            <p>
-              학교 안팎의 동료, 멘토, 파트너와 연결되어 더 넓은 개발자
-              네트워크를 만듭니다.
-            </p>
-          </WdsSurfaceCard>
-          <WdsSurfaceCard as="article">
-            <WdsBadge>Learn</WdsBadge>
-            <h3>실습으로 기술을 익힙니다</h3>
-            <p>
-              Google 기술과 AI를 직접 다루고, 서로 설명하며 배움을 공유합니다.
-            </p>
-          </WdsSurfaceCard>
-          <WdsSurfaceCard as="article">
-            <WdsBadge tone="green">Grow</WdsBadge>
-            <h3>프로젝트로 경험을 쌓습니다</h3>
-            <p>
-              아이디어를 작은 결과물로 구현하며 협업과 문제 해결 경험을
-              쌓습니다.
-            </p>
-          </WdsSurfaceCard>
-        </WdsResponsiveGrid>
-      </section>
+      <div id="activities">
+        <PublicActivitySection />
+      </div>
     </main>
   );
 }

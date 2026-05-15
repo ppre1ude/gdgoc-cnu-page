@@ -19,6 +19,7 @@
     "@wanteddev/wds": "^3.6.0",
     "@wanteddev/wds-icon": "^3.6.0",
     "@wanteddev/wds-nextjs": "^3.6.0",
+    "css-doodle": "^0.34.5",
     "firebase": "^12.13.0",
     "firebase-admin": "^13.10.0",
     "next": "^16.2.6",

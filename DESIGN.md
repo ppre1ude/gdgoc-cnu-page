@@ -3,7 +3,8 @@
 ## Product Context
 
 - **What this is:** GDGoC CNU chapter homepage for the Build with AI event and follow-up chapter activity.
-- **Who it is for:** CNU students, GDGoC chapter members, event participants, mentors, and partner organizers.
+- **University identity:** CNU means Chonnam National University, 전남대학교. Public copy must not refer to CNU as 충남대학교, Chungnam National University, or 충남대.
+- **Who it is for:** 전남대학교 students, GDGoC chapter members, event participants, mentors, and partner organizers.
 - **Project type:** Event/chapter homepage with lightweight product-like sections for agenda, tools, teams, prototypes, and recruiting.
 - **Primary implementation target:** React/Next.js or React/Vite using Wanted Montage Web Design System.
 
@@ -182,7 +183,7 @@ These colors are approved for onboarding visuals, motion graphics, badges, ribbo
 - **Grid:** 12 columns desktop, 6 tablet, 4 mobile.
 - **Cards:** Use cards only for repeated items such as tools, sessions, organizers, projects, or announcements.
 - **Radius:** Prefer 8px or less for normal UI. Use larger radius only for avatars or circular icon buttons.
-- **First viewport:** Show "GDGoC CNU" and "Build with AI" clearly, then immediately expose event value and next action.
+- **First viewport:** Show GDGoC CNU's chapter identity first, then immediately expose values and next action. Seasonal campaigns such as Build with AI should not replace the hero identity.
 
 ## Component Rules
 
@@ -208,6 +209,21 @@ These colors are approved for onboarding visuals, motion graphics, badges, ribbo
 - Explain what participants can build, what tools they will use, and what proof of work they will leave with.
 - Avoid generic AI slogans unless they connect to a concrete workshop outcome.
 
+## Onboarding Message System
+
+The onboarding screen primarily serves 전남대학교 students who are seeing GDGoC CNU for the first time.
+
+The first impression should be: GDGoC CNU is a trusted 전남대학교 student developer community connected to the Google Developers ecosystem.
+
+Use this message hierarchy:
+
+1. **Goal:** Impact students and empower them to impact their communities through technology.
+2. **Values:** Connect / Learn / Grow.
+3. **Roles:** Host workshops / Build projects.
+4. **Benefits:** Professional growth / Network growth / Community learning.
+
+Build with AI is a seasonal campaign and activity example. It must not replace the permanent chapter identity.
+
 ## Implementation Checklist
 
 - [ ] Install WDS packages through GitHub Packages.
@@ -227,3 +243,4 @@ These colors are approved for onboarding visuals, motion graphics, badges, ribbo
 | 2026-05-11 | Use Korean-first event copy with preserved English tool names | The audience is local CNU students, while the event and tools are global Google AI programs. |
 | 2026-05-11 | Add GDGoC / Google four-color palette as the campaign accent system | The official mark uses blue, red, yellow, and green; these should anchor onboarding and event identity without replacing WDS UI semantics. |
 | 2026-05-11 | Separate onboarding campaign art from member home utility | Onboarding can carry seasonal Build with AI poster texture and motion, while member home should remain an efficient dashboard for routing, notices, schedules, and board access. |
+| 2026-05-16 | Define CNU as Chonnam National University and adopt GDGoC Goal/Values/Roles/Benefits for onboarding | The onboarding audience is 전남대학교 students seeing the chapter for the first time; the screen should lead with Google Developers credibility and chapter values before seasonal campaign details. |
