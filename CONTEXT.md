@@ -2,20 +2,27 @@
 
 ## Domain Terms
 
-- **Activity Hub**: The homepage product surface that gathers chapter notices, activities, applications, records, showcases, and lightweight participation state.
+- **Activity Hub**: The whole homepage product that combines the public showcase, member-facing dashboard, and operator console around structured chapter activity.
 - **Activity Participation Snapshot**: The loaded, activity-indexed participation view for operator surfaces and analytics. It centralizes application lists, default session sync, session attendance loading, attendance summaries, and flat analytics inputs for a set of activities.
 - **Activity Schedule Module**: The domain module that interprets an activity's schedule, derives the prototype default session window, and answers upcoming/recent-ended schedule questions for operations and analytics.
 - **Data Adapter Split**: The adapter selection rule that keeps local demo seed data separate from production Firestore reads. Production Firestore adapters return persisted documents only; demo depth comes from local demo storage or explicit seed actions.
 - **Firestore Mutation Seam**: The server-owned write path for sensitive Firestore changes. Clients send mutation intent, while actor identity, role policy, document writes, and audit logs stay behind the seam.
-- **Member Home**: The logged-in chapter surface where approved members and alumni scan what is happening now.
-- **Member Home Snapshot**: The loaded, role-aware view model for Member Home. It centralizes content-role selection, visible home content, member application state, participation counts, and activity section grouping before the React screen renders it.
+- **Member Dashboard**: The member-facing logged-in product surface where approved members scan schedules, important notices, open studies/projects, available applications, and their own upcoming commitments.
+- **Member Calendar**: The member-facing schedule view of upcoming activities and sessions. It answers "what is happening next?" before exposing operator analytics or management state.
+- **Member Home**: The current route/screen name for the Member Dashboard. The route may remain `/member`, but product decisions should treat it as the member dashboard, not an operator dashboard.
+- **Member Home Snapshot**: The loaded, role-aware view model for Member Home. It centralizes content-role selection, visible home content, member application state, participation counts, calendar summary, important notices, open study/project sections, and activity grouping before the React screen renders it.
+- **Notice Board**: The board-like member surface for official announcements. Notices are read-first, pinnable, and separate from participation targets.
+- **Operator Console**: The team-member/admin surface for creating, approving, publishing, assigning, and analyzing chapter activity. It supports the Member Dashboard but is not the member product.
+- **Study/Project Board**: The board-like member surface for discovering active or recruiting studies and projects, seeing status, and applying or proposing where permitted.
 - **Korean Copy Catalog**: The shared copy module for Korean-first logged-in surfaces. It keeps role/access, Member Home, admin navigation, and operator error messages in one UTF-8-safe place.
 - **Role And Access Policy Module**: The domain module that classifies chapter roles, maps them to content visibility, and answers shared access questions for navigation, member home, production adapters, operator workflows, and analytics.
 
 ## Constraints
 
 - Member Home shows member-level content to alumni and operator roles, but it does not expose operator-only content there.
+- Member Dashboard is the presentation center for approved members. It must prioritize calendar, pinned notices, open studies/projects, available applications, and my commitments before member authoring tools or operator concerns.
 - Alumni can read member content but cannot apply to activities.
+- Operator Console responsibilities must not leak into the primary member flow. Activity creation, approval, attendance management, role management, and analytics belong to team-member/admin surfaces.
 - Activity Participation Snapshot may synchronize default sessions while loading participation state, because the current prototype derives a default two-hour session from scheduled activities.
 - Activity Schedule Module owns the current prototype rule that a scheduled activity derives one default two-hour session from `startsAt`.
 - Production Firestore adapters must not substitute seed data when a collection is empty.
@@ -23,3 +30,4 @@
 - Korean-first logged-in copy should move through the Korean Copy Catalog when it is shared across role/access, Member Home, admin navigation, or operator feedback surfaces.
 - Role And Access Policy Module is the TypeScript source of truth for role classification and content visibility. Firestore rules enforce the same cases independently and must stay aligned through rules tests.
 - Discord remains the live conversation channel; this product is the source of truth for structured chapter activity.
+- PoolC `/board` is a reference for member browsing rhythm and board-like category flow: list, detail, write where appropriate, comments/scraps later if needed. It is not a mandate to replace Discord with a free-form chat board in the first slice.
