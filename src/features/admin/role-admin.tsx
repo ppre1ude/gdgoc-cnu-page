@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 
 import type { UserRole } from '@/domain/activity';
 import type { ChapterUser, RoleChangeLog } from '@/domain/chapter-user';
-import { changeUserRole } from '@/domain/chapter-user-service';
 import {
   formatKoreanDate,
   formatKoreanDateTime,
@@ -27,6 +26,7 @@ import {
 } from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserChapterUserStore } from '../users/browser-chapter-user-store';
+import { createBrowserChapterUserMutationClient } from '../users/browser-chapter-user-mutation-client';
 import { seedChapterUsers } from '../users/seed-chapter-users';
 
 type AccountRole = Exclude<UserRole, 'visitor'>;
@@ -86,6 +86,10 @@ const roleSortWeight: Record<UserRole, number> = {
 export function RoleAdmin() {
   const { role, userId } = useAuthSession();
   const store = useMemo(() => createBrowserChapterUserStore(), []);
+  const mutationClient = useMemo(
+    () => createBrowserChapterUserMutationClient(store),
+    [store],
+  );
   const [users, setUsers] = useState<ChapterUser[]>(seedChapterUsers);
   const [roleChangeLogs, setRoleChangeLogs] = useState<RoleChangeLog[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<Record<string, AccountRole>>(
@@ -145,7 +149,7 @@ export function RoleAdmin() {
     setPendingUserId(user.id);
 
     try {
-      const changed = await changeUserRole(store, {
+      const changed = await mutationClient.changeUserRole({
         actorId: userId,
         actorRole: role,
         nextRole,

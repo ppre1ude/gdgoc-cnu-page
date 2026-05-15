@@ -3,10 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import type { ChapterUser, RoleChangeLog } from '@/domain/chapter-user';
-import {
-  approveGuestToMember,
-  listPendingGuestUsers,
-} from '@/domain/chapter-user-service';
+import { listPendingGuestUsers } from '@/domain/chapter-user-service';
 import { WdsBadge, WdsButton, WdsEmptyState } from '@/components/wds-form-controls';
 import {
   WdsBadgeGroup,
@@ -18,11 +15,16 @@ import {
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { formatKoreanDate } from '@/lib/format-korean-date-time';
 import { createBrowserChapterUserStore } from '../users/browser-chapter-user-store';
+import { createBrowserChapterUserMutationClient } from '../users/browser-chapter-user-mutation-client';
 import { seedChapterUsers } from '../users/seed-chapter-users';
 
 export function MemberApprovalPanel() {
   const { role, userId } = useAuthSession();
   const store = useMemo(() => createBrowserChapterUserStore(), []);
+  const mutationClient = useMemo(
+    () => createBrowserChapterUserMutationClient(store),
+    [store],
+  );
   const [pendingUsers, setPendingUsers] = useState<ChapterUser[]>(
     seedChapterUsers.filter((user) => user.role === 'guest'),
   );
@@ -54,7 +56,7 @@ export function MemberApprovalPanel() {
       return;
     }
 
-    await approveGuestToMember(store, {
+    await mutationClient.approveGuestToMember({
       actorId: userId,
       actorRole: role,
       now: new Date().toISOString(),

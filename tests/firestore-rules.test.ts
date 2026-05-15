@@ -230,23 +230,36 @@ describe('Firestore security rules', () => {
     );
   });
 
-  it('lets team members approve guests into members but not grant privileged roles', async () => {
+  it('blocks direct client role changes and role change log writes', async () => {
     await seedChapterUser('team-1', 'team_member');
+    await seedChapterUser('admin-1', 'admin');
     await seedChapterUser('guest-1', 'guest');
     await seedChapterUser('guest-2', 'guest');
 
     const teamDb = authenticatedDb('team-1');
+    const adminDb = authenticatedDb('admin-1');
 
-    await assertSucceeds(
+    await assertFails(
       updateDoc(doc(teamDb, 'chapterUsers', 'guest-1'), {
         role: 'member',
         updatedAt: '2026-05-14T00:00:00.000Z',
       }),
     );
     await assertFails(
-      updateDoc(doc(teamDb, 'chapterUsers', 'guest-2'), {
-        role: 'admin',
+      updateDoc(doc(adminDb, 'chapterUsers', 'guest-2'), {
+        role: 'organizer',
         updatedAt: '2026-05-14T00:00:00.000Z',
+      }),
+    );
+    await assertFails(
+      setDoc(doc(teamDb, 'roleChangeLogs', 'role-change-guest-1'), {
+        id: 'role-change-guest-1',
+        actorId: 'team-1',
+        actorRole: 'team_member',
+        createdAt: '2026-05-14T00:00:00.000Z',
+        nextRole: 'member',
+        previousRole: 'guest',
+        targetUserId: 'guest-1',
       }),
     );
   });
