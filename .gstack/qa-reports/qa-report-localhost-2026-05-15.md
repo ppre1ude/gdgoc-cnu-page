@@ -43,20 +43,23 @@ Screenshots are in `C:\gdgoc-cnu-page\.scratch\run\qa-2026-05-15`.
 8. Static public value cards were keyboard-focusable without an action.
    - Fixed by removing the unnecessary `tabIndex`.
 
+9. Build with AI seed/admin CTA still used the generic `https://gdg.community.dev/` root.
+   - Fixed by pointing the demo seed and Activity Admin draft default to the official GDG event page.
+
 ## Deferred Manual Checks
 
 - Confirm Gemini API key restrictions, quota, and model health in the deployed Google Cloud/Firebase environment.
 - Add the final production/preview/custom domain to Firebase Auth authorized domains.
 - Confirm Firestore rules are deployed to the target Firebase project.
 - Confirm the first operator `chapterUsers/{uid}` document is bootstrapped with `admin`.
-- Replace generic `https://gdg.community.dev/` seed/admin default URL with the exact event page when available.
 
 ## Verification
 
-- `npm run test`: 135 passing
+- `npm run test`: 136 passing
 - `npm run typecheck`: passing
 - `npm run build`: passing
 - `npm run test:rules:emulator`: 9 passing
 - Browser checks: `/`, `/member`, `/admin`, `/admin/activities` returned no console errors in tested desktop/mobile routes.
+- Browser check: `/` Build with AI `바로가기` href resolves to the official GDG event page.
 
 Note: Firebase emulator test passed, but Firebase CLI warned that Java versions below 21 will lose support in `firebase-tools@15`.

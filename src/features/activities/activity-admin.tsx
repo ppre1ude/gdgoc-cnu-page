@@ -57,7 +57,7 @@ import { createBrowserActivityApplicationStore } from './browser-activity-applic
 import { createBrowserActivitySessionStore } from './browser-activity-session-store';
 import { createBrowserActivityStore } from './browser-activity-store';
 import { createBrowserSessionAttendanceStore } from './browser-session-attendance-store';
-import { seedActivities } from './seed-activities';
+import { officialBuildWithAiEventUrl, seedActivities } from './seed-activities';
 
 type AiResponse = {
   provider: 'gemini' | 'local-fallback';
@@ -85,7 +85,7 @@ const initialDraft: ActivityDraftFormState = {
   status: 'published' as ActivityStatus,
   startsAt: '2026-05-16T04:00',
   registrationMode: 'hybrid' as ActivityRegistrationMode,
-  externalRegistrationUrl: 'https://gdg.community.dev/',
+  externalRegistrationUrl: officialBuildWithAiEventUrl,
 };
 
 const operatorRoles = new Set(['team_member', 'organizer', 'admin']);
