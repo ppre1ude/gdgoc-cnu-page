@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Typography } from '@wanteddev/wds';
 
 import {
   WdsPageHeader,
@@ -15,6 +16,24 @@ import { DemoEnvironmentPanel } from './demo-environment-panel';
 import { DemoSeedPanel } from './demo-seed-panel';
 import { MemberApprovalPanel } from './member-approval-panel';
 import { OperatorAnalyticsPanel } from './operator-analytics-panel';
+
+const adminToolCardSx = {
+  transition:
+    'border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease',
+  '&:hover, &:focus-visible': {
+    borderColor: 'rgb(var(--semantic-primary-normal-rgb) / 0.36)',
+    boxShadow: 'var(--shadow)',
+    transform: 'translateY(-1px)',
+  },
+};
+
+const adminToolLinkSx = {
+  color: 'var(--primary)',
+  display: 'inline-block',
+  fontSize: '14px',
+  fontWeight: 800,
+  marginTop: '16px',
+};
 
 export function AdminDashboard() {
   const { role } = useAuthSession();
@@ -38,14 +57,16 @@ export function AdminDashboard() {
             {adminItems.map((item) => (
               <WdsSurfaceCard
                 as={Link}
-                className="admin-tool-card"
                 href={item.href}
                 key={item.href}
+                sx={adminToolCardSx}
               >
                 <WdsBadge tone="blue">Admin Tool</WdsBadge>
                 <h3>{item.label}</h3>
                 <p>{item.description}</p>
-                <span className="admin-tool-link">열기</span>
+                <Typography as="span" sx={adminToolLinkSx}>
+                  열기
+                </Typography>
               </WdsSurfaceCard>
             ))}
           </WdsResponsiveGrid>

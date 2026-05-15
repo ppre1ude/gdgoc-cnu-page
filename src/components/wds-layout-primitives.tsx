@@ -81,6 +81,25 @@ type WdsPageHeaderProps = {
   title: ReactNode;
 };
 
+type WdsQueueProps = {
+  as?: ElementType;
+  children: ReactNode;
+  className?: string;
+  gap?: string;
+};
+
+type WdsQueueRowProps = {
+  actions?: ReactNode;
+  as?: ElementType;
+  children: ReactNode;
+  className?: string;
+};
+
+type WdsQueueSummaryProps = {
+  children: ReactNode;
+  className?: string;
+};
+
 const layoutOffsets: Record<WdsLayoutOffset, string | undefined> = {
   none: undefined,
   xs: '8px',
@@ -358,6 +377,83 @@ export function WdsOffset({
     >
       {children}
     </PolymorphicBox>
+  );
+}
+
+export function WdsQueue({
+  as = 'div',
+  children,
+  className,
+  gap = '10px',
+}: WdsQueueProps) {
+  return (
+    <PolymorphicBox
+      as={as}
+      className={className}
+      sx={{
+        background: 'var(--surface)',
+        border: '1px solid var(--line)',
+        borderRadius: 'var(--radius)',
+        display: 'grid',
+        gap,
+        padding: '12px',
+      }}
+    >
+      {children}
+    </PolymorphicBox>
+  );
+}
+
+export function WdsQueueRow({
+  actions,
+  as = 'div',
+  children,
+  className,
+}: WdsQueueRowProps) {
+  return (
+    <PolymorphicBox
+      as={as}
+      className={className}
+      sx={{
+        alignItems: 'center',
+        display: 'flex',
+        gap: '12px',
+        justifyContent: 'space-between',
+        '& strong': {
+          color: 'var(--text-strong)',
+          display: 'block',
+          fontSize: '14px',
+          overflowWrap: 'anywhere',
+        },
+        '@media (max-width: 560px)': {
+          alignItems: 'flex-start',
+          flexDirection: 'column',
+        },
+      }}
+    >
+      {children}
+      {actions}
+    </PolymorphicBox>
+  );
+}
+
+export function WdsQueueSummary({
+  children,
+  className,
+}: WdsQueueSummaryProps) {
+  return (
+    <FlexBox
+      alignItems="center"
+      className={className}
+      flexWrap="wrap"
+      gap="8px"
+      sx={{
+        borderBottom: '1px solid var(--line)',
+        padding: '0 0 10px',
+      }}
+    >
+      {children}
+    </FlexBox>
   );
 }
 

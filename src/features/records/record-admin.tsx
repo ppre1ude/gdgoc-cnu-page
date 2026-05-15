@@ -28,6 +28,8 @@ import {
   WdsActionRow,
   WdsDashboardLayout,
   WdsPageHeader,
+  WdsQueue,
+  WdsQueueRow,
   WdsResponsiveGrid,
   WdsSectionHeader,
   WdsStack,
@@ -263,9 +265,9 @@ export function RecordAdmin() {
                 title="Pending Review"
               />
               {pendingRecords.length > 0 ? (
-                <div className="application-queue">
+                <WdsQueue>
                   {pendingRecords.map((record) => (
-                    <div className="application-row" key={record.id}>
+                    <WdsQueueRow key={record.id}>
                       <div>
                         <strong>{record.title}</strong>
                         <p className="helper-text">{record.summary}</p>
@@ -288,9 +290,9 @@ export function RecordAdmin() {
                           쇼케이스 후보
                         </WdsButton>
                       </WdsActionRow>
-                    </div>
+                    </WdsQueueRow>
                   ))}
-                </div>
+                </WdsQueue>
               ) : (
                 <WdsEmptyState>검토 대기 중인 기록이 없습니다.</WdsEmptyState>
               )}

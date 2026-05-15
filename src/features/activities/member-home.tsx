@@ -1,6 +1,12 @@
 'use client';
 
-import { type FormEvent, useEffect, useMemo, useState } from 'react';
+import {
+  type FormEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import type { Activity, UserRole } from '@/domain/activity';
 import {
@@ -40,6 +46,8 @@ import {
   WdsBadgeGroup,
   WdsFormActions,
   WdsPageHeader,
+  WdsQueue,
+  WdsQueueRow,
   WdsResponsiveGrid,
   WdsSectionHeader,
   WdsSurfaceCard,
@@ -93,6 +101,23 @@ type MemberRecordFormState = {
   body: string;
   kind: ChapterRecordKind;
   tags: string;
+};
+
+const memberFormSurfaceSx = {
+  display: 'grid',
+  gap: '18px',
+  '& h2': {
+    color: 'var(--text-strong)',
+    fontSize: '22px',
+    letterSpacing: 0,
+    lineHeight: 1.3,
+    margin: '12px 0 8px',
+  },
+  '& > div > p': {
+    color: 'var(--text-muted)',
+    lineHeight: 1.6,
+    margin: 0,
+  },
 };
 
 const defaultGuestProfile: GuestProfileFormState = {
@@ -483,6 +508,24 @@ export function MemberHome() {
   );
 }
 
+function MemberFormSurface({
+  children,
+  onSubmit,
+}: {
+  children: ReactNode;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+}) {
+  return (
+    <WdsSurfaceCard
+      as="form"
+      onSubmit={onSubmit}
+      sx={memberFormSurfaceSx}
+    >
+      {children}
+    </WdsSurfaceCard>
+  );
+}
+
 function MemberProposalForm({
   message,
   onChange,
@@ -506,12 +549,7 @@ function MemberProposalForm({
 
   return (
     <section className="section section-compact">
-      <WdsSurfaceCard
-        as="form"
-        className="guest-profile-form"
-        onSubmit={onSubmit}
-        sx={{ display: 'grid', gap: '18px' }}
-      >
+      <MemberFormSurface onSubmit={onSubmit}>
         <div>
           <WdsBadge tone="blue">Member Proposal</WdsBadge>
           <h2>스터디 / 프로젝트 제안</h2>
@@ -562,7 +600,7 @@ function MemberProposalForm({
           }
           helper={message}
         />
-      </WdsSurfaceCard>
+      </MemberFormSurface>
     </section>
   );
 }
@@ -587,12 +625,7 @@ function MemberRecordForm({
 
   return (
     <section className="section section-compact">
-      <WdsSurfaceCard
-        as="form"
-        className="guest-profile-form"
-        onSubmit={onSubmit}
-        sx={{ display: 'grid', gap: '18px' }}
-      >
+      <MemberFormSurface onSubmit={onSubmit}>
         <div>
           <WdsBadge tone="green">Chapter Record</WdsBadge>
           <h2>회고 / 리뷰 / 기술 노트 작성</h2>
@@ -651,7 +684,7 @@ function MemberRecordForm({
           }
           helper={message}
         />
-      </WdsSurfaceCard>
+      </MemberFormSurface>
     </section>
   );
 }
@@ -679,12 +712,7 @@ function GuestProfileForm({
 
   return (
     <section className="section section-compact">
-      <WdsSurfaceCard
-        as="form"
-        className="guest-profile-form"
-        onSubmit={onSubmit}
-        sx={{ display: 'grid', gap: '18px' }}
-      >
+      <MemberFormSurface onSubmit={onSubmit}>
         <div>
           <WdsBadge tone="green">Guest Profile</WdsBadge>
           <h2>멤버 승인 요청 정보</h2>
@@ -755,7 +783,7 @@ function GuestProfileForm({
           }
           helper={message}
         />
-      </WdsSurfaceCard>
+      </MemberFormSurface>
     </section>
   );
 }
@@ -824,9 +852,9 @@ function MemberApplicationsSection({
         title="내 신청 현황"
       />
       {summaries.length > 0 ? (
-        <div className="application-queue">
+        <WdsQueue>
           {summaries.map(({ activity, state }) => (
-            <article className="application-row" key={activity.id}>
+            <WdsQueueRow as="article" key={activity.id}>
               <div>
                 <WdsBadgeGroup>
                   <WdsBadge tone={state === 'approved' ? 'green' : 'blue'}>
@@ -846,9 +874,9 @@ function MemberApplicationsSection({
               >
                 자세히
               </WdsTextLinkButton>
-            </article>
+            </WdsQueueRow>
           ))}
-        </div>
+        </WdsQueue>
       ) : (
         <WdsEmptyState>아직 신청 중인 활동이 없습니다.</WdsEmptyState>
       )}
