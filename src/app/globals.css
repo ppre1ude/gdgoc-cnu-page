@@ -156,6 +156,164 @@ textarea {
   color: var(--text-strong);
 }
 
+.member-dashboard-container {
+  max-width: 1280px;
+}
+
+.member-dashboard-shell {
+  align-items: start;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+  margin-top: 32px;
+}
+
+.member-dashboard-sidebar {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--semantic-elevation-shadow-normal-xsmall);
+  display: grid;
+  gap: 18px;
+  max-height: calc(100vh - 110px);
+  min-width: 0;
+  overflow-y: auto;
+  padding: 14px;
+  position: sticky;
+  scrollbar-width: thin;
+  top: 86px;
+}
+
+.member-sidebar-status {
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 10px;
+  padding: 2px 2px 16px;
+}
+
+.member-sidebar-status strong {
+  color: var(--text-strong);
+  font-size: 18px;
+  letter-spacing: 0;
+  line-height: 1.35;
+}
+
+.member-sidebar-status p {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.member-sidebar-controls {
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 12px;
+  padding: 0 2px 16px;
+}
+
+.member-dashboard-nav {
+  display: grid;
+  gap: 6px;
+}
+
+.member-dashboard-nav-item {
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-width: 0;
+  padding: 11px 12px;
+  position: relative;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.member-dashboard-nav-item::before {
+  background: transparent;
+  border-radius: 999px;
+  content: "";
+  height: calc(100% - 20px);
+  left: 0;
+  position: absolute;
+  top: 10px;
+  width: 3px;
+}
+
+.member-dashboard-nav-item span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.member-dashboard-nav-item strong {
+  color: inherit;
+  font-size: 14px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.member-dashboard-nav-item small {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.member-dashboard-nav-item em {
+  background: var(--surface-muted);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1;
+  padding: 6px 8px;
+}
+
+.member-dashboard-nav-item:hover,
+.member-dashboard-nav-item:focus-visible {
+  background: var(--surface-muted);
+  color: var(--text-strong);
+  transform: translateX(2px);
+}
+
+.member-dashboard-nav-item-active {
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface));
+  border-color: rgb(var(--semantic-primary-normal-rgb) / 0.28);
+  color: var(--text-strong);
+}
+
+.member-dashboard-nav-item-active::before {
+  background: var(--primary);
+}
+
+.member-dashboard-nav-item-active em {
+  background: rgb(var(--semantic-primary-normal-rgb) / 0.14);
+  color: var(--primary-strong);
+}
+
+.member-dashboard-content {
+  min-width: 0;
+}
+
+.member-dashboard-content .section,
+.member-dashboard-overview {
+  padding: 0;
+}
+
+.member-dashboard-overview {
+  display: grid;
+  gap: 20px;
+}
+
 .auth-pill {
   align-items: center;
   background: rgb(var(--semantic-status-positive-rgb) / 0.1);
@@ -1460,6 +1618,33 @@ textarea {
   .grid-3 {
     grid-template-columns: 1fr;
   }
+
+  .member-dashboard-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .member-dashboard-sidebar {
+    max-height: none;
+    overflow: visible;
+    position: static;
+  }
+
+  .member-dashboard-nav {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: thin;
+  }
+
+  .member-dashboard-nav-item {
+    flex: 0 0 min(220px, 72vw);
+  }
+
+  .member-dashboard-nav-item:hover,
+  .member-dashboard-nav-item:focus-visible {
+    transform: none;
+  }
 }
 
 @media (max-width: 560px) {
@@ -1655,6 +1840,25 @@ textarea {
   .demo-role-field {
     min-width: 0;
     width: 100%;
+  }
+
+  .member-dashboard-shell {
+    margin-top: 24px;
+  }
+
+  .member-dashboard-sidebar {
+    padding: 12px;
+  }
+
+  .member-sidebar-status,
+  .member-sidebar-controls {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .member-dashboard-nav-item {
+    flex-basis: min(190px, 78vw);
+    padding: 10px;
   }
 
   .profile-summary-list div {

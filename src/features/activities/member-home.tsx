@@ -33,7 +33,12 @@ import {
   isMemberHomeSnapshotCurrent,
   type MemberHomeSnapshot,
 } from '@/domain/member-home-snapshot';
-import { memberDashboardDestinations } from '@/domain/member-dashboard-destinations';
+import {
+  getMemberDashboardSectionHref,
+  getVisibleMemberDashboardSections,
+  type MemberDashboardSection,
+  type MemberDashboardSectionId,
+} from '@/domain/member-dashboard-sections';
 import { describeMemberHomeAccess } from '@/domain/member-access';
 import { koreanCopy } from '@/domain/korean-copy';
 import { formatKoreanDateTime } from '@/lib/format-korean-date-time';
@@ -95,6 +100,12 @@ type MemberRecordFormState = {
   tags: string;
 };
 
+type MemberHomeProps = {
+  initialSectionId?: MemberDashboardSectionId;
+};
+
+type MemberDashboardCounts = Partial<Record<MemberDashboardSectionId, string>>;
+
 const memberFormSurfaceSx = {
   display: 'grid',
   gap: '18px',
@@ -146,7 +157,7 @@ const chapterRecordKindOptions = [
 
 const memberHomeCopy = koreanCopy.memberHome;
 
-export function MemberHome() {
+export function MemberHome({ initialSectionId = 'overview' }: MemberHomeProps) {
   const {
     isFirebaseConfigured,
     role,
@@ -347,229 +358,348 @@ export function MemberHome() {
     currentSnapshot?.canApplyToActivities ?? access.canApplyToActivities;
   const canProposeActivities =
     currentSnapshot?.canProposeActivities ?? canApplyToActivities;
+  const visibleSections = getVisibleMemberDashboardSections({
+    canApplyToActivities,
+    canProposeActivities,
+  });
+  const selectedSection =
+    visibleSections.find((section) => section.id === initialSectionId) ??
+    visibleSections[0];
+  const dashboardCounts: MemberDashboardCounts = {
+    applications: `${dashboardMyNextCommitments.length}개`,
+    calendar: `${dashboardCalendarActivities.length}개`,
+    community: `${challenges.length}개`,
+    notices: `${dashboardImportantNotices.length}개`,
+    projects: `${dashboardOpenProjects.length}개`,
+    records: `${records.length}개`,
+    showcase: `${showcases.length}개`,
+    studies: `${dashboardOpenStudies.length}개`,
+  };
 
   return (
     <main className="page">
-      <div className="container">
+      <div className="container member-dashboard-container">
         <WdsPageHeader
           description={memberHomeCopy.header.description}
           eyebrow={memberHomeCopy.header.eyebrow}
           title={memberHomeCopy.header.title}
         />
 
-        <section className="section section-compact">
-          <div className="access-panel">
-            <div>
-              <WdsBadgeGroup>
-                <WdsBadge tone="blue">
-                  {isFirebaseConfigured
-                    ? memberHomeCopy.access.currentRoleLabel
-                    : 'Demo Role'}
-                </WdsBadge>
-                <WdsBadge>{access.status}</WdsBadge>
-              </WdsBadgeGroup>
-              <h2>{getAccessPanelTitle(access?.status)}</h2>
-              <p>{access.message}</p>
-            </div>
-            <div className="access-panel-side">
-              {role === 'visitor' ? (
-                <div className="access-panel-actions">
-                  <WdsLinkButton href={getPublicOnboardingHref()} tone="primary">
-                    {memberHomeCopy.access.googleLoginLabel}
-                  </WdsLinkButton>
-                </div>
-              ) : null}
-              {role === 'guest' ? (
-                <div className="access-panel-actions">
-                  <WdsLinkButton href={getPublicOnboardingHref()} tone="primary">
-                    {memberHomeCopy.access.guestSubmitLabel}
-                  </WdsLinkButton>
-                </div>
-              ) : null}
-              <WdsField
-                className="demo-role-field"
-                label={
-                  isFirebaseConfigured
-                    ? memberHomeCopy.access.currentRoleLabel
-                    : memberHomeCopy.access.demoRoleLabel
-                }
-              >
-                <WdsSelect
-                  disabled={authStatus !== 'demo'}
-                  onValueChange={changeDemoRole}
-                  options={demoRoleSelectOptions}
-                  value={role}
-                />
-              </WdsField>
-            </div>
+        <div className="member-dashboard-shell">
+          <MemberDashboardSidebar
+            accessMessage={access.message}
+            authStatus={authStatus}
+            counts={dashboardCounts}
+            currentRoleLabel={
+              isFirebaseConfigured
+                ? memberHomeCopy.access.currentRoleLabel
+                : memberHomeCopy.access.demoRoleLabel
+            }
+            isFirebaseConfigured={isFirebaseConfigured}
+            onRoleChange={changeDemoRole}
+            role={role}
+            selectedSectionId={selectedSection.id}
+            sections={visibleSections}
+            statusLabel={getAccessPanelTitle(access?.status)}
+          />
+
+          <div className="member-dashboard-content">
+            {selectedSection.id === 'overview' ? (
+              <MemberDashboardOverview
+                accessMessage={access.message}
+                canApplyToActivities={canApplyToActivities}
+                dashboardCalendarActivities={dashboardCalendarActivities}
+                dashboardMyNextCommitments={dashboardMyNextCommitments}
+                dashboardOpenProjects={dashboardOpenProjects}
+                dashboardOpenStudies={dashboardOpenStudies}
+                guestProfile={guestProfile}
+                guestProfileMessage={guestProfileMessage}
+                isFirebaseConfigured={isFirebaseConfigured}
+                onGuestProfileChange={setGuestProfile}
+                onGuestProfileSubmit={handleGuestProfileSubmit}
+                role={role}
+                statusLabel={getAccessPanelTitle(access?.status)}
+              />
+            ) : null}
+
+            {selectedSection.id === 'calendar' ? (
+              <MemberCalendarSection
+                activities={dashboardCalendarActivities}
+                applicationStates={applicationStates}
+              />
+            ) : null}
+
+            {selectedSection.id === 'notices' ? (
+              <ImportantNoticeSection
+                notices={dashboardImportantNotices.slice(0, 6)}
+              />
+            ) : null}
+
+            {selectedSection.id === 'applications' ? (
+              <MemberApplicationsSection summaries={dashboardMyNextCommitments} />
+            ) : null}
+
+            {selectedSection.id === 'studies' ? (
+              <ActivitySection
+                activities={dashboardOpenStudies}
+                applicationStates={applicationStates}
+                description="모집 중이거나 진행 중인 스터디를 먼저 확인하고, 더 많은 스터디는 전용 목록에서 살펴봅니다."
+                moreHref="/studies"
+                onApply={canApplyToActivities ? handleApply : undefined}
+                onCancel={canApplyToActivities ? handleCancel : undefined}
+                title="스터디 현황"
+              />
+            ) : null}
+
+            {selectedSection.id === 'projects' ? (
+              <ActivitySection
+                activities={dashboardOpenProjects}
+                applicationStates={applicationStates}
+                description="진행 중인 프로젝트와 새로 열릴 프로젝트 기회를 확인하고 신청합니다."
+                moreHref="/projects"
+                onApply={canApplyToActivities ? handleApply : undefined}
+                onCancel={canApplyToActivities ? handleCancel : undefined}
+                title="프로젝트 현황"
+              />
+            ) : null}
+
+            {selectedSection.id === 'community' ? (
+              <ActivitySection
+                activities={challenges}
+                applicationStates={applicationStates}
+                description={memberHomeCopy.activitySections.challenges.description}
+                onApply={canApplyToActivities ? handleApply : undefined}
+                onCancel={canApplyToActivities ? handleCancel : undefined}
+                title={memberHomeCopy.activitySections.challenges.title}
+              />
+            ) : null}
+
+            {selectedSection.id === 'showcase' ? (
+              <ShowcasePreviewSection showcases={showcases.slice(0, 3)} />
+            ) : null}
+
+            {selectedSection.id === 'records' ? (
+              <ChapterRecordSection records={records.slice(0, 3)} />
+            ) : null}
+
+            {selectedSection.id === 'propose' ? (
+              <MemberProposalForm
+                message={proposalMessage}
+                onChange={setProposal}
+                onSubmit={handleProposalSubmit}
+                value={proposal}
+              />
+            ) : null}
+
+            {selectedSection.id === 'write-record' ? (
+              <MemberRecordForm
+                message={recordMessage}
+                onChange={setRecordDraft}
+                onSubmit={handleRecordSubmit}
+                value={recordDraft}
+              />
+            ) : null}
           </div>
-        </section>
-
-        {role === 'guest' ? (
-          <section className="section section-compact">
-            <GuestProfileForm
-              message={guestProfileMessage}
-              onChange={setGuestProfile}
-              onSubmit={handleGuestProfileSubmit}
-              value={guestProfile}
-            />
-          </section>
-        ) : null}
-
-        <MemberDashboardRouteGrid
-          calendarCount={dashboardCalendarActivities.length}
-          noticesCount={dashboardImportantNotices.length}
-          projectsCount={dashboardOpenProjects.length}
-          recordsCount={records.length}
-          studiesCount={dashboardOpenStudies.length}
-        />
-
-        <MemberCalendarSection
-          activities={dashboardCalendarActivities}
-          applicationStates={applicationStates}
-        />
-
-        <ImportantNoticeSection notices={dashboardImportantNotices.slice(0, 6)} />
-
-        {canApplyToActivities ? (
-          <MemberApplicationsSection summaries={dashboardMyNextCommitments} />
-        ) : null}
-
-        <ActivitySection
-          activities={dashboardOpenStudies}
-          applicationStates={applicationStates}
-          description="모집 중이거나 진행 중인 스터디를 먼저 확인하고, 더 많은 스터디는 전용 목록에서 살펴봅니다."
-          moreHref="/studies"
-          onApply={canApplyToActivities ? handleApply : undefined}
-          onCancel={canApplyToActivities ? handleCancel : undefined}
-          title="스터디 현황"
-        />
-        <ActivitySection
-          activities={dashboardOpenProjects}
-          applicationStates={applicationStates}
-          description="진행 중인 프로젝트와 새로 열릴 프로젝트 기회를 확인하고 신청합니다."
-          moreHref="/projects"
-          onApply={canApplyToActivities ? handleApply : undefined}
-          onCancel={canApplyToActivities ? handleCancel : undefined}
-          title="프로젝트 현황"
-        />
-        <ActivitySection
-          activities={challenges}
-          applicationStates={applicationStates}
-          description={memberHomeCopy.activitySections.challenges.description}
-          onApply={canApplyToActivities ? handleApply : undefined}
-          onCancel={canApplyToActivities ? handleCancel : undefined}
-          title={memberHomeCopy.activitySections.challenges.title}
-        />
-
-        <ShowcasePreviewSection showcases={showcases.slice(0, 3)} />
-
-        <ChapterRecordSection records={records.slice(0, 3)} />
-
-        <WdsResponsiveGrid columns={3} offset="lg">
-          <WdsSurfaceCard>
-            <WdsBadge tone="blue">Calendar</WdsBadge>
-            <h3>
-              {memberHomeCopy.dashboard.summaryCards.schedule.title(
-                dashboardCalendarActivities.length,
-              )}
-            </h3>
-            <p>{memberHomeCopy.dashboard.summaryCards.schedule.description}</p>
-          </WdsSurfaceCard>
-          <WdsSurfaceCard>
-            <WdsBadge tone="green">My Status</WdsBadge>
-            <h3>
-              {canApplyToActivities
-                ? memberHomeCopy.dashboard.summaryCards.commitments.title(
-                  dashboardMyNextCommitments.length,
-                )
-                : memberHomeCopy.summaryCards.participation.applyLimitedTitle}
-            </h3>
-            <p>
-              {canApplyToActivities
-                ? memberHomeCopy.dashboard.summaryCards.commitments.description
-                : access?.message ??
-                  memberHomeCopy.summaryCards.participation.fallbackMessage}
-            </p>
-          </WdsSurfaceCard>
-          <WdsSurfaceCard>
-            <WdsBadge tone="blue">Board</WdsBadge>
-            <h3>
-              {memberHomeCopy.dashboard.summaryCards.studyProjects.title(
-                dashboardOpenStudies.length + dashboardOpenProjects.length,
-              )}
-            </h3>
-            <p>
-              {memberHomeCopy.dashboard.summaryCards.studyProjects.description}
-            </p>
-          </WdsSurfaceCard>
-        </WdsResponsiveGrid>
-
-        {canProposeActivities ? (
-          <MemberProposalForm
-            message={proposalMessage}
-            onChange={setProposal}
-            onSubmit={handleProposalSubmit}
-            value={proposal}
-          />
-        ) : null}
-
-        {canProposeActivities ? (
-          <MemberRecordForm
-            message={recordMessage}
-            onChange={setRecordDraft}
-            onSubmit={handleRecordSubmit}
-            value={recordDraft}
-          />
-        ) : null}
+        </div>
       </div>
     </main>
   );
 }
 
-function MemberDashboardRouteGrid({
-  calendarCount,
-  noticesCount,
-  projectsCount,
-  recordsCount,
-  studiesCount,
+function MemberDashboardSidebar({
+  accessMessage,
+  authStatus,
+  counts,
+  currentRoleLabel,
+  isFirebaseConfigured,
+  onRoleChange,
+  role,
+  sections,
+  selectedSectionId,
+  statusLabel,
 }: {
-  calendarCount: number;
-  noticesCount: number;
-  projectsCount: number;
-  recordsCount: number;
-  studiesCount: number;
+  accessMessage: string;
+  authStatus: ReturnType<typeof useAuthSession>['status'];
+  counts: MemberDashboardCounts;
+  currentRoleLabel: string;
+  isFirebaseConfigured: boolean;
+  onRoleChange: (role: UserRole) => void;
+  role: UserRole;
+  sections: readonly MemberDashboardSection[];
+  selectedSectionId: MemberDashboardSectionId;
+  statusLabel: string;
 }) {
-  const counts = {
-    calendar: `${calendarCount}개 일정`,
-    notices: `${noticesCount}개 공지`,
-    projects: `${projectsCount}개 프로젝트`,
-    records: `${recordsCount}개 기록`,
-    studies: `${studiesCount}개 스터디`,
-  };
-
   return (
-    <section className="section section-compact">
+    <aside className="member-dashboard-sidebar">
+      <div className="member-sidebar-status">
+        <WdsBadgeGroup>
+          <WdsBadge tone="blue">
+            {isFirebaseConfigured ? memberHomeCopy.access.currentRoleLabel : 'Demo Role'}
+          </WdsBadge>
+          <WdsBadge>{statusLabel}</WdsBadge>
+        </WdsBadgeGroup>
+        <strong>Member Workspace</strong>
+        <p>{accessMessage}</p>
+      </div>
+
+      <div className="member-sidebar-controls">
+        {role === 'visitor' ? (
+          <WdsLinkButton href={getPublicOnboardingHref()} tone="primary">
+            {memberHomeCopy.access.googleLoginLabel}
+          </WdsLinkButton>
+        ) : null}
+        {role === 'guest' ? (
+          <WdsLinkButton href={getPublicOnboardingHref()} tone="primary">
+            {memberHomeCopy.access.guestSubmitLabel}
+          </WdsLinkButton>
+        ) : null}
+        <WdsField className="demo-role-field" label={currentRoleLabel}>
+          <WdsSelect
+            disabled={authStatus !== 'demo'}
+            onValueChange={onRoleChange}
+            options={demoRoleSelectOptions}
+            value={role}
+          />
+        </WdsField>
+      </div>
+
+      <nav className="member-dashboard-nav" aria-label="Member dashboard sections">
+        {sections.map((section) => {
+          const isActive = section.id === selectedSectionId;
+
+          return (
+            <Link
+              aria-current={isActive ? 'page' : undefined}
+              className={
+                isActive
+                  ? 'member-dashboard-nav-item member-dashboard-nav-item-active'
+                  : 'member-dashboard-nav-item'
+              }
+              href={getMemberDashboardSectionHref(section.id)}
+              key={section.id}
+            >
+              <span>
+                <strong>{section.label}</strong>
+                <small>{section.title}</small>
+              </span>
+              {counts[section.id] ? (
+                <em aria-label={`${section.label} count`}>
+                  {counts[section.id]}
+                </em>
+              ) : null}
+            </Link>
+          );
+        })}
+      </nav>
+    </aside>
+  );
+}
+
+function MemberDashboardOverview({
+  accessMessage,
+  canApplyToActivities,
+  dashboardCalendarActivities,
+  dashboardMyNextCommitments,
+  dashboardOpenProjects,
+  dashboardOpenStudies,
+  guestProfile,
+  guestProfileMessage,
+  isFirebaseConfigured,
+  onGuestProfileChange,
+  onGuestProfileSubmit,
+  role,
+  statusLabel,
+}: {
+  accessMessage: string;
+  canApplyToActivities: boolean;
+  dashboardCalendarActivities: Activity[];
+  dashboardMyNextCommitments: MemberApplicationSummary[];
+  dashboardOpenProjects: Activity[];
+  dashboardOpenStudies: Activity[];
+  guestProfile: GuestProfileFormState;
+  guestProfileMessage: string;
+  isFirebaseConfigured: boolean;
+  onGuestProfileChange: (value: GuestProfileFormState) => void;
+  onGuestProfileSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  role: UserRole;
+  statusLabel: string;
+}) {
+  return (
+    <section className="member-dashboard-overview">
       <WdsSectionHeader
-        description="Dashboard에서 오늘 확인할 항목을 한 번에 훑고, 필요한 카테고리로 바로 이동합니다."
-        title="Dashboard 흐름"
+        description="오늘 확인할 역할, 일정, 공지, 참여 상태를 한 화면에서 정리합니다."
+        title="Overview"
       />
-      <WdsResponsiveGrid columns={3} dense>
-        {memberDashboardDestinations.map((destination) => (
-          <WdsSurfaceCard
-            as={Link}
-            className="member-route-card"
-            href={destination.href}
-            key={destination.id}
-          >
-            <WdsBadge tone="blue">{destination.label}</WdsBadge>
-            <h3>{destination.title}</h3>
-            <p>{destination.description}</p>
-            <span className="member-route-count">
-              {counts[destination.id]}
-            </span>
-          </WdsSurfaceCard>
-        ))}
+
+      <div className="access-panel">
+        <div>
+          <WdsBadgeGroup>
+            <WdsBadge tone="blue">
+              {isFirebaseConfigured
+                ? memberHomeCopy.access.currentRoleLabel
+                : 'Demo Role'}
+            </WdsBadge>
+            <WdsBadge>{statusLabel}</WdsBadge>
+          </WdsBadgeGroup>
+          <h2>{statusLabel}</h2>
+          <p>{accessMessage}</p>
+        </div>
+        {role === 'visitor' || role === 'guest' ? (
+          <div className="access-panel-actions">
+            <WdsLinkButton href={getPublicOnboardingHref()} tone="primary">
+              {role === 'visitor'
+                ? memberHomeCopy.access.googleLoginLabel
+                : memberHomeCopy.access.guestSubmitLabel}
+            </WdsLinkButton>
+          </div>
+        ) : null}
+      </div>
+
+      {role === 'guest' ? (
+        <GuestProfileForm
+          message={guestProfileMessage}
+          onChange={onGuestProfileChange}
+          onSubmit={onGuestProfileSubmit}
+          value={guestProfile}
+        />
+      ) : null}
+
+      <WdsResponsiveGrid columns={3} offset="lg">
+        <WdsSurfaceCard>
+          <WdsBadge tone="blue">Calendar</WdsBadge>
+          <h3>
+            {memberHomeCopy.dashboard.summaryCards.schedule.title(
+              dashboardCalendarActivities.length,
+            )}
+          </h3>
+          <p>{memberHomeCopy.dashboard.summaryCards.schedule.description}</p>
+        </WdsSurfaceCard>
+        <WdsSurfaceCard>
+          <WdsBadge tone="green">My Status</WdsBadge>
+          <h3>
+            {canApplyToActivities
+              ? memberHomeCopy.dashboard.summaryCards.commitments.title(
+                dashboardMyNextCommitments.length,
+              )
+              : memberHomeCopy.summaryCards.participation.applyLimitedTitle}
+          </h3>
+          <p>
+            {canApplyToActivities
+              ? memberHomeCopy.dashboard.summaryCards.commitments.description
+              : memberHomeCopy.summaryCards.participation.fallbackMessage}
+          </p>
+        </WdsSurfaceCard>
+        <WdsSurfaceCard>
+          <WdsBadge tone="blue">Board</WdsBadge>
+          <h3>
+            {memberHomeCopy.dashboard.summaryCards.studyProjects.title(
+              dashboardOpenStudies.length + dashboardOpenProjects.length,
+            )}
+          </h3>
+          <p>
+            {memberHomeCopy.dashboard.summaryCards.studyProjects.description}
+          </p>
+        </WdsSurfaceCard>
       </WdsResponsiveGrid>
     </section>
   );
