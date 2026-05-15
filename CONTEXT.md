@@ -2,6 +2,8 @@
 
 ## Domain Terms
 
+- **CNU**: Chonnam National University, 전남대학교. This project must not describe CNU as Chungnam National University, 충남대학교, or 충남대.
+- **GDGoC CNU Onboarding Values**: The public onboarding message system for 전남대학교 students seeing GDGoC CNU for the first time. Goal: impact students and empower them to impact their communities through technology. Values: Connect / Learn / Grow. Roles: host workshops and build projects. Benefits: professional growth, network growth, and community learning.
 - **Activity Hub**: The whole homepage product that combines the public showcase, member-facing dashboard, and operator console around structured chapter activity.
 - **Activity Participation Snapshot**: The loaded, activity-indexed participation view for operator surfaces and analytics. It centralizes application lists, default session sync, session attendance loading, attendance summaries, and flat analytics inputs for a set of activities.
 - **Activity Schedule Module**: The domain module that interprets an activity's schedule, derives the prototype default session window, and answers upcoming/recent-ended schedule questions for operations and analytics.
@@ -37,3 +39,5 @@
 - Role And Access Policy Module is the TypeScript source of truth for role classification and content visibility. Firestore rules enforce the same cases independently and must stay aligned through rules tests.
 - Discord remains the live conversation channel; this product is the source of truth for structured chapter activity.
 - PoolC `/board` is a reference for member browsing rhythm and board-like category flow: list, detail, write where appropriate, comments/scraps later if needed. It is not a mandate to replace Discord with a free-form chat board in the first slice.
+- Public onboarding must lead with GDGoC CNU as a trusted 전남대학교 student developer community connected to the Google Developers ecosystem.
+- Build with AI is a seasonal campaign and activity example, not the permanent identity of GDGoC CNU.
