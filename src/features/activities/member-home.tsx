@@ -11,32 +11,27 @@ import {
 import type { Activity, UserRole } from '@/domain/activity';
 import {
   type ActivityProposalType,
-  listHomeActivities,
   proposeMemberActivity,
 } from '@/domain/activity-service';
 import { getPublicOnboardingHref } from '@/domain/auth-flow';
-import { listVisibleActivities } from '@/domain/activity';
 import type { ActivityApplicationState } from '@/domain/activity-application';
 import { submitGuestProfile } from '@/domain/chapter-user-service';
 import type { ChapterRecord, ChapterRecordKind } from '@/domain/chapter-record';
 import {
-  listHomeChapterRecords,
   submitChapterRecord,
 } from '@/domain/chapter-record-service';
-import { describeMemberHomeAccess } from '@/domain/member-access';
-import type { Notice } from '@/domain/notice';
-import { listVisibleNotices } from '@/domain/notice';
-import { listHomeNotices } from '@/domain/notice-service';
 import type { Showcase } from '@/domain/showcase';
-import { listVisibleShowcases } from '@/domain/showcase';
-import { listHomeShowcases } from '@/domain/showcase-service';
 import {
   applyForActivity,
   cancelApplicationForActivity,
-  getApplicationStateByActivity,
-  listMemberApplicationSummaries,
   type MemberApplicationSummary,
 } from '@/domain/activity-participation-service';
+import {
+  buildMemberHomeSnapshot,
+  isMemberHomeSnapshotCurrent,
+  type MemberHomeSnapshot,
+} from '@/domain/member-home-snapshot';
+import { describeMemberHomeAccess } from '@/domain/member-access';
 import { formatKoreanDateTime } from '@/lib/format-korean-date-time';
 import { ActivityCard } from '@/components/activity-card';
 import { ChapterRecordCard } from '@/components/chapter-record-card';
@@ -80,10 +75,6 @@ import { createBrowserNoticeStore } from '../notices/browser-notice-store';
 import { createBrowserShowcaseStore } from '../showcases/browser-showcase-store';
 import { createBrowserChapterUserStore } from '../users/browser-chapter-user-store';
 import { createBrowserChapterRecordStore } from '../records/browser-chapter-record-store';
-import { seedActivities } from './seed-activities';
-import { seedNotices } from '../notices/seed-notices';
-import { seedChapterRecords } from '../records/seed-chapter-records';
-import { seedShowcases } from '../showcases/seed-showcases';
 
 type MemberProposalFormState = {
   title: string;
@@ -163,19 +154,7 @@ export function MemberHome() {
   const showcaseStore = useMemo(() => createBrowserShowcaseStore(), []);
   const userStore = useMemo(() => createBrowserChapterUserStore(), []);
   const recordStore = useMemo(() => createBrowserChapterRecordStore(), []);
-  const [activities, setActivities] = useState<Activity[]>(
-    listVisibleActivities(seedActivities, 'visitor'),
-  );
-  const [notices, setNotices] = useState<Notice[]>(
-    listVisibleNotices(seedNotices, 'visitor'),
-  );
-  const [showcases, setShowcases] = useState<Showcase[]>(
-    listVisibleShowcases(seedShowcases, 'visitor'),
-  );
-  const [records, setRecords] = useState<ChapterRecord[]>(seedChapterRecords);
-  const [applicationStates, setApplicationStates] = useState<
-    Record<string, ActivityApplicationState>
-  >({});
+  const [snapshot, setSnapshot] = useState<MemberHomeSnapshot | null>(null);
   const [guestProfile, setGuestProfile] =
     useState<GuestProfileFormState>(defaultGuestProfile);
   const [guestProfileMessage, setGuestProfileMessage] = useState(
@@ -206,29 +185,17 @@ export function MemberHome() {
   }, [authStatus, role, userId]);
 
   async function refreshMemberHome(currentRole: UserRole, currentUserId: string) {
-    const access = describeMemberHomeAccess(currentRole);
-    const contentRole = getMemberHomeContentRole(currentRole);
-    const [
-      nextActivities,
-      nextApplicationStates,
-      nextNotices,
-      nextShowcases,
-      nextRecords,
-    ] = await Promise.all([
-      listHomeActivities(store, contentRole),
-      access.canApplyToActivities
-        ? getApplicationStateByActivity(applicationStore, currentUserId)
-        : Promise.resolve({}),
-      listHomeNotices(noticeStore, contentRole),
-      listHomeShowcases(showcaseStore, contentRole),
-      listHomeChapterRecords(recordStore, contentRole),
-    ]);
-
-    setActivities(nextActivities);
-    setApplicationStates(nextApplicationStates);
-    setNotices(nextNotices);
-    setShowcases(nextShowcases);
-    setRecords(nextRecords);
+    setSnapshot(
+      await buildMemberHomeSnapshot({
+        activityStore: store,
+        applicationStore,
+        noticeStore,
+        recordStore,
+        role: currentRole,
+        showcaseStore,
+        userId: currentUserId,
+      }),
+    );
   }
 
   function changeDemoRole(nextRole: UserRole) {
@@ -349,23 +316,25 @@ export function MemberHome() {
     await refreshMemberHome(role, userId);
   }
 
-  const upcoming = activities.filter((activity) => activity.startsAt);
-  const studiesAndProjects = activities.filter((activity) =>
-    ['study', 'project'].includes(activity.type),
-  );
-  const challenges = activities.filter((activity) =>
-    ['challenge', 'social'].includes(activity.type),
-  );
-  const activeApplicationCount = Object.values(applicationStates).filter(
-    (state) => state === 'applied' || state === 'approved',
-  ).length;
-  const memberApplicationSummaries = listMemberApplicationSummaries(
-    activities,
-    applicationStates,
-  );
+  const currentSnapshot = isMemberHomeSnapshotCurrent(snapshot, { role, userId })
+    ? snapshot
+    : null;
+  const activities = currentSnapshot?.activities ?? [];
+  const applicationStates = currentSnapshot?.applicationStates ?? {};
+  const notices = currentSnapshot?.notices ?? [];
+  const showcases = currentSnapshot?.showcases ?? [];
+  const records = currentSnapshot?.records ?? [];
+  const upcoming = currentSnapshot?.sections.upcomingActivities ?? [];
+  const studiesAndProjects = currentSnapshot?.sections.studiesAndProjects ?? [];
+  const challenges = currentSnapshot?.sections.challengesAndSocialActivities ?? [];
+  const activeApplicationCount = currentSnapshot?.activeApplicationCount ?? 0;
+  const memberApplicationSummaries =
+    currentSnapshot?.memberApplicationSummaries ?? [];
   const access = describeMemberHomeAccess(role);
-  const canApplyToActivities = Boolean(access?.canApplyToActivities);
-  const canProposeActivities = canApplyToActivities;
+  const canApplyToActivities =
+    currentSnapshot?.canApplyToActivities ?? access.canApplyToActivities;
+  const canProposeActivities =
+    currentSnapshot?.canProposeActivities ?? canApplyToActivities;
 
   return (
     <main className="page">
@@ -813,14 +782,6 @@ function ActivitySection({
       )}
     </section>
   );
-}
-
-function getMemberHomeContentRole(role: UserRole): UserRole {
-  if (role === 'visitor' || role === 'guest') {
-    return role;
-  }
-
-  return 'member';
 }
 
 function getAccessPanelTitle(status?: string) {
