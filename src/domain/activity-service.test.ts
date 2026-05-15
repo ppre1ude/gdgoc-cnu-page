@@ -250,6 +250,104 @@ describe('activity authoring flow', () => {
     assert.equal(externalActivity.externalRegistrationLabel, undefined);
   });
 
+  it('requires title and summary when creating official activities', async () => {
+    const store = createInMemoryActivityStore();
+
+    await assert.rejects(
+      createActivity(store, {
+        actorRole: 'team_member',
+        title: '   ',
+        summary: 'Registration happens inside the homepage.',
+        type: 'event',
+        visibility: 'member',
+        status: 'published',
+        registrationMode: 'internal',
+        now: '2026-05-14T09:00:00.000Z',
+      }),
+      /Activity title is required/,
+    );
+
+    await assert.rejects(
+      createActivity(store, {
+        actorRole: 'team_member',
+        title: 'Internal Seminar',
+        summary: '',
+        type: 'event',
+        visibility: 'member',
+        status: 'published',
+        registrationMode: 'internal',
+        now: '2026-05-14T09:00:00.000Z',
+      }),
+      /Activity summary is required/,
+    );
+  });
+
+  it('requires an external URL for external or hybrid registration', async () => {
+    const store = createInMemoryActivityStore();
+
+    await assert.rejects(
+      createActivity(store, {
+        actorRole: 'team_member',
+        title: 'GDG Korea Event',
+        summary: 'Registration happens on gdg.community.dev.',
+        type: 'event',
+        visibility: 'public',
+        status: 'published',
+        registrationMode: 'external',
+        now: '2026-05-14T09:00:00.000Z',
+      }),
+      /External registration URL is required/,
+    );
+
+    await assert.rejects(
+      createActivity(store, {
+        actorRole: 'team_member',
+        title: 'Build with AI Sprint',
+        summary: 'Members apply internally and visitors register externally.',
+        type: 'event',
+        visibility: 'public',
+        status: 'published',
+        registrationMode: 'hybrid',
+        externalRegistrationUrl: '   ',
+        now: '2026-05-14T09:00:00.000Z',
+      }),
+      /External registration URL is required/,
+    );
+  });
+
+  it('preserves an existing external URL when updating other activity fields', async () => {
+    const originalActivity: Activity = {
+      id: 'activity-external',
+      title: 'GDG Korea Event',
+      summary: 'Registration happens on gdg.community.dev.',
+      type: 'event',
+      visibility: 'public',
+      status: 'published',
+      registrationMode: 'external',
+      externalRegistrationUrl: 'https://gdg.community.dev/events/gdg-korea',
+      createdAt: '2026-05-14T09:00:00.000Z',
+      updatedAt: '2026-05-14T09:00:00.000Z',
+    };
+    const store = createInMemoryActivityStore([originalActivity]);
+
+    const updated = await updateActivity(store, {
+      actorRole: 'team_member',
+      activityId: originalActivity.id,
+      title: 'GDG Korea Event Updated',
+      summary: originalActivity.summary,
+      type: originalActivity.type,
+      visibility: originalActivity.visibility,
+      status: originalActivity.status,
+      registrationMode: 'external',
+      now: '2026-05-14T10:00:00.000Z',
+    });
+
+    assert.equal(
+      updated.externalRegistrationUrl,
+      'https://gdg.community.dev/events/gdg-korea',
+    );
+  });
+
   it('clears stale external registration fields when switching to internal registration', async () => {
     const originalActivity: Activity = {
       id: 'activity-external',

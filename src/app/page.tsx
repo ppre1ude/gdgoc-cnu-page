@@ -49,8 +49,7 @@ export default function PublicHomePage() {
               <WdsLinkButton href="/member" tone="primary">
                 멤버로 참여하기
               </WdsLinkButton>
-              {/* TODO: 지원 플로우가 정해지면 /apply 페이지 또는 Google Form URL로 연결합니다. */}
-              <WdsLinkButton href="#apply-todo" tone="secondary">
+              <WdsLinkButton href="/member" tone="secondary">
                 지원하기
               </WdsLinkButton>
             </div>
@@ -114,7 +113,6 @@ export default function PublicHomePage() {
                 <article
                   className={`value-process-step value-process-step-${step.accent}`}
                   key={step.label}
-                  tabIndex={0}
                 >
                   <span className="value-process-index">
                     {String(index + 1).padStart(2, '0')}

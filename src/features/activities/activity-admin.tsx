@@ -406,6 +406,7 @@ export function ActivityAdmin() {
                   onChange={(event) =>
                     setDraft((current) => ({ ...current, title: event.target.value }))
                   }
+                  required
                   value={draft.title}
                 />
               </WdsField>
@@ -487,6 +488,7 @@ export function ActivityAdmin() {
                       }))
                     }
                     placeholder="https://gdg.community.dev/..."
+                    required={usesExternalRegistration}
                     type="url"
                     value={draft.externalRegistrationUrl}
                   />
@@ -498,6 +500,7 @@ export function ActivityAdmin() {
                   onChange={(event) =>
                     setDraft((current) => ({ ...current, body: event.target.value }))
                   }
+                  required
                   value={draft.body}
                 />
               </WdsField>

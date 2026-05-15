@@ -365,7 +365,9 @@ export function MemberHome() {
           <div className="access-panel">
             <div>
               <div className="badge-row">
-                <WdsBadge tone="blue">Demo Role</WdsBadge>
+                <WdsBadge tone="blue">
+                  {isFirebaseConfigured ? '현재 역할' : 'Demo Role'}
+                </WdsBadge>
                 <WdsBadge>{access.status}</WdsBadge>
               </div>
               <h2>{getAccessPanelTitle(access?.status)}</h2>

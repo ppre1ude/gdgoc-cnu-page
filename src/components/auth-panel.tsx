@@ -34,6 +34,7 @@ export function AuthPanel() {
       <div className="auth-role-control">
         <span className="auth-pill">Demo role</span>
         <WdsSelect
+          aria-label="Demo role"
           height={32}
           onValueChange={setDemoRole}
           options={demoRoleSelectOptions}

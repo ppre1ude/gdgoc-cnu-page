@@ -110,11 +110,11 @@ export async function createActivity(
   }
 
   const registrationFields = getRegistrationFields(input);
+  const contentFields = getRequiredActivityContentFields(input);
 
   return store.create({
     id: `activity-${crypto.randomUUID()}`,
-    title: input.title,
-    summary: input.summary,
+    ...contentFields,
     type: input.type,
     visibility: input.visibility,
     status: input.status,
@@ -134,9 +134,11 @@ export async function updateActivity(
   }
 
   const activity = await findActivityOrThrow(store, input.activityId);
+  const contentFields = getRequiredActivityContentFields(input);
   const registrationFields = getRegistrationFields({
     registrationMode: input.registrationMode ?? activity.registrationMode,
-    externalRegistrationUrl: input.externalRegistrationUrl,
+    externalRegistrationUrl:
+      input.externalRegistrationUrl ?? activity.externalRegistrationUrl,
   });
   const {
     externalRegistrationLabel: _legacyExternalRegistrationLabel,
@@ -147,8 +149,7 @@ export async function updateActivity(
 
   return store.save({
     ...activityWithoutRegistrationFields,
-    title: input.title,
-    summary: input.summary,
+    ...contentFields,
     type: input.type,
     visibility: input.visibility,
     status: input.status,
@@ -184,11 +185,11 @@ export async function proposeMemberActivity(
   }
 
   const isStudy = input.type === 'study';
+  const contentFields = getRequiredActivityContentFields(input);
 
   return store.create({
     id: `activity-${crypto.randomUUID()}`,
-    title: input.title,
-    summary: input.summary,
+    ...contentFields,
     type: input.type,
     visibility: isStudy ? 'member' : 'operator',
     status: isStudy ? 'published' : 'draft',
@@ -325,10 +326,37 @@ function getRegistrationFields(
     };
   }
 
+  const externalRegistrationUrl = input.externalRegistrationUrl?.trim();
+
+  if (!externalRegistrationUrl) {
+    throw new Error(
+      'External registration URL is required for external or hybrid activities.',
+    );
+  }
+
   return {
     registrationMode,
-    ...(input.externalRegistrationUrl
-      ? { externalRegistrationUrl: input.externalRegistrationUrl }
-      : {}),
+    externalRegistrationUrl,
+  };
+}
+
+function getRequiredActivityContentFields(input: {
+  title: string;
+  summary: string;
+}) {
+  const title = input.title.trim();
+  const summary = input.summary.trim();
+
+  if (!title) {
+    throw new Error('Activity title is required.');
+  }
+
+  if (!summary) {
+    throw new Error('Activity summary is required.');
+  }
+
+  return {
+    title,
+    summary,
   };
 }
