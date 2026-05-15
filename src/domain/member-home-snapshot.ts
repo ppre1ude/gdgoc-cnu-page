@@ -40,6 +40,7 @@ export type MemberHomeSnapshotStores = {
 };
 
 export type BuildMemberHomeSnapshotInput = MemberHomeSnapshotStores & {
+  now?: string;
   role: UserRole;
   userId: string;
 };
@@ -55,6 +56,13 @@ export type MemberHomeActivitySections = {
   upcomingActivities: Activity[];
 };
 
+export type MemberHomeDashboard = {
+  calendarActivities: Activity[];
+  importantNotices: Notice[];
+  myNextCommitments: MemberApplicationSummary[];
+  openStudyProjects: Activity[];
+};
+
 export type MemberHomeSnapshot = {
   access: MemberHomeAccess;
   activeApplicationCount: number;
@@ -63,6 +71,7 @@ export type MemberHomeSnapshot = {
   canApplyToActivities: boolean;
   canProposeActivities: boolean;
   contentRole: UserRole;
+  dashboard: MemberHomeDashboard;
   memberApplicationSummaries: MemberApplicationSummary[];
   notices: Notice[];
   records: ChapterRecord[];
@@ -77,6 +86,7 @@ export async function buildMemberHomeSnapshot(
 ): Promise<MemberHomeSnapshot> {
   const access = describeMemberHomeAccess(input.role);
   const contentRole = getMemberHomeContentRole(input.role);
+  const now = input.now ?? new Date().toISOString();
   const [
     activities,
     applicationStates,
@@ -92,6 +102,10 @@ export async function buildMemberHomeSnapshot(
     listHomeShowcases(input.showcaseStore, contentRole),
     listHomeChapterRecords(input.recordStore, contentRole),
   ]);
+  const memberApplicationSummaries = listMemberApplicationSummaries(
+    activities,
+    applicationStates,
+  );
 
   return {
     access,
@@ -101,10 +115,13 @@ export async function buildMemberHomeSnapshot(
     canApplyToActivities: access.canApplyToActivities,
     canProposeActivities: access.canApplyToActivities,
     contentRole,
-    memberApplicationSummaries: listMemberApplicationSummaries(
+    dashboard: getMemberHomeDashboard(
       activities,
-      applicationStates,
+      notices,
+      memberApplicationSummaries,
+      now,
     ),
+    memberApplicationSummaries,
     notices,
     records,
     role: input.role,
@@ -145,4 +162,35 @@ function getMemberHomeActivitySections(
     ),
     upcomingActivities: activities.filter((activity) => activity.startsAt),
   };
+}
+
+function getMemberHomeDashboard(
+  activities: Activity[],
+  notices: Notice[],
+  memberApplicationSummaries: MemberApplicationSummary[],
+  now: string,
+): MemberHomeDashboard {
+  return {
+    calendarActivities: activities
+      .filter((activity) => isUpcomingScheduledActivity(activity, now))
+      .sort((activity, nextActivity) =>
+        activity.startsAt!.localeCompare(nextActivity.startsAt!),
+      ),
+    importantNotices: notices,
+    myNextCommitments: memberApplicationSummaries.filter(({ activity }) =>
+      isUpcomingOrUnscheduledActivity(activity, now),
+    ),
+    openStudyProjects: activities.filter((activity) =>
+      ['study', 'project'].includes(activity.type) &&
+      isUpcomingOrUnscheduledActivity(activity, now),
+    ),
+  };
+}
+
+function isUpcomingScheduledActivity(activity: Activity, now: string) {
+  return Boolean(activity.startsAt) && activity.startsAt! >= now;
+}
+
+function isUpcomingOrUnscheduledActivity(activity: Activity, now: string) {
+  return !activity.startsAt || activity.startsAt >= now;
 }

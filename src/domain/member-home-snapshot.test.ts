@@ -30,9 +30,15 @@ describe('member home snapshot', () => {
       now: '2026-05-15T09:30:00.000Z',
       userId: 'member-1',
     });
+    await applyForActivity(stores.applicationStore, {
+      activityId: 'past-project',
+      now: '2026-05-14T09:30:00.000Z',
+      userId: 'member-1',
+    });
 
     const snapshot = await buildMemberHomeSnapshot({
       ...stores,
+      now: '2026-05-15T06:00:00.000Z',
       role: 'member',
       userId: 'member-1',
     });
@@ -45,15 +51,17 @@ describe('member home snapshot', () => {
       'public-event',
       'member-event',
       'member-study',
+      'member-project',
       'member-social',
+      'past-project',
     ]);
     assert.deepEqual(
       snapshot.sections.upcomingActivities.map((activity) => activity.id),
-      ['public-event', 'member-event'],
+      ['past-project', 'member-project', 'public-event', 'member-event'],
     );
     assert.deepEqual(
       snapshot.sections.studiesAndProjects.map((activity) => activity.id),
-      ['member-study'],
+      ['past-project', 'member-project', 'member-study'],
     );
     assert.deepEqual(
       snapshot.sections.challengesAndSocialActivities.map((activity) => activity.id),
@@ -61,18 +69,38 @@ describe('member home snapshot', () => {
     );
     assert.deepEqual(snapshot.applicationStates, {
       'member-event': 'applied',
+      'past-project': 'applied',
     });
-    assert.equal(snapshot.activeApplicationCount, 1);
+    assert.equal(snapshot.activeApplicationCount, 2);
     assert.deepEqual(
       snapshot.memberApplicationSummaries.map(({ activity, state }) => [
         activity.id,
         state,
       ]),
-      [['member-event', 'applied']],
+      [
+        ['past-project', 'applied'],
+        ['member-event', 'applied'],
+      ],
+    );
+    assert.deepEqual(
+      snapshot.dashboard.calendarActivities.map((activity) => activity.id),
+      ['member-project', 'member-event'],
+    );
+    assert.deepEqual(
+      snapshot.dashboard.importantNotices.map((notice) => notice.id),
+      ['pinned-member-notice', 'recent-member-notice', 'public-notice'],
+    );
+    assert.deepEqual(
+      snapshot.dashboard.myNextCommitments.map(({ activity }) => activity.id),
+      ['member-event'],
+    );
+    assert.deepEqual(
+      snapshot.dashboard.openStudyProjects.map((activity) => activity.id),
+      ['member-project', 'member-study'],
     );
     assert.deepEqual(
       snapshot.notices.map((notice) => notice.id),
-      ['pinned-member-notice', 'public-notice'],
+      ['pinned-member-notice', 'recent-member-notice', 'public-notice'],
     );
     assert.deepEqual(
       snapshot.showcases.map((showcase) => showcase.id),
@@ -128,7 +156,9 @@ describe('member home snapshot', () => {
       'public-event',
       'member-event',
       'member-study',
+      'member-project',
       'member-social',
+      'past-project',
     ]);
     assert.deepEqual(snapshot.applicationStates, {});
     assert.equal(snapshot.activeApplicationCount, 0);
@@ -191,6 +221,20 @@ function createSnapshotStores() {
         visibility: 'member',
       }),
       activityFixture({
+        id: 'member-project',
+        startsAt: '2026-05-15T08:00:00.000Z',
+        title: 'Member Project',
+        type: 'project',
+        visibility: 'member',
+      }),
+      activityFixture({
+        id: 'past-project',
+        startsAt: '2026-05-14T08:00:00.000Z',
+        title: 'Past Project',
+        type: 'project',
+        visibility: 'member',
+      }),
+      activityFixture({
         id: 'member-social',
         title: 'Member Social',
         type: 'social',
@@ -218,6 +262,13 @@ function createSnapshotStores() {
         pinned: true,
         title: 'Pinned Member Notice',
         updatedAt: '2026-05-14T01:00:00.000Z',
+        visibility: 'member',
+      }),
+      noticeFixture({
+        id: 'recent-member-notice',
+        pinned: false,
+        title: 'Recent Member Notice',
+        updatedAt: '2026-05-16T01:00:00.000Z',
         visibility: 'member',
       }),
       noticeFixture({

@@ -17,6 +17,7 @@ import { getPublicOnboardingHref } from '@/domain/auth-flow';
 import type { ActivityApplicationState } from '@/domain/activity-application';
 import { submitGuestProfile } from '@/domain/chapter-user-service';
 import type { ChapterRecord, ChapterRecordKind } from '@/domain/chapter-record';
+import type { Notice } from '@/domain/notice';
 import {
   submitChapterRecord,
 } from '@/domain/chapter-record-service';
@@ -316,7 +317,6 @@ export function MemberHome() {
   const currentSnapshot = isMemberHomeSnapshotCurrent(snapshot, { role, userId })
     ? snapshot
     : null;
-  const activities = currentSnapshot?.activities ?? [];
   const applicationStates = currentSnapshot?.applicationStates ?? {};
   const notices = currentSnapshot?.notices ?? [];
   const showcases = currentSnapshot?.showcases ?? [];
@@ -324,9 +324,16 @@ export function MemberHome() {
   const upcoming = currentSnapshot?.sections.upcomingActivities ?? [];
   const studiesAndProjects = currentSnapshot?.sections.studiesAndProjects ?? [];
   const challenges = currentSnapshot?.sections.challengesAndSocialActivities ?? [];
-  const activeApplicationCount = currentSnapshot?.activeApplicationCount ?? 0;
   const memberApplicationSummaries =
     currentSnapshot?.memberApplicationSummaries ?? [];
+  const dashboardCalendarActivities =
+    currentSnapshot?.dashboard.calendarActivities ?? upcoming;
+  const dashboardImportantNotices =
+    currentSnapshot?.dashboard.importantNotices ?? notices;
+  const dashboardMyNextCommitments =
+    currentSnapshot?.dashboard.myNextCommitments ?? memberApplicationSummaries;
+  const dashboardOpenStudyProjects =
+    currentSnapshot?.dashboard.openStudyProjects ?? studiesAndProjects;
   const access = describeMemberHomeAccess(role);
   const canApplyToActivities =
     currentSnapshot?.canApplyToActivities ?? access.canApplyToActivities;
@@ -401,6 +408,77 @@ export function MemberHome() {
           </section>
         ) : null}
 
+        <MemberCalendarSection
+          activities={dashboardCalendarActivities}
+          applicationStates={applicationStates}
+        />
+
+        <ImportantNoticeSection notices={dashboardImportantNotices.slice(0, 6)} />
+
+        {canApplyToActivities ? (
+          <MemberApplicationsSection summaries={dashboardMyNextCommitments} />
+        ) : null}
+
+        <ActivitySection
+          activities={dashboardOpenStudyProjects}
+          applicationStates={applicationStates}
+          description={memberHomeCopy.dashboard.studyProjectBoard.description}
+          onApply={canApplyToActivities ? handleApply : undefined}
+          onCancel={canApplyToActivities ? handleCancel : undefined}
+          title={memberHomeCopy.dashboard.studyProjectBoard.title}
+        />
+        <ActivitySection
+          activities={challenges}
+          applicationStates={applicationStates}
+          description={memberHomeCopy.activitySections.challenges.description}
+          onApply={canApplyToActivities ? handleApply : undefined}
+          onCancel={canApplyToActivities ? handleCancel : undefined}
+          title={memberHomeCopy.activitySections.challenges.title}
+        />
+
+        <ShowcasePreviewSection showcases={showcases.slice(0, 3)} />
+
+        <ChapterRecordSection records={records.slice(0, 3)} />
+
+        <WdsResponsiveGrid columns={3} offset="lg">
+          <WdsSurfaceCard>
+            <WdsBadge tone="blue">Calendar</WdsBadge>
+            <h3>
+              {memberHomeCopy.dashboard.summaryCards.schedule.title(
+                dashboardCalendarActivities.length,
+              )}
+            </h3>
+            <p>{memberHomeCopy.dashboard.summaryCards.schedule.description}</p>
+          </WdsSurfaceCard>
+          <WdsSurfaceCard>
+            <WdsBadge tone="green">My Status</WdsBadge>
+            <h3>
+              {canApplyToActivities
+                ? memberHomeCopy.dashboard.summaryCards.commitments.title(
+                  dashboardMyNextCommitments.length,
+                )
+                : memberHomeCopy.summaryCards.participation.applyLimitedTitle}
+            </h3>
+            <p>
+              {canApplyToActivities
+                ? memberHomeCopy.dashboard.summaryCards.commitments.description
+                : access?.message ??
+                  memberHomeCopy.summaryCards.participation.fallbackMessage}
+            </p>
+          </WdsSurfaceCard>
+          <WdsSurfaceCard>
+            <WdsBadge tone="blue">Board</WdsBadge>
+            <h3>
+              {memberHomeCopy.dashboard.summaryCards.studyProjects.title(
+                dashboardOpenStudyProjects.length,
+              )}
+            </h3>
+            <p>
+              {memberHomeCopy.dashboard.summaryCards.studyProjects.description}
+            </p>
+          </WdsSurfaceCard>
+        </WdsResponsiveGrid>
+
         {canProposeActivities ? (
           <MemberProposalForm
             message={proposalMessage}
@@ -418,73 +496,6 @@ export function MemberHome() {
             value={recordDraft}
           />
         ) : null}
-
-        <section className="section section-compact">
-          <WdsSectionHeader
-            description={memberHomeCopy.notices.description}
-            title={memberHomeCopy.notices.title}
-          />
-          <NoticeBoard notices={notices.slice(0, 6)} />
-        </section>
-
-        <ShowcasePreviewSection showcases={showcases.slice(0, 3)} />
-
-        <ChapterRecordSection records={records.slice(0, 3)} />
-
-        <WdsResponsiveGrid columns={3} offset="lg">
-          <WdsSurfaceCard>
-            <WdsBadge tone="green">Participation</WdsBadge>
-            <h3>
-              {canApplyToActivities
-                ? memberHomeCopy.summaryCards.participation.title(
-                  activeApplicationCount,
-                )
-                : memberHomeCopy.summaryCards.participation.applyLimitedTitle}
-            </h3>
-            <p>
-              {canApplyToActivities
-                ? memberHomeCopy.summaryCards.participation.applyMessage
-                : access?.message ??
-                  memberHomeCopy.summaryCards.participation.fallbackMessage}
-            </p>
-          </WdsSurfaceCard>
-          <WdsSurfaceCard>
-            <WdsBadge tone="blue">Next Action</WdsBadge>
-            <h3>{memberHomeCopy.summaryCards.nextAction.title(activities.length)}</h3>
-            <p>{memberHomeCopy.summaryCards.nextAction.description}</p>
-          </WdsSurfaceCard>
-        </WdsResponsiveGrid>
-
-        {canApplyToActivities ? (
-          <MemberApplicationsSection summaries={memberApplicationSummaries} />
-        ) : null}
-
-        <ActivitySection
-          activities={upcoming}
-          applicationStates={applicationStates}
-          description={memberHomeCopy.activitySections.upcoming.description}
-          onApply={canApplyToActivities ? handleApply : undefined}
-          onCancel={canApplyToActivities ? handleCancel : undefined}
-          title={memberHomeCopy.activitySections.upcoming.title}
-        />
-        <ActivitySection
-          activities={studiesAndProjects}
-          applicationStates={applicationStates}
-          description={
-            memberHomeCopy.activitySections.studiesAndProjects.description
-          }
-          onApply={canApplyToActivities ? handleApply : undefined}
-          onCancel={canApplyToActivities ? handleCancel : undefined}
-          title={memberHomeCopy.activitySections.studiesAndProjects.title}
-        />
-        <ActivitySection
-          activities={challenges}
-          applicationStates={applicationStates}
-          description={memberHomeCopy.activitySections.challenges.description}
-          onApply={canApplyToActivities ? handleApply : undefined}
-          onCancel={canApplyToActivities ? handleCancel : undefined}
-          title={memberHomeCopy.activitySections.challenges.title}
-        />
       </div>
     </main>
   );
@@ -661,6 +672,75 @@ function MemberRecordForm({
           helper={message}
         />
       </MemberFormSurface>
+    </section>
+  );
+}
+
+function MemberCalendarSection({
+  activities,
+  applicationStates,
+}: {
+  activities: Activity[];
+  applicationStates: Record<string, ActivityApplicationState>;
+}) {
+  return (
+    <section className="section section-compact">
+      <WdsSectionHeader
+        description={memberHomeCopy.dashboard.calendar.description}
+        title={memberHomeCopy.dashboard.calendar.title}
+      />
+      {activities.length > 0 ? (
+        <WdsQueue as="div">
+          {activities.map((activity) => {
+            const applicationState = applicationStates[activity.id];
+
+            return (
+              <WdsQueueRow
+                actions={
+                  <WdsTextLinkButton
+                    href={`/activities/${encodeURIComponent(activity.id)}`}
+                  >
+                    {memberHomeCopy.applications.detailLabel}
+                  </WdsTextLinkButton>
+                }
+                as="article"
+                key={activity.id}
+              >
+                <div>
+                  <WdsBadgeGroup>
+                    <WdsBadge tone="blue">{activity.type}</WdsBadge>
+                    {applicationState ? (
+                      <WdsBadge tone="green">
+                        {getApplicationStateLabel(applicationState)}
+                      </WdsBadge>
+                    ) : null}
+                  </WdsBadgeGroup>
+                  <strong>{activity.title}</strong>
+                  <p className="helper-text">
+                    {activity.startsAt
+                      ? formatKoreanDateTime(activity.startsAt)
+                      : memberHomeCopy.applications.unscheduled}
+                  </p>
+                </div>
+              </WdsQueueRow>
+            );
+          })}
+        </WdsQueue>
+      ) : (
+        <WdsEmptyState>{memberHomeCopy.dashboard.calendar.empty}</WdsEmptyState>
+      )}
+    </section>
+  );
+}
+
+function ImportantNoticeSection({ notices }: { notices: Notice[] }) {
+  return (
+    <section className="section section-compact">
+      <WdsSectionHeader
+        description={memberHomeCopy.dashboard.notices.description}
+        title={memberHomeCopy.dashboard.notices.title}
+      />
+      <NoticeBoard notices={notices} />
     </section>
   );
 }

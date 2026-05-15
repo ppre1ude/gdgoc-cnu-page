@@ -55,6 +55,39 @@ export const koreanCopy = {
       title: '내 신청 현황',
       unscheduled: '일정 미정',
     },
+    dashboard: {
+      calendar: {
+        description:
+          '이벤트, 스터디, 프로젝트, 챌린지 일정을 시간순으로 확인합니다.',
+        empty: '예정된 일정이 없습니다.',
+        title: '이번 일정',
+      },
+      notices: {
+        description: '고정 공지와 최근 공지를 먼저 확인합니다.',
+        title: '중요 공지',
+      },
+      studyProjectBoard: {
+        description:
+          '진행 중이거나 참여 가능한 스터디와 프로젝트를 모아 봅니다.',
+        title: '스터디 / 프로젝트 현황',
+      },
+      summaryCards: {
+        commitments: {
+          description: '신청했거나 승인된 활동의 다음 행동을 확인합니다.',
+          title: (commitmentCount: number) =>
+            `${commitmentCount}개 내 신청`,
+        },
+        schedule: {
+          description: '가까운 일정부터 캘린더처럼 확인할 수 있습니다.',
+          title: (scheduleCount: number) => `${scheduleCount}개 예정`,
+        },
+        studyProjects: {
+          description: '열려 있는 스터디와 프로젝트를 바로 탐색합니다.',
+          title: (studyProjectCount: number) =>
+            `${studyProjectCount}개 스터디 / 프로젝트`,
+        },
+      },
+    },
     confirmations: {
       apply:
         '이 활동에 참여 신청하시겠습니까? 운영진 승인 후 참여가 확정됩니다.',
