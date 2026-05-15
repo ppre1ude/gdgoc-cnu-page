@@ -16,7 +16,13 @@ import {
   WdsSelect,
 } from '@/components/wds-form-controls';
 import {
+  WdsActionRow,
+  WdsBadgeGroup,
+  WdsDashboardLayout,
+  WdsPageHeader,
+  WdsResponsiveGrid,
   WdsSectionHeader,
+  WdsStack,
   WdsSurfaceCard,
 } from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
@@ -165,15 +171,14 @@ export function RoleAdmin() {
   return (
     <main className="page">
       <div className="container">
-        <p className="eyebrow">Operator Dashboard</p>
-        <h1 className="page-title">Role Admin</h1>
-        <p className="page-lead">
-          가입한 사용자의 역할을 조정하고, 운영진 승격과 alumni 전환 같은 권한 변경 이력을
-          추적합니다.
-        </p>
+        <WdsPageHeader
+          description="가입한 사용자의 역할을 조정하고, 운영진 승격과 alumni 전환 같은 권한 변경 이력을 추적합니다."
+          eyebrow="Operator Dashboard"
+          title="Role Admin"
+        />
 
         <section className="section section-compact">
-          <div className="grid grid-2">
+          <WdsResponsiveGrid columns={2}>
             <WdsSurfaceCard>
               <WdsBadge tone="blue">Role Policy</WdsBadge>
               <h2>역할 변경은 admin만 수행</h2>
@@ -190,11 +195,11 @@ export function RoleAdmin() {
                 저장됩니다.
               </p>
             </WdsSurfaceCard>
-          </div>
+          </WdsResponsiveGrid>
         </section>
 
-        <div className="dashboard-grid section-offset-md">
-          <section className="stack">
+        <WdsDashboardLayout offset="md">
+          <WdsStack as="section">
             <WdsSectionHeader
               description={message}
               flush
@@ -209,13 +214,13 @@ export function RoleAdmin() {
                 return (
                   <article className="member-approval-row" key={user.id}>
                     <div>
-                      <div className="badge-row">
+                      <WdsBadgeGroup>
                         <WdsBadge>{getRoleLabel(user.role)}</WdsBadge>
                         <WdsBadge>{formatKoreanDate(user.createdAt)} 가입</WdsBadge>
                         {user.department ? (
                           <WdsBadge tone="blue">{user.department}</WdsBadge>
                         ) : null}
-                      </div>
+                      </WdsBadgeGroup>
                       <strong>{user.displayName}</strong>
                       <p>{user.email}</p>
                       <p className="helper-text">
@@ -224,7 +229,7 @@ export function RoleAdmin() {
                       </p>
                     </div>
 
-                    <div className="toolbar">
+                    <WdsActionRow align="flex-end">
                       <WdsField className="demo-role-field" label="변경할 역할">
                         <WdsSelect
                           onValueChange={(nextRole) =>
@@ -246,14 +251,14 @@ export function RoleAdmin() {
                       >
                         {isPending ? '변경 중' : '역할 변경'}
                       </WdsButton>
-                    </div>
+                    </WdsActionRow>
                   </article>
                 );
               })}
             </div>
-          </section>
+          </WdsStack>
 
-          <aside className="stack">
+          <WdsStack as="aside">
             <WdsSurfaceCard>
               <WdsBadge tone="blue">Role Guide</WdsBadge>
               <h2>권한 설명</h2>
@@ -286,8 +291,8 @@ export function RoleAdmin() {
                 <p className="helper-text">아직 역할 변경 기록이 없습니다.</p>
               )}
             </WdsSurfaceCard>
-          </aside>
-        </div>
+          </WdsStack>
+        </WdsDashboardLayout>
       </div>
     </main>
   );

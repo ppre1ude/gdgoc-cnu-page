@@ -2,7 +2,12 @@ import {
   type Activity,
   getActivityRegistrationPolicy,
 } from '@/domain/activity';
-import { WdsSurfaceCard } from '@/components/wds-layout-primitives';
+import {
+  WdsActionRow,
+  WdsBadgeGroup,
+  WdsOffset,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 import {
   WdsButton,
   WdsBadge,
@@ -60,7 +65,7 @@ export function ActivityCard({
 
   return (
     <WdsSurfaceCard as="article">
-      <div className="badge-row">
+      <WdsBadgeGroup>
         <WdsBadge tone="blue">{activityTypeLabel[activity.type]}</WdsBadge>
         <WdsBadge>{visibilityLabel[activity.visibility]}</WdsBadge>
         {registrationPolicy.registrationMode !== 'internal' ? (
@@ -73,15 +78,17 @@ export function ActivityCard({
             {applicationStateLabel[applicationState]}
           </WdsBadge>
         ) : null}
-      </div>
+      </WdsBadgeGroup>
       <h3>{activity.title}</h3>
       <p>{activity.summary}</p>
       {activity.startsAt ? (
-        <p className="helper-text section-offset-sm">
-          {formatKoreanDateTime(activity.startsAt)}
-        </p>
+        <WdsOffset offset="sm">
+          <p className="helper-text">
+            {formatKoreanDateTime(activity.startsAt)}
+          </p>
+        </WdsOffset>
       ) : null}
-      <div className="card-actions">
+      <WdsActionRow offset="sm">
         <WdsTextLinkButton
           href={`/activities/${encodeURIComponent(activity.id)}`}
         >
@@ -119,7 +126,7 @@ export function ActivityCard({
             신청 취소
           </WdsButton>
         ) : null}
-      </div>
+      </WdsActionRow>
     </WdsSurfaceCard>
   );
 }

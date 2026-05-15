@@ -4,7 +4,10 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { ActivityCard } from '@/components/activity-card';
 import { WdsEmptyState } from '@/components/wds-form-controls';
-import { WdsSectionHeader } from '@/components/wds-layout-primitives';
+import {
+  WdsResponsiveGrid,
+  WdsSectionHeader,
+} from '@/components/wds-layout-primitives';
 import { listVisibleActivities, type Activity } from '@/domain/activity';
 import { listPublicHomeActivities } from '@/domain/activity-service';
 import { createBrowserActivityStore } from './browser-activity-store';
@@ -38,11 +41,11 @@ export function PublicActivitySection() {
           title="Public Activities"
         />
         {activities.length > 0 ? (
-          <div className="grid grid-3">
+          <WdsResponsiveGrid columns={3}>
             {activities.map((activity) => (
               <ActivityCard activity={activity} key={activity.id} />
             ))}
-          </div>
+          </WdsResponsiveGrid>
         ) : (
           <WdsEmptyState>아직 공개된 활동이 없습니다.</WdsEmptyState>
         )}

@@ -49,7 +49,14 @@ import {
   type WdsSelectOption,
 } from '@/components/wds-form-controls';
 import {
+  WdsActionRow,
+  WdsBadgeGroup,
+  WdsDashboardLayout,
+  WdsOffset,
+  WdsPageHeader,
+  WdsResponsiveGrid,
   WdsSectionHeader,
+  WdsStack,
   WdsSurfaceCard,
 } from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
@@ -387,24 +394,23 @@ export function ActivityAdmin() {
   return (
     <main className="page">
       <div className="container">
-        <p className="eyebrow">Operator Dashboard</p>
-        <h1 className="page-title">Activity Admin</h1>
-        <p className="page-lead">
-          운영진이 활동 초안을 쓰고, Gemini 보조를 확인하고, Firebase 또는 demo
-          bridge에 저장합니다.
-        </p>
+        <WdsPageHeader
+          description="운영진이 활동 초안을 쓰고, Gemini 보조를 확인하고, Firebase 또는 demo bridge에 저장합니다."
+          eyebrow="Operator Dashboard"
+          title="Activity Admin"
+        />
 
-        <div className="dashboard-grid section-offset-lg">
+        <WdsDashboardLayout offset="lg">
           <WdsSurfaceCard as="section">
             <form className="form" onSubmit={saveActivity}>
-              <div className="badge-row">
+              <WdsBadgeGroup>
                 <WdsBadge tone="blue">
                   {editingActivityId ? 'Activity 수정' : 'Activity 생성'}
                 </WdsBadge>
                 {editingActivityId ? (
                   <WdsBadge>{editingActivityId}</WdsBadge>
                 ) : null}
-              </div>
+              </WdsBadgeGroup>
               <WdsField label="제목">
                 <WdsInput
                   onChange={(event) =>
@@ -415,7 +421,7 @@ export function ActivityAdmin() {
                 />
               </WdsField>
 
-              <div className="grid grid-2">
+              <WdsResponsiveGrid columns={2}>
                 <WdsField label="유형">
                   <WdsSelect
                     onValueChange={(type) =>
@@ -441,7 +447,7 @@ export function ActivityAdmin() {
                     value={draft.visibility}
                   />
                 </WdsField>
-              </div>
+              </WdsResponsiveGrid>
 
               <WdsField label="일정">
                 <WdsInput
@@ -453,7 +459,7 @@ export function ActivityAdmin() {
                 />
               </WdsField>
 
-              <div className="grid grid-2">
+              <WdsResponsiveGrid columns={2}>
                 <WdsField label="등록 방식">
                   <WdsSelect
                     onValueChange={(registrationMode) => {
@@ -471,7 +477,7 @@ export function ActivityAdmin() {
                     value={draft.registrationMode}
                   />
                 </WdsField>
-              </div>
+              </WdsResponsiveGrid>
 
               {usesExternalRegistration ? (
                 <WdsField
@@ -509,7 +515,7 @@ export function ActivityAdmin() {
                 />
               </WdsField>
 
-              <div className="toolbar">
+              <WdsActionRow>
                 <WdsButton
                   disabled={isSuggesting}
                   onClick={requestSuggestion}
@@ -521,9 +527,9 @@ export function ActivityAdmin() {
                 <WdsButton tone="primary" type="submit">
                   {editingActivityId ? 'Activity 수정' : 'Activity 저장'}
                 </WdsButton>
-              </div>
+              </WdsActionRow>
               {editingActivityId ? (
-                <div className="toolbar">
+                <WdsActionRow>
                   <WdsButton
                     onClick={cancelEditing}
                     tone="secondary"
@@ -531,32 +537,32 @@ export function ActivityAdmin() {
                   >
                     수정 취소
                   </WdsButton>
-                </div>
+                </WdsActionRow>
               ) : null}
               <p className="helper-text" aria-live="polite">{message}</p>
             </form>
           </WdsSurfaceCard>
 
-          <aside className="stack">
+          <WdsStack as="aside">
             <WdsSurfaceCard as="section">
-              <div className="badge-row">
+              <WdsBadgeGroup>
                 <WdsBadge tone="blue">AI Draft</WdsBadge>
-              </div>
+              </WdsBadgeGroup>
               {suggestion ? (
-                <div className="stack section-offset-sm">
+                <WdsStack offset="sm">
                   <p className="helper-text">카드 요약</p>
                   <p>{suggestion.cardSummary}</p>
                   <p className="helper-text">멤버용 문구</p>
                   <p>{suggestion.memberCopy}</p>
                   <p className="helper-text">공개용 문구</p>
                   <p>{suggestion.publicCopy}</p>
-                  <div className="badge-row">
+                  <WdsBadgeGroup>
                     {suggestion.suggestedTags.map((tag) => (
                       <WdsBadge key={tag}>
                         {tag}
                       </WdsBadge>
                     ))}
-                  </div>
+                  </WdsBadgeGroup>
                   {suggestion.missingInfo.length > 0 ? (
                     <p className="helper-text">
                       보완 필요: {suggestion.missingInfo.join(', ')}
@@ -565,12 +571,14 @@ export function ActivityAdmin() {
                   <WdsButton onClick={applySuggestion} tone="ghost" type="button">
                     제안 적용
                   </WdsButton>
-                </div>
+                </WdsStack>
               ) : (
-                <p className="helper-text section-offset-sm">
-                  초안을 입력하고 AI 보조를 실행하면 요약과 문구 제안이 여기에
-                  표시됩니다.
-                </p>
+                <WdsOffset offset="sm">
+                  <p className="helper-text">
+                    초안을 입력하고 AI 보조를 실행하면 요약과 문구 제안이 여기에
+                    표시됩니다.
+                  </p>
+                </WdsOffset>
               )}
             </WdsSurfaceCard>
 
@@ -579,7 +587,7 @@ export function ActivityAdmin() {
               proposals={pendingProposals}
             />
 
-            <section className="stack">
+            <WdsStack as="section">
               <WdsSectionHeader
                 description="운영진 관점에서 볼 수 있는 activity입니다."
                 flush
@@ -589,9 +597,9 @@ export function ActivityAdmin() {
                 const session = sessionsByActivity[activity.id] ?? null;
 
                 return (
-                  <div className="stack" key={activity.id}>
+                  <WdsStack key={activity.id}>
                     <ActivityCard activity={activity} />
-                    <div className="toolbar">
+                    <WdsActionRow>
                       <WdsButton
                         disabled={editingActivityId === activity.id}
                         onClick={() => startEditing(activity)}
@@ -609,7 +617,7 @@ export function ActivityAdmin() {
                       >
                         아카이브
                       </WdsButton>
-                    </div>
+                    </WdsActionRow>
                     <ApplicationQueue
                       activity={activity}
                       applications={applicationsByActivity[activity.id] ?? []}
@@ -620,12 +628,12 @@ export function ActivityAdmin() {
                       onMarkAttended={markAttended}
                       session={session}
                     />
-                  </div>
+                  </WdsStack>
                 );
               })}
-            </section>
-          </aside>
-        </div>
+            </WdsStack>
+          </WdsStack>
+        </WdsDashboardLayout>
       </div>
     </main>
   );
@@ -639,7 +647,7 @@ function ProposalReviewQueue({
   proposals: Activity[];
 }) {
   return (
-    <section className="stack">
+    <WdsStack as="section">
       <WdsSectionHeader
         description="멤버가 제출한 프로젝트 제안을 검토하고 공개 여부를 확정합니다."
         flush
@@ -671,7 +679,7 @@ function ProposalReviewQueue({
       ) : (
         <WdsEmptyState>검토 대기 중인 프로젝트 제안이 없습니다.</WdsEmptyState>
       )}
-    </section>
+    </WdsStack>
   );
 }
 

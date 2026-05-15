@@ -882,19 +882,7 @@ textarea {
   word-break: keep-all;
 }
 
-.page-title {
-  color: var(--text-strong);
-  font-size: 32px;
-  letter-spacing: 0;
-  line-height: 1.28;
-  margin: 0;
-  max-width: 820px;
-  overflow-wrap: break-word;
-  word-break: keep-all;
-}
-
-.hero p,
-.page-lead {
+.hero p {
   color: var(--text-muted);
   font-size: 16px;
   line-height: 1.65;
@@ -948,32 +936,6 @@ textarea {
   padding: 52px 0;
 }
 
-.section-header {
-  align-items: end;
-  display: flex;
-  gap: 18px;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.section-header-content {
-  display: grid;
-  flex: 1 1 auto;
-  gap: 8px;
-  min-width: 0;
-}
-
-.section-header [data-role='section-header-content-heading'] {
-  word-break: keep-all;
-}
-
-.section-header-content p {
-  color: var(--text-muted);
-  line-height: 1.6;
-  margin: 0;
-  max-width: 640px;
-}
-
 .grid {
   display: grid;
   gap: 16px;
@@ -985,36 +947,6 @@ textarea {
 
 .grid-2 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--semantic-elevation-shadow-normal-xsmall);
-  padding: 20px;
-}
-
-.card h3 {
-  color: var(--text-strong);
-  font-size: 20px;
-  letter-spacing: 0;
-  line-height: 1.35;
-  margin: 12px 0 8px;
-  word-break: keep-all;
-}
-
-.card p {
-  color: var(--text-muted);
-  line-height: 1.65;
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-.card.showcase-card {
-  display: block;
-  overflow: hidden;
-  padding: 0;
 }
 
 .showcase-card-body {
@@ -1053,8 +985,7 @@ textarea {
   padding: 7px 9px;
 }
 
-.card.admin-tool-card {
-  display: block;
+.admin-tool-card {
   transition:
     border-color 160ms ease,
     box-shadow 160ms ease,
@@ -1072,43 +1003,6 @@ textarea {
   display: inline-block;
   font-size: 14px;
   font-weight: 800;
-  margin-top: 16px;
-}
-
-.badge-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.badge {
-  background: var(--surface-muted);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  color: var(--text-muted);
-  display: inline-flex;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1;
-  padding: 7px 9px;
-}
-
-.badge-blue {
-  background: rgb(var(--semantic-accent-foreground-blue-rgb) / 0.1);
-  border-color: rgb(var(--semantic-accent-foreground-blue-rgb) / 0.22);
-  color: var(--semantic-accent-foreground-blue);
-}
-
-.badge-green {
-  background: rgb(var(--semantic-status-positive-rgb) / 0.1);
-  border-color: rgb(var(--semantic-status-positive-rgb) / 0.22);
-  color: var(--semantic-accent-foreground-green);
-}
-
-.card-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
   margin-top: 16px;
 }
 
@@ -1142,14 +1036,6 @@ textarea {
   flex-wrap: wrap;
   gap: 8px;
   padding: 0 0 10px;
-}
-
-.analytics-dashboard-grid {
-  align-items: start;
-  display: grid;
-  gap: 16px;
-  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
-  margin-top: 16px;
 }
 
 .analytics-list {
@@ -1289,11 +1175,6 @@ textarea {
   min-width: 180px;
 }
 
-.card.guest-profile-form {
-  display: grid;
-  gap: 18px;
-}
-
 .guest-profile-form h2 {
   color: var(--text-strong);
   font-size: 22px;
@@ -1306,13 +1187,6 @@ textarea {
   color: var(--text-muted);
   line-height: 1.6;
   margin: 0;
-}
-
-.form-footer {
-  align-items: center;
-  display: flex;
-  gap: 14px;
-  justify-content: space-between;
 }
 
 .profile-summary-list {
@@ -1338,21 +1212,6 @@ textarea {
   line-height: 1.5;
   margin: 0;
   overflow-wrap: anywhere;
-}
-
-.activity-detail {
-  align-items: start;
-  display: grid;
-  gap: 18px;
-  grid-template-columns: minmax(0, 1fr) 320px;
-}
-
-.activity-detail-main,
-.activity-detail-side {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 24px;
 }
 
 .activity-detail-main h1 {
@@ -1419,46 +1278,9 @@ textarea {
   padding: 44px 0 72px;
 }
 
-.dashboard-grid {
-  align-items: start;
-  display: grid;
-  gap: 18px;
-  grid-template-columns: minmax(0, 1fr) 360px;
-}
-
-.stack {
-  display: grid;
-  gap: 14px;
-}
-
 .form {
   display: grid;
   gap: 14px;
-}
-
-.section-header-flush {
-  margin-bottom: 0;
-}
-
-.section-offset-xs {
-  margin-top: 8px;
-}
-
-.section-offset-sm {
-  margin-top: 16px;
-}
-
-.section-offset-md {
-  margin-top: 20px;
-}
-
-.section-offset-lg {
-  margin-top: 28px;
-}
-
-.toolbar.section-offset-md {
-  margin-bottom: 20px;
-  margin-top: 0;
 }
 
 .helper-text {
@@ -1481,12 +1303,6 @@ textarea {
   line-height: 1.5;
   margin: 8px 0 0;
   padding-left: 18px;
-}
-
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
 }
 
 .notice-board {
@@ -1557,27 +1373,6 @@ textarea {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-}
-
-.dashboard-grid .notice-board-head {
-  display: none;
-}
-
-.dashboard-grid .notice-board-row {
-  align-items: start;
-  gap: 10px;
-  grid-template-columns: 1fr;
-}
-
-.dashboard-grid .notice-board-cell {
-  min-width: 0;
-}
-
-.dashboard-grid .notice-board-status,
-.dashboard-grid .notice-board-date {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
 }
 
 .section-compact {
@@ -1724,17 +1519,9 @@ textarea {
   }
 
   .hero-grid,
-  .activity-detail,
-  .analytics-dashboard-grid,
-  .dashboard-grid,
   .grid-2,
   .grid-3 {
     grid-template-columns: 1fr;
-  }
-
-  .section-header {
-    align-items: start;
-    flex-direction: column;
   }
 }
 
@@ -1880,23 +1667,12 @@ textarea {
     padding-top: 42px;
   }
 
-  .hero h1,
-  .page-title {
+  .hero h1 {
     overflow-wrap: anywhere;
   }
 
   .hero h1 {
     font-size: 38px;
-  }
-
-  .page-title {
-    font-size: 30px;
-    line-height: 1.2;
-  }
-
-  .page-lead {
-    font-size: 16px;
-    overflow-wrap: anywhere;
   }
 
   .notice-board-head {
@@ -1951,18 +1727,8 @@ textarea {
     min-width: 0;
   }
 
-  .form-footer {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
   .profile-summary-list div {
     grid-template-columns: 1fr;
-  }
-
-  .activity-detail-main,
-  .activity-detail-side {
-    padding: 18px;
   }
 
   .activity-detail-main h1 {

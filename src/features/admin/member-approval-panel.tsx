@@ -9,6 +9,9 @@ import {
 } from '@/domain/chapter-user-service';
 import { WdsBadge, WdsButton, WdsEmptyState } from '@/components/wds-form-controls';
 import {
+  WdsBadgeGroup,
+  WdsOffset,
+  WdsResponsiveGrid,
   WdsSectionHeader,
   WdsSurfaceCard,
 } from '@/components/wds-layout-primitives';
@@ -69,7 +72,7 @@ export function MemberApprovalPanel() {
         title="멤버 승인"
       />
 
-      <div className="grid grid-2">
+      <WdsResponsiveGrid columns={2}>
         <WdsSurfaceCard>
           <WdsBadge tone="green">Approval Queue</WdsBadge>
           <h3>{pendingUsers.length}명 승인 대기</h3>
@@ -82,14 +85,14 @@ export function MemberApprovalPanel() {
             승인 작업은 actor, target, 이전 role, 다음 role과 함께 저장됩니다.
           </p>
         </WdsSurfaceCard>
-      </div>
+      </WdsResponsiveGrid>
 
-      <div className="member-approval-list section-offset-sm">
+      <WdsOffset className="member-approval-list" offset="sm">
         {pendingUsers.length > 0 ? (
           pendingUsers.map((user) => (
             <article className="member-approval-row" key={user.id}>
               <div>
-                <div className="badge-row">
+                <WdsBadgeGroup>
                   <WdsBadge>Guest</WdsBadge>
                   <WdsBadge>
                     {formatKoreanDate(user.createdAt)} 가입
@@ -101,7 +104,7 @@ export function MemberApprovalPanel() {
                   ) : (
                     <WdsBadge>프로필 미제출</WdsBadge>
                   )}
-                </div>
+                </WdsBadgeGroup>
                 <strong>{user.displayName}</strong>
                 <p>{user.email}</p>
                 <GuestProfileSummary user={user} />
@@ -119,7 +122,7 @@ export function MemberApprovalPanel() {
         ) : (
           <WdsEmptyState>승인 대기 중인 guest가 없습니다.</WdsEmptyState>
         )}
-      </div>
+      </WdsOffset>
     </section>
   );
 }

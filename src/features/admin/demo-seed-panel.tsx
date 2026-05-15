@@ -15,6 +15,8 @@ import type { Showcase } from '@/domain/showcase';
 import { loadOrSyncDefaultActivitySession } from '@/domain/activity-session';
 import { WdsBadge, WdsButton, WdsNotice } from '@/components/wds-form-controls';
 import {
+  WdsOffset,
+  WdsResponsiveGrid,
   WdsSectionHeader,
   WdsSurfaceCard,
 } from '@/components/wds-layout-primitives';
@@ -142,7 +144,7 @@ export function DemoSeedPanel() {
       </WdsNotice>
 
       {summary ? (
-        <div className="grid grid-3 section-offset-sm">
+        <WdsResponsiveGrid columns={3} offset="sm">
           <WdsSurfaceCard as="article">
             <WdsBadge tone="green">Created</WdsBadge>
             <h3>{createdCount}개 문서 추가</h3>
@@ -161,24 +163,26 @@ export function DemoSeedPanel() {
             <h3>{summary.sessionSyncCount}개 기본 세션 확인</h3>
             <p>일정이 있는 seed activity에 기본 출석 세션을 연결했습니다.</p>
           </WdsSurfaceCard>
-        </div>
+        </WdsResponsiveGrid>
       ) : null}
 
       {summary ? (
-        <WdsNotice className="section-offset-sm">
-          <strong>
-            {summary.mode === 'firestore' ? 'Firestore' : 'localStorage'} seed 결과 ·{' '}
-            {formatKoreanDateTime(summary.completedAt)}
-          </strong>
-          <ul className="helper-list">
-            {summary.results.map((result) => (
-              <li key={result.collection}>
-                {result.collection}: 추가 {result.createdIds.length}개, 유지{' '}
-                {result.skippedIds.length}개
-              </li>
-            ))}
-          </ul>
-        </WdsNotice>
+        <WdsOffset offset="sm">
+          <WdsNotice>
+            <strong>
+              {summary.mode === 'firestore' ? 'Firestore' : 'localStorage'} seed 결과 ·{' '}
+              {formatKoreanDateTime(summary.completedAt)}
+            </strong>
+            <ul className="helper-list">
+              {summary.results.map((result) => (
+                <li key={result.collection}>
+                  {result.collection}: 추가 {result.createdIds.length}개, 유지{' '}
+                  {result.skippedIds.length}개
+                </li>
+              ))}
+            </ul>
+          </WdsNotice>
+        </WdsOffset>
       ) : null}
     </section>
   );

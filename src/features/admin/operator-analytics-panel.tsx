@@ -17,7 +17,11 @@ import {
 } from '@/domain/operator-analytics';
 import { WdsBadge } from '@/components/wds-form-controls';
 import {
+  WdsDashboardLayout,
+  WdsOffset,
+  WdsResponsiveGrid,
   WdsSectionHeader,
+  WdsStack,
   WdsSurfaceCard,
 } from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
@@ -102,7 +106,7 @@ export function OperatorAnalyticsPanel() {
         title="운영 지표"
       />
 
-      <div className="grid grid-3">
+      <WdsResponsiveGrid columns={3}>
         <AnalyticsCard
           description="member, team_member, organizer, admin을 포함하고 alumni는 제외합니다."
           label="Active Members"
@@ -143,15 +147,15 @@ export function OperatorAnalyticsPanel() {
           label="Capacity Fill"
           title={`${analytics.upcomingActivityCapacityFillRate}% 충원율`}
         />
-      </div>
+      </WdsResponsiveGrid>
 
-      <div className="analytics-dashboard-grid">
+      <WdsDashboardLayout offset="sm" sidebarWidth="minmax(280px, 0.75fr)">
         <ActivityFunnels funnels={analytics.activityFunnels} />
-        <div className="stack">
+        <WdsStack>
           <ActivityTypeRates rates={analytics.activityTypeAttendanceRates} />
           <LowParticipationList members={analytics.lowParticipationMembers} />
-        </div>
-      </div>
+        </WdsStack>
+      </WdsDashboardLayout>
     </section>
   );
 }
@@ -228,9 +232,11 @@ function ActivityFunnels({
           ))}
         </div>
       ) : (
-        <p className="helper-text section-offset-sm">
-          일정이 있는 activity가 생기면 활동별 funnel이 표시됩니다.
-        </p>
+        <WdsOffset offset="sm">
+          <p className="helper-text">
+            일정이 있는 activity가 생기면 활동별 funnel이 표시됩니다.
+          </p>
+        </WdsOffset>
       )}
     </WdsSurfaceCard>
   );
@@ -268,9 +274,11 @@ function ActivityTypeRates({
           ))}
         </div>
       ) : (
-        <p className="helper-text section-offset-sm">
-          종료된 세션의 승인/출석 데이터가 쌓이면 유형별 참석률이 표시됩니다.
-        </p>
+        <WdsOffset offset="sm">
+          <p className="helper-text">
+            종료된 세션의 승인/출석 데이터가 쌓이면 유형별 참석률이 표시됩니다.
+          </p>
+        </WdsOffset>
       )}
     </WdsSurfaceCard>
   );
@@ -302,9 +310,11 @@ function LowParticipationList({
           ))}
         </div>
       ) : (
-        <p className="helper-text section-offset-sm">
-          최근 종료 세션에서 반복 미참석이 감지된 활동 멤버가 없습니다.
-        </p>
+        <WdsOffset offset="sm">
+          <p className="helper-text">
+            최근 종료 세션에서 반복 미참석이 감지된 활동 멤버가 없습니다.
+          </p>
+        </WdsOffset>
       )}
     </WdsSurfaceCard>
   );

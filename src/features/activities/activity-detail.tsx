@@ -28,6 +28,12 @@ import {
   WdsTextLinkButton,
   type WdsSelectOption,
 } from '@/components/wds-form-controls';
+import {
+  WdsActionRow,
+  WdsBadgeGroup,
+  WdsDashboardLayout,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 import { describeMemberHomeAccess } from '@/domain/member-access';
 import { formatKoreanDateTime } from '@/lib/format-korean-date-time';
 import { createBrowserActivityApplicationStore } from './browser-activity-application-store';
@@ -181,22 +187,22 @@ export function ActivityDetail({ activityId }: { activityId: string }) {
   return (
     <main className="page">
       <div className="container">
-        <div className="toolbar section-offset-md">
+        <WdsActionRow reserveBottom>
           <WdsLinkButton href="/member" size="small" tone="secondary">
             Member Home
           </WdsLinkButton>
           <WdsTextLinkButton href="/admin/activities">
             Activity Admin
           </WdsTextLinkButton>
-        </div>
+        </WdsActionRow>
 
         <section className="section section-compact">
           <div className="access-panel">
             <div>
-              <div className="badge-row">
+              <WdsBadgeGroup>
                 <WdsBadge tone="blue">Activity Detail</WdsBadge>
                 <WdsBadge>{status}</WdsBadge>
-              </div>
+              </WdsBadgeGroup>
               <h2>{activity ? activity.title : '활동 상세'}</h2>
               <p>{message}</p>
             </div>
@@ -214,9 +220,17 @@ export function ActivityDetail({ activityId }: { activityId: string }) {
         {!isLoaded ? (
           <WdsEmptyState>활동 정보를 불러오는 중입니다.</WdsEmptyState>
         ) : activity && registrationPolicy ? (
-          <article className="activity-detail">
-            <div className="activity-detail-main">
-              <div className="badge-row">
+          <WdsDashboardLayout as="article" sidebarWidth="320px">
+            <WdsSurfaceCard
+              className="activity-detail-main"
+              sx={{
+                padding: '24px',
+                '@media (max-width: 560px)': {
+                  padding: '18px',
+                },
+              }}
+            >
+              <WdsBadgeGroup>
                 <WdsBadge tone="blue">
                   {activityTypeLabel[activity.type]}
                 </WdsBadge>
@@ -227,7 +241,7 @@ export function ActivityDetail({ activityId }: { activityId: string }) {
                     {applicationStateLabel[applicationState]}
                   </WdsBadge>
                 ) : null}
-              </div>
+              </WdsBadgeGroup>
 
               <h1>{activity.title}</h1>
               <p>{activity.summary}</p>
@@ -250,15 +264,24 @@ export function ActivityDetail({ activityId }: { activityId: string }) {
                   <dd>{visibilityLabel[activity.visibility]}</dd>
                 </div>
               </dl>
-            </div>
+            </WdsSurfaceCard>
 
-            <aside className="activity-detail-side">
+            <WdsSurfaceCard
+              as="aside"
+              className="activity-detail-side"
+              sx={{
+                padding: '24px',
+                '@media (max-width: 560px)': {
+                  padding: '18px',
+                },
+              }}
+            >
               <h2>다음 행동</h2>
               <p className="helper-text">
                 공식 Google 행사라면 외부 등록 페이지를 먼저 확인하고, 내부
                 참여 추적이 필요한 경우 홈페이지 신청도 함께 사용합니다.
               </p>
-              <div className="card-actions">
+              <WdsActionRow offset="sm">
                 {registrationPolicy.externalRegistrationUrl ? (
                   <WdsLinkButton
                     external
@@ -288,9 +311,9 @@ export function ActivityDetail({ activityId }: { activityId: string }) {
                     신청 취소
                   </WdsButton>
                 ) : null}
-              </div>
-            </aside>
-          </article>
+              </WdsActionRow>
+            </WdsSurfaceCard>
+          </WdsDashboardLayout>
         ) : (
           <WdsEmptyState>
             현재 역할로 열람할 수 없는 활동입니다. 멤버 전용 활동은 승인된

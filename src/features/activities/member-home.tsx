@@ -37,6 +37,10 @@ import { ChapterRecordCard } from '@/components/chapter-record-card';
 import { NoticeBoard } from '@/components/notice-board';
 import { ShowcaseCard } from '@/components/showcase-card';
 import {
+  WdsBadgeGroup,
+  WdsFormActions,
+  WdsPageHeader,
+  WdsResponsiveGrid,
   WdsSectionHeader,
   WdsSurfaceCard,
 } from '@/components/wds-layout-primitives';
@@ -354,22 +358,21 @@ export function MemberHome() {
   return (
     <main className="page">
       <div className="container">
-        <p className="eyebrow">Member Home</p>
-        <h1 className="page-title">지금 우리 챕터에서 진행 중인 활동</h1>
-        <p className="page-lead">
-          공지, 이벤트, 스터디, 프로젝트를 한 화면에서 확인하는 멤버용 홈입니다.
-          현재 데모는 activity 데이터를 Firebase 또는 localStorage bridge에서 읽습니다.
-        </p>
+        <WdsPageHeader
+          description="공지, 이벤트, 스터디, 프로젝트를 한 화면에서 확인하는 멤버용 홈입니다. 현재 데모는 activity 데이터를 Firebase 또는 localStorage bridge에서 읽습니다."
+          eyebrow="Member Home"
+          title="지금 우리 챕터에서 진행 중인 활동"
+        />
 
         <section className="section section-compact">
           <div className="access-panel">
             <div>
-              <div className="badge-row">
+              <WdsBadgeGroup>
                 <WdsBadge tone="blue">
                   {isFirebaseConfigured ? '현재 역할' : 'Demo Role'}
                 </WdsBadge>
                 <WdsBadge>{access.status}</WdsBadge>
-              </div>
+              </WdsBadgeGroup>
               <h2>{getAccessPanelTitle(access?.status)}</h2>
               <p>{access.message}</p>
             </div>
@@ -426,7 +429,7 @@ export function MemberHome() {
 
         <ChapterRecordSection records={records.slice(0, 3)} />
 
-        <div className="grid grid-3 section-offset-lg">
+        <WdsResponsiveGrid columns={3} offset="lg">
           <WdsSurfaceCard>
             <WdsBadge tone="green">Participation</WdsBadge>
             <h3>
@@ -445,7 +448,7 @@ export function MemberHome() {
             <h3>{activities.length}개 활동 열람 가능</h3>
             <p>Firebase 설정 전에는 localStorage bridge로 같은 흐름을 검증합니다.</p>
           </WdsSurfaceCard>
-        </div>
+        </WdsResponsiveGrid>
 
         {canApplyToActivities ? (
           <MemberApplicationsSection summaries={memberApplicationSummaries} />
@@ -507,6 +510,7 @@ function MemberProposalForm({
         as="form"
         className="guest-profile-form"
         onSubmit={onSubmit}
+        sx={{ display: 'grid', gap: '18px' }}
       >
         <div>
           <WdsBadge tone="blue">Member Proposal</WdsBadge>
@@ -517,7 +521,7 @@ function MemberProposalForm({
           </p>
         </div>
 
-        <div className="grid grid-2">
+        <WdsResponsiveGrid columns={2}>
           <WdsField label="활동 유형">
             <WdsSelect
               onValueChange={(nextValue) => updateField('type', nextValue)}
@@ -532,7 +536,7 @@ function MemberProposalForm({
               value={value.startsAt}
             />
           </WdsField>
-        </div>
+        </WdsResponsiveGrid>
 
         <WdsField label="제목">
           <WdsInput
@@ -550,12 +554,14 @@ function MemberProposalForm({
           />
         </WdsField>
 
-        <div className="form-footer">
-          <p className="helper-text">{message}</p>
-          <WdsButton tone="primary" type="submit">
-            제안 제출
-          </WdsButton>
-        </div>
+        <WdsFormActions
+          actions={
+            <WdsButton tone="primary" type="submit">
+              제안 제출
+            </WdsButton>
+          }
+          helper={message}
+        />
       </WdsSurfaceCard>
     </section>
   );
@@ -585,6 +591,7 @@ function MemberRecordForm({
         as="form"
         className="guest-profile-form"
         onSubmit={onSubmit}
+        sx={{ display: 'grid', gap: '18px' }}
       >
         <div>
           <WdsBadge tone="green">Chapter Record</WdsBadge>
@@ -595,7 +602,7 @@ function MemberRecordForm({
           </p>
         </div>
 
-        <div className="grid grid-2">
+        <WdsResponsiveGrid columns={2}>
           <WdsField label="기록 유형">
             <WdsSelect
               onValueChange={(nextValue) => updateField('kind', nextValue)}
@@ -610,7 +617,7 @@ function MemberRecordForm({
               value={value.tags}
             />
           </WdsField>
-        </div>
+        </WdsResponsiveGrid>
 
         <WdsField label="제목">
           <WdsInput
@@ -636,12 +643,14 @@ function MemberRecordForm({
           />
         </WdsField>
 
-        <div className="form-footer">
-          <p className="helper-text">{message}</p>
-          <WdsButton tone="primary" type="submit">
-            기록 제출
-          </WdsButton>
-        </div>
+        <WdsFormActions
+          actions={
+            <WdsButton tone="primary" type="submit">
+              기록 제출
+            </WdsButton>
+          }
+          helper={message}
+        />
       </WdsSurfaceCard>
     </section>
   );
@@ -674,6 +683,7 @@ function GuestProfileForm({
         as="form"
         className="guest-profile-form"
         onSubmit={onSubmit}
+        sx={{ display: 'grid', gap: '18px' }}
       >
         <div>
           <WdsBadge tone="green">Guest Profile</WdsBadge>
@@ -684,7 +694,7 @@ function GuestProfileForm({
           </p>
         </div>
 
-        <div className="grid grid-2">
+        <WdsResponsiveGrid columns={2}>
           <WdsField label="이름">
             <WdsInput
               onChange={(event) => updateField('displayName', event.target.value)}
@@ -727,7 +737,7 @@ function GuestProfileForm({
               value={value.interests}
             />
           </WdsField>
-        </div>
+        </WdsResponsiveGrid>
 
         <WdsField label="참여 동기">
           <WdsTextArea
@@ -737,12 +747,14 @@ function GuestProfileForm({
           />
         </WdsField>
 
-        <div className="form-footer">
-          <p className="helper-text">{message}</p>
-          <WdsButton tone="primary" type="submit">
-            승인 요청 정보 저장
-          </WdsButton>
-        </div>
+        <WdsFormActions
+          actions={
+            <WdsButton tone="primary" type="submit">
+              승인 요청 정보 저장
+            </WdsButton>
+          }
+          helper={message}
+        />
       </WdsSurfaceCard>
     </section>
   );
@@ -768,11 +780,11 @@ function ShowcasePreviewSection({ showcases }: { showcases: Showcase[] }) {
         title="쇼케이스"
       />
       {showcases.length > 0 ? (
-        <div className="grid grid-3">
+        <WdsResponsiveGrid columns={3}>
           {showcases.map((showcase) => (
             <ShowcaseCard key={showcase.id} showcase={showcase} />
           ))}
-        </div>
+        </WdsResponsiveGrid>
       ) : (
         <WdsEmptyState>아직 표시할 쇼케이스가 없습니다.</WdsEmptyState>
       )}
@@ -788,11 +800,11 @@ function ChapterRecordSection({ records }: { records: ChapterRecord[] }) {
         title="긴 글 기록"
       />
       {records.length > 0 ? (
-        <div className="grid grid-3">
+        <WdsResponsiveGrid columns={3}>
           {records.map((record) => (
             <ChapterRecordCard key={record.id} record={record} />
           ))}
-        </div>
+        </WdsResponsiveGrid>
       ) : (
         <WdsEmptyState>아직 게시된 긴 글 기록이 없습니다.</WdsEmptyState>
       )}
@@ -816,12 +828,12 @@ function MemberApplicationsSection({
           {summaries.map(({ activity, state }) => (
             <article className="application-row" key={activity.id}>
               <div>
-                <div className="badge-row">
+                <WdsBadgeGroup>
                   <WdsBadge tone={state === 'approved' ? 'green' : 'blue'}>
                     {getApplicationStateLabel(state)}
                   </WdsBadge>
                   <WdsBadge>{activity.type}</WdsBadge>
-                </div>
+                </WdsBadgeGroup>
                 <strong>{activity.title}</strong>
                 <p className="helper-text">
                   {activity.startsAt
@@ -863,7 +875,7 @@ function ActivitySection({
     <section className="section">
       <WdsSectionHeader description={description} title={title} />
       {activities.length > 0 ? (
-        <div className="grid grid-3">
+        <WdsResponsiveGrid columns={3}>
           {activities.map((activity) => (
             <ActivityCard
               activity={activity}
@@ -873,7 +885,7 @@ function ActivitySection({
               onCancel={onCancel}
             />
           ))}
-        </div>
+        </WdsResponsiveGrid>
       ) : (
         <WdsEmptyState>아직 표시할 활동이 없습니다.</WdsEmptyState>
       )}

@@ -15,7 +15,12 @@ import {
   type WdsSelectOption,
 } from '@/components/wds-form-controls';
 import {
+  WdsActionRow,
+  WdsDashboardLayout,
+  WdsPageHeader,
+  WdsResponsiveGrid,
   WdsSectionHeader,
+  WdsStack,
   WdsSurfaceCard,
 } from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
@@ -118,17 +123,16 @@ export function ShowcaseAdmin() {
   return (
     <main className="page">
       <div className="container">
-        <p className="eyebrow">Operator Dashboard</p>
-        <h1 className="page-title">Showcase Admin</h1>
-        <p className="page-lead">
-          활동 성과, 회고, 프로젝트 결과, 갤러리를 Activity와 분리된 아카이브로
-          등록합니다.
-        </p>
+        <WdsPageHeader
+          description="활동 성과, 회고, 프로젝트 결과, 갤러리를 Activity와 분리된 아카이브로 등록합니다."
+          eyebrow="Operator Dashboard"
+          title="Showcase Admin"
+        />
 
-        <div className="dashboard-grid section-offset-lg">
+        <WdsDashboardLayout offset="lg">
           <WdsSurfaceCard as="section">
             <form className="form" onSubmit={saveShowcase}>
-              <div className="grid grid-2">
+              <WdsResponsiveGrid columns={2}>
                 <WdsField label="종류">
                   <WdsSelect
                     onValueChange={(kind) =>
@@ -154,9 +158,9 @@ export function ShowcaseAdmin() {
                     value={draft.visibility}
                   />
                 </WdsField>
-              </div>
+              </WdsResponsiveGrid>
 
-              <div className="grid grid-2">
+              <WdsResponsiveGrid columns={2}>
                 <WdsField label="상태">
                   <WdsSelect
                     onValueChange={(status) =>
@@ -182,7 +186,7 @@ export function ShowcaseAdmin() {
                     value={draft.publishedAt}
                   />
                 </WdsField>
-              </div>
+              </WdsResponsiveGrid>
 
               <WdsField label="제목">
                 <WdsInput
@@ -239,7 +243,7 @@ export function ShowcaseAdmin() {
                 />
               </WdsField>
 
-              <div className="grid grid-2">
+              <WdsResponsiveGrid columns={2}>
                 <WdsField label="태그">
                   <WdsInput
                     onChange={(event) =>
@@ -265,18 +269,18 @@ export function ShowcaseAdmin() {
                     value={draft.relatedActivityId}
                   />
                 </WdsField>
-              </div>
+              </WdsResponsiveGrid>
 
-              <div className="toolbar">
+              <WdsActionRow>
                 <WdsButton tone="primary" type="submit">
                   쇼케이스 저장
                 </WdsButton>
-              </div>
+              </WdsActionRow>
               <p className="helper-text">{message}</p>
             </form>
           </WdsSurfaceCard>
 
-          <aside className="stack">
+          <WdsStack as="aside">
             <WdsSectionHeader
               description="운영진 관점에서 볼 수 있는 최신 쇼케이스입니다."
               flush
@@ -285,8 +289,8 @@ export function ShowcaseAdmin() {
             {showcases.map((showcase) => (
               <ShowcaseCard key={showcase.id} showcase={showcase} />
             ))}
-          </aside>
-        </div>
+          </WdsStack>
+        </WdsDashboardLayout>
       </div>
     </main>
   );

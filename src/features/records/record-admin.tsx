@@ -25,7 +25,12 @@ import {
   type WdsSelectOption,
 } from '@/components/wds-form-controls';
 import {
+  WdsActionRow,
+  WdsDashboardLayout,
+  WdsPageHeader,
+  WdsResponsiveGrid,
   WdsSectionHeader,
+  WdsStack,
   WdsSurfaceCard,
 } from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
@@ -135,16 +140,16 @@ export function RecordAdmin() {
   return (
     <main className="page">
       <div className="container">
-        <p className="eyebrow">Operator Dashboard</p>
-        <h1 className="page-title">Record Admin</h1>
-        <p className="page-lead">
-          회고, 리뷰, 기술 노트처럼 긴 글로 남겨야 하는 챕터 기록을 검토하고 게시합니다.
-        </p>
+        <WdsPageHeader
+          description="회고, 리뷰, 기술 노트처럼 긴 글로 남겨야 하는 챕터 기록을 검토하고 게시합니다."
+          eyebrow="Operator Dashboard"
+          title="Record Admin"
+        />
 
-        <div className="dashboard-grid section-offset-lg">
+        <WdsDashboardLayout offset="lg">
           <WdsSurfaceCard as="section">
             <form className="form" onSubmit={submitRecord}>
-              <div className="grid grid-2">
+              <WdsResponsiveGrid columns={2}>
                 <WdsField label="기록 유형">
                   <WdsSelect
                     onValueChange={(kind) =>
@@ -170,9 +175,9 @@ export function RecordAdmin() {
                     value={draft.visibility}
                   />
                 </WdsField>
-              </div>
+              </WdsResponsiveGrid>
 
-              <div className="grid grid-2">
+              <WdsResponsiveGrid columns={2}>
                 <WdsField label="저장 상태">
                   <WdsSelect
                     onValueChange={(status) =>
@@ -197,7 +202,7 @@ export function RecordAdmin() {
                     value={draft.relatedActivityId}
                   />
                 </WdsField>
-              </div>
+              </WdsResponsiveGrid>
 
               <WdsField label="제목">
                 <WdsInput
@@ -241,17 +246,17 @@ export function RecordAdmin() {
                 />
               </WdsField>
 
-              <div className="toolbar">
+              <WdsActionRow>
                 <WdsButton tone="primary" type="submit">
                   기록 저장
                 </WdsButton>
-              </div>
+              </WdsActionRow>
               <p className="helper-text">{message}</p>
             </form>
           </WdsSurfaceCard>
 
-          <aside className="stack">
-            <section className="stack">
+          <WdsStack as="aside">
+            <WdsStack as="section">
               <WdsSectionHeader
                 description="멤버가 제출한 기록을 검토하고 게시합니다."
                 flush
@@ -265,7 +270,7 @@ export function RecordAdmin() {
                         <strong>{record.title}</strong>
                         <p className="helper-text">{record.summary}</p>
                       </div>
-                      <div className="toolbar">
+                      <WdsActionRow>
                         <WdsButton
                           onClick={() => publishRecord(record, false)}
                           size="small"
@@ -282,16 +287,16 @@ export function RecordAdmin() {
                         >
                           쇼케이스 후보
                         </WdsButton>
-                      </div>
+                      </WdsActionRow>
                     </div>
                   ))}
                 </div>
               ) : (
                 <WdsEmptyState>검토 대기 중인 기록이 없습니다.</WdsEmptyState>
               )}
-            </section>
+            </WdsStack>
 
-            <section className="stack">
+            <WdsStack as="section">
               <WdsSectionHeader
                 description="현재 멤버 홈에 노출되는 최신 기록입니다."
                 flush
@@ -300,9 +305,9 @@ export function RecordAdmin() {
               {publishedRecords.map((record) => (
                 <ChapterRecordCard key={record.id} record={record} />
               ))}
-            </section>
-          </aside>
-        </div>
+            </WdsStack>
+          </WdsStack>
+        </WdsDashboardLayout>
       </div>
     </main>
   );

@@ -20,7 +20,13 @@ import {
   type WdsSelectOption,
 } from '@/components/wds-form-controls';
 import {
+  WdsActionRow,
+  WdsBadgeGroup,
+  WdsDashboardLayout,
+  WdsPageHeader,
+  WdsResponsiveGrid,
   WdsSectionHeader,
+  WdsStack,
   WdsSurfaceCard,
 } from '@/components/wds-layout-primitives';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
@@ -151,24 +157,23 @@ export function NoticeAdmin() {
   return (
     <main className="page">
       <div className="container">
-        <p className="eyebrow">Operator Dashboard</p>
-        <h1 className="page-title">Notice Admin</h1>
-        <p className="page-lead">
-          운영진이 공지사항을 등록하고, pinned 상태와 공개 범위를 관리해 멤버 홈 상단에
-          노출합니다.
-        </p>
+        <WdsPageHeader
+          description="운영진이 공지사항을 등록하고, pinned 상태와 공개 범위를 관리해 멤버 홈 상단에 노출합니다."
+          eyebrow="Operator Dashboard"
+          title="Notice Admin"
+        />
 
-        <div className="dashboard-grid section-offset-lg">
+        <WdsDashboardLayout offset="lg">
           <WdsSurfaceCard as="section">
             <form className="form" onSubmit={saveNotice}>
-              <div className="badge-row">
+              <WdsBadgeGroup>
                 <WdsBadge tone="blue">
                   {editingNoticeId ? '공지 수정' : '공지 생성'}
                 </WdsBadge>
                 {editingNoticeId ? (
                   <WdsBadge>{editingNoticeId}</WdsBadge>
                 ) : null}
-              </div>
+              </WdsBadgeGroup>
 
               <WdsField label="제목">
                 <WdsInput
@@ -190,7 +195,7 @@ export function NoticeAdmin() {
                 />
               </WdsField>
 
-              <div className="grid grid-2">
+              <WdsResponsiveGrid columns={2}>
                 <WdsField label="공개 범위">
                   <WdsSelect
                     onValueChange={(visibility) =>
@@ -216,7 +221,7 @@ export function NoticeAdmin() {
                     value={draft.status}
                   />
                 </WdsField>
-              </div>
+              </WdsResponsiveGrid>
 
               <label className="checkbox-field">
                 <input
@@ -229,7 +234,7 @@ export function NoticeAdmin() {
                 <span>상단 고정</span>
               </label>
 
-              <div className="toolbar">
+              <WdsActionRow>
                 <WdsButton tone="primary" type="submit">
                   {editingNoticeId ? '공지 수정' : '공지 저장'}
                 </WdsButton>
@@ -242,12 +247,12 @@ export function NoticeAdmin() {
                     수정 취소
                   </WdsButton>
                 ) : null}
-              </div>
+              </WdsActionRow>
               <p className="helper-text">{message}</p>
             </form>
           </WdsSurfaceCard>
 
-          <aside className="stack">
+          <WdsStack as="aside">
             <WdsSectionHeader
               description="멤버 홈에 노출되는 순서대로 표시합니다."
               flush
@@ -256,7 +261,7 @@ export function NoticeAdmin() {
             <NoticeBoard
               notices={notices}
               renderActions={(notice) => (
-                <div className="toolbar">
+                <WdsActionRow>
                   <WdsButton
                     disabled={editingNoticeId === notice.id}
                     onClick={() => startEditing(notice)}
@@ -274,11 +279,11 @@ export function NoticeAdmin() {
                   >
                     아카이브
                   </WdsButton>
-                </div>
+                </WdsActionRow>
               )}
             />
-          </aside>
-        </div>
+          </WdsStack>
+        </WdsDashboardLayout>
       </div>
     </main>
   );

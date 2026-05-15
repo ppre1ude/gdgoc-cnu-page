@@ -12,6 +12,8 @@ import {
   type WdsBadgeTone,
 } from '@/components/wds-form-controls';
 import {
+  WdsOffset,
+  WdsResponsiveGrid,
   WdsSectionHeader,
   WdsSurfaceCard,
 } from '@/components/wds-layout-primitives';
@@ -93,7 +95,7 @@ export function DemoEnvironmentPanel() {
         }
       />
 
-      <div className="grid grid-3">
+      <WdsResponsiveGrid columns={3}>
         {readiness.items.map((item) => (
           <WdsSurfaceCard as="article" key={item.id}>
             <WdsBadge tone={getStatusBadgeTone(item.status)}>
@@ -103,29 +105,31 @@ export function DemoEnvironmentPanel() {
             <p>{item.description}</p>
           </WdsSurfaceCard>
         ))}
-      </div>
+      </WdsResponsiveGrid>
 
-      <WdsNotice className="section-offset-sm">
-        <strong>다음 준비물</strong>
-        {readiness.requiredActions.length > 0 ? (
-          <ul className="helper-list">
-            {readiness.requiredActions.map((action) => (
-              <li key={action}>{action}</li>
-            ))}
-            {environmentStatus.missingFirebaseKeys.length > 0 ? (
-              <li>
-                Firebase 누락 환경 변수:{' '}
-                {environmentStatus.missingFirebaseKeys.join(', ')}
-              </li>
-            ) : null}
-          </ul>
-        ) : (
-          <p className="helper-text helper-text-caution">
-            필수 환경 설정이 준비되어 있습니다. 현재 Gemini 모델은{' '}
-            {environmentStatus.geminiModel}입니다.
-          </p>
-        )}
-      </WdsNotice>
+      <WdsOffset offset="sm">
+        <WdsNotice>
+          <strong>다음 준비물</strong>
+          {readiness.requiredActions.length > 0 ? (
+            <ul className="helper-list">
+              {readiness.requiredActions.map((action) => (
+                <li key={action}>{action}</li>
+              ))}
+              {environmentStatus.missingFirebaseKeys.length > 0 ? (
+                <li>
+                  Firebase 누락 환경 변수:{' '}
+                  {environmentStatus.missingFirebaseKeys.join(', ')}
+                </li>
+              ) : null}
+            </ul>
+          ) : (
+            <p className="helper-text helper-text-caution">
+              필수 환경 설정이 준비되어 있습니다. 현재 Gemini 모델은{' '}
+              {environmentStatus.geminiModel}입니다.
+            </p>
+          )}
+        </WdsNotice>
+      </WdsOffset>
     </section>
   );
 }

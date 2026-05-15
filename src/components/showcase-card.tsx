@@ -4,7 +4,10 @@ import {
   type ShowcaseKind,
 } from '@/domain/showcase';
 import { WdsBadge } from '@/components/wds-form-controls';
-import { WdsSurfaceCard } from '@/components/wds-layout-primitives';
+import {
+  WdsBadgeGroup,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 
 const showcaseKindLabel: Record<ShowcaseKind, string> = {
   achievement: '성과',
@@ -13,13 +16,19 @@ const showcaseKindLabel: Record<ShowcaseKind, string> = {
   gallery: '갤러리',
 };
 
+const showcaseSurfaceSx = {
+  display: 'block',
+  overflow: 'hidden',
+  padding: 0,
+};
+
 export function ShowcaseCard({ showcase }: { showcase: Showcase }) {
   const safeHref = getSafeShowcaseHref(showcase.href);
   const content = (
     <>
       <ShowcaseMedia showcase={showcase} />
       <div className="showcase-card-body">
-        <div className="badge-row">
+        <WdsBadgeGroup>
           <WdsBadge tone="green">
             {showcaseKindLabel[showcase.kind]}
           </WdsBadge>
@@ -28,7 +37,7 @@ export function ShowcaseCard({ showcase }: { showcase: Showcase }) {
               {tag}
             </WdsBadge>
           ))}
-        </div>
+        </WdsBadgeGroup>
         <h3>{showcase.title}</h3>
         <p>{showcase.summary}</p>
       </div>
@@ -37,14 +46,23 @@ export function ShowcaseCard({ showcase }: { showcase: Showcase }) {
 
   if (safeHref) {
     return (
-      <WdsSurfaceCard as="a" className="showcase-card" href={safeHref}>
+      <WdsSurfaceCard
+        as="a"
+        className="showcase-card"
+        href={safeHref}
+        sx={showcaseSurfaceSx}
+      >
         {content}
       </WdsSurfaceCard>
     );
   }
 
   return (
-    <WdsSurfaceCard as="article" className="showcase-card">
+    <WdsSurfaceCard
+      as="article"
+      className="showcase-card"
+      sx={showcaseSurfaceSx}
+    >
       {content}
     </WdsSurfaceCard>
   );
