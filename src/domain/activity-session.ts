@@ -1,5 +1,9 @@
 import type { Activity, ActivityType, UserRole } from './activity.ts';
 import type { ActivityApplication } from './activity-application.ts';
+import {
+  getDefaultActivitySessionDraft,
+  shouldSyncDefaultActivitySession,
+} from './activity-schedule.ts';
 
 export type ActivitySession = {
   id: string;
@@ -91,23 +95,7 @@ export function createActivitySession(
 export function createDefaultActivitySession(
   activity: Activity,
 ): ActivitySession | null {
-  if (!activity.startsAt) {
-    return null;
-  }
-
-  const startsAt = new Date(activity.startsAt);
-  const endsAt = new Date(startsAt.getTime() + 2 * 60 * 60 * 1000);
-
-  return {
-    ...createActivitySession({
-      activityId: activity.id,
-      endsAt: endsAt.toISOString(),
-      now: activity.createdAt,
-      startsAt: activity.startsAt,
-      title: activity.title,
-    }),
-    updatedAt: activity.updatedAt,
-  };
+  return getDefaultActivitySessionDraft(activity);
 }
 
 export function createInMemoryActivitySessionStore(
@@ -168,23 +156,14 @@ export async function loadOrSyncDefaultActivitySession(
     sessions[0] ??
     null;
 
-  if (!savedSession || shouldSyncDefaultSession(savedSession, defaultSession)) {
+  if (
+    !savedSession ||
+    shouldSyncDefaultActivitySession(savedSession, defaultSession)
+  ) {
     return syncDefaultActivitySession(store, activity);
   }
 
   return savedSession;
-}
-
-function shouldSyncDefaultSession(
-  savedSession: ActivitySession,
-  defaultSession: ActivitySession,
-) {
-  return (
-    savedSession.title !== defaultSession.title ||
-    savedSession.startsAt !== defaultSession.startsAt ||
-    savedSession.endsAt !== defaultSession.endsAt ||
-    savedSession.updatedAt !== defaultSession.updatedAt
-  );
 }
 
 export function recordSessionAttendance(

@@ -5,6 +5,10 @@ import type {
   SessionAttendance,
 } from './activity-session.ts';
 import { summarizeSessionAttendance } from './activity-session.ts';
+import {
+  isActivityUpcoming,
+  isSessionRecentlyEnded,
+} from './activity-schedule.ts';
 import type { ChapterUser, RoleChangeLog } from './chapter-user.ts';
 
 export type OperatorAnalyticsInput = {
@@ -178,10 +182,8 @@ function getUpcomingActivityRates({
   applications: ActivityApplication[];
   now: string;
 }) {
-  const nowTime = Date.parse(now);
   const upcomingActivities = activities.filter(
-    (activity) =>
-      activity.startsAt !== undefined && Date.parse(activity.startsAt) > nowTime,
+    (activity) => isActivityUpcoming(activity, now),
   );
   const upcomingActivityIds = new Set(
     upcomingActivities.map((activity) => activity.id),
@@ -273,14 +275,12 @@ function getRecentEndedSessions({
   now: string;
   sessions: ActivitySession[];
 }) {
-  const nowTime = Date.parse(now);
-  const recentStartTime = nowTime - 30 * 24 * 60 * 60 * 1000;
-
-  return sessions.filter((session) => {
-    const sessionEndTime = Date.parse(session.endsAt);
-
-    return sessionEndTime <= nowTime && sessionEndTime >= recentStartTime;
-  });
+  return sessions.filter((session) =>
+    isSessionRecentlyEnded(session, {
+      now,
+      recentWindowDays: 30,
+    }),
+  );
 }
 
 function getActivityTypeAttendanceRates(
