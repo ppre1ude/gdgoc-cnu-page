@@ -48,7 +48,7 @@ textarea {
 
 .top-nav {
   align-items: center;
-  background: rgb(var(--semantic-static-white-rgb) / 0.92);
+  background: var(--surface);
   border-bottom: 1px solid var(--line);
   display: flex;
   gap: 20px;

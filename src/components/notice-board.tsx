@@ -13,10 +13,13 @@ const visibilityLabel: Record<Notice['visibility'], string> = {
   operator: 'Operator',
 };
 
+const compactNoticeBoardQuery = '@container (max-width: 720px)';
+
 const noticeBoardSx = {
   background: 'var(--surface)',
   border: '1px solid var(--line)',
   borderRadius: 'var(--radius)',
+  containerType: 'inline-size',
   overflow: 'hidden',
 };
 
@@ -29,6 +32,9 @@ const noticeHeaderSx = {
   '@media (max-width: 560px)': {
     display: 'none',
   },
+  [compactNoticeBoardQuery]: {
+    display: 'none',
+  },
 };
 
 const noticeTitleSx = {
@@ -37,7 +43,8 @@ const noticeTitleSx = {
   fontSize: '16px',
   letterSpacing: 0,
   lineHeight: 1.35,
-  overflowWrap: 'anywhere' as const,
+  overflowWrap: 'break-word' as const,
+  wordBreak: 'keep-all' as const,
 };
 
 const noticeBodySx = {
@@ -45,7 +52,8 @@ const noticeBodySx = {
   fontSize: '14px',
   lineHeight: 1.55,
   margin: '6px 0 0',
-  overflowWrap: 'anywhere' as const,
+  overflowWrap: 'break-word' as const,
+  wordBreak: 'keep-all' as const,
 };
 
 const noticeCellSx = {
@@ -55,6 +63,11 @@ const noticeCellSx = {
 const noticeStatusDateCellSx = {
   ...noticeCellSx,
   '@media (max-width: 560px)': {
+    alignItems: 'center',
+    display: 'flex',
+    justifyContent: 'space-between',
+  },
+  [compactNoticeBoardQuery]: {
     alignItems: 'center',
     display: 'flex',
     justifyContent: 'space-between',
@@ -89,6 +102,12 @@ function getNoticeRowSx({
       borderBottom: 0,
     },
     '@media (max-width: 560px)': {
+      ...(isHeader ? { display: 'none' } : {}),
+      alignItems: 'start',
+      gap: '10px',
+      gridTemplateColumns: '1fr',
+    },
+    [compactNoticeBoardQuery]: {
       ...(isHeader ? { display: 'none' } : {}),
       alignItems: 'start',
       gap: '10px',
