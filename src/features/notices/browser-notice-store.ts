@@ -1,27 +1,36 @@
 'use client';
 
-import type { UserRole } from '@/domain/activity';
 import type { Notice } from '@/domain/notice';
-import type { NoticeVisibility } from '@/domain/notice';
 import {
   type NoticeStore,
   createInMemoryNoticeStore,
 } from '@/domain/notice-service';
+import {
+  listProductionFirestoreDocuments,
+  resolveBrowserDataAdapterMode,
+} from '@/domain/data-adapter-split';
+import {
+  getReadablePublishedVisibilities,
+  shouldUseUnfilteredContentRead,
+} from '@/domain/role-access-policy';
 import { getFirestoreDb, hasFirebaseConfig } from '@/lib/firebase/client';
 import { seedNotices } from './seed-notices';
 
 const storageKey = 'gdgoc-cnu.notices';
 
 export function createBrowserNoticeStore(): NoticeStore {
-  if (typeof window === 'undefined') {
-    return createInMemoryNoticeStore(seedNotices);
-  }
+  const adapterMode = resolveBrowserDataAdapterMode({
+    firebaseConfigured: hasFirebaseConfig(),
+    hasBrowserRuntime: typeof window !== 'undefined',
+  });
 
-  if (hasFirebaseConfig()) {
+  if (adapterMode === 'production_firestore') {
     return createFirestoreNoticeStore();
   }
 
-  return createLocalStorageNoticeStore();
+  return adapterMode === 'server_demo_memory'
+    ? createInMemoryNoticeStore(seedNotices)
+    : createLocalStorageNoticeStore();
 }
 
 function createLocalStorageNoticeStore(): NoticeStore {
@@ -91,34 +100,20 @@ function createFirestoreNoticeStore(): NoticeStore {
       );
       const noticesCollection = collection(getFirestoreDb(), 'notices');
       const snapshot = await getDocs(
-        shouldListAllForRole(role)
+        shouldUseUnfilteredContentRead(role)
           ? noticesCollection
           : query(
               noticesCollection,
               where('status', '==', 'published'),
-              where('visibility', 'in', getVisibleNoticeVisibilities(role)),
+              where(
+                'visibility',
+                'in',
+                getReadablePublishedVisibilities(role ?? 'visitor'),
+              ),
             ),
       );
 
-      if (snapshot.empty) {
-        return seedNotices;
-      }
-
-      return snapshot.docs.map((item) => item.data() as Notice);
+      return listProductionFirestoreDocuments(snapshot, (data) => data as Notice);
     },
   };
-}
-
-function shouldListAllForRole(role: UserRole | undefined) {
-  return role === undefined || ['team_member', 'organizer', 'admin'].includes(role);
-}
-
-function getVisibleNoticeVisibilities(
-  role: UserRole | undefined,
-): NoticeVisibility[] {
-  if (role === 'member' || role === 'alumni') {
-    return ['public', 'member'];
-  }
-
-  return ['public'];
 }

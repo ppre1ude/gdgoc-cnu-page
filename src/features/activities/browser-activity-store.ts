@@ -4,22 +4,33 @@ import {
   type ActivityStore,
   createInMemoryActivityStore,
 } from '@/domain/activity-service';
-import type { Activity, ActivityVisibility, UserRole } from '@/domain/activity';
+import type { Activity } from '@/domain/activity';
+import {
+  listProductionFirestoreDocuments,
+  resolveBrowserDataAdapterMode,
+} from '@/domain/data-adapter-split';
+import {
+  getReadablePublishedVisibilities,
+  shouldUseUnfilteredContentRead,
+} from '@/domain/role-access-policy';
 import { getFirestoreDb, hasFirebaseConfig } from '@/lib/firebase/client';
 import { seedActivities } from './seed-activities';
 
 const storageKey = 'gdgoc-cnu.activities';
 
 export function createBrowserActivityStore(): ActivityStore {
-  if (typeof window === 'undefined') {
-    return createInMemoryActivityStore(seedActivities);
-  }
+  const adapterMode = resolveBrowserDataAdapterMode({
+    firebaseConfigured: hasFirebaseConfig(),
+    hasBrowserRuntime: typeof window !== 'undefined',
+  });
 
-  if (hasFirebaseConfig()) {
+  if (adapterMode === 'production_firestore') {
     return createFirestoreActivityStore();
   }
 
-  return createLocalStorageActivityStore();
+  return adapterMode === 'server_demo_memory'
+    ? createInMemoryActivityStore(seedActivities)
+    : createLocalStorageActivityStore();
 }
 
 function createLocalStorageActivityStore(): ActivityStore {
@@ -119,34 +130,23 @@ function createFirestoreActivityStore(): ActivityStore {
       );
       const activitiesCollection = collection(getFirestoreDb(), 'activities');
       const snapshot = await getDocs(
-        shouldListAllForRole(role)
+        shouldUseUnfilteredContentRead(role)
           ? activitiesCollection
           : query(
               activitiesCollection,
               where('status', '==', 'published'),
-              where('visibility', 'in', getVisibleActivityVisibilities(role)),
+              where(
+                'visibility',
+                'in',
+                getReadablePublishedVisibilities(role ?? 'visitor'),
+              ),
             ),
       );
 
-      if (snapshot.empty) {
-        return seedActivities;
-      }
-
-      return snapshot.docs.map((item) => item.data() as Activity);
+      return listProductionFirestoreDocuments(
+        snapshot,
+        (data) => data as Activity,
+      );
     },
   };
-}
-
-function shouldListAllForRole(role: UserRole | undefined) {
-  return role === undefined || ['team_member', 'organizer', 'admin'].includes(role);
-}
-
-function getVisibleActivityVisibilities(
-  role: UserRole | undefined,
-): ActivityVisibility[] {
-  if (role === 'member' || role === 'alumni') {
-    return ['public', 'member'];
-  }
-
-  return ['public'];
 }

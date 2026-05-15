@@ -1,11 +1,9 @@
-export type UserRole =
-  | 'visitor'
-  | 'guest'
-  | 'member'
-  | 'alumni'
-  | 'team_member'
-  | 'organizer'
-  | 'admin';
+import {
+  canReadPublishedResource,
+  type UserRole,
+} from './role-access-policy.ts';
+
+export type { UserRole } from './role-access-policy.ts';
 
 export type ActivityType = 'event' | 'study' | 'project' | 'challenge' | 'social';
 export type ActivityVisibility = 'public' | 'member' | 'operator';
@@ -40,37 +38,15 @@ export type Activity = {
   updatedAt: string;
 };
 
-const roleVisibilityRank: Record<UserRole, number> = {
-  visitor: 0,
-  guest: 0,
-  member: 1,
-  alumni: 1,
-  team_member: 2,
-  organizer: 2,
-  admin: 2,
-};
-
-const activityVisibilityRank: Record<ActivityVisibility, number> = {
-  public: 0,
-  member: 1,
-  operator: 2,
-};
-
 const externalRegistrationLabel = '바로가기';
 
 export function listVisibleActivities(
   activities: Activity[],
   role: UserRole,
 ): Activity[] {
-  const allowedRank = roleVisibilityRank[role];
-
-  return activities.filter((activity) => {
-    if (activity.status !== 'published') {
-      return false;
-    }
-
-    return activityVisibilityRank[activity.visibility] <= allowedRank;
-  });
+  return activities.filter((activity) =>
+    canReadPublishedResource(role, activity),
+  );
 }
 
 export function getActivityRegistrationPolicy(

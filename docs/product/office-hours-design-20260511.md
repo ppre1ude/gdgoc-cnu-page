@@ -7,15 +7,17 @@ Target demo date: 2026-05-16
 
 ## Summary
 
-GDGoC CNU's homepage should become a two-sided chapter activity hub.
+GDGoC CNU's homepage should become a three-surface chapter activity hub.
 
 For external visitors, it should work as a polished public showcase: the chapter's brand, achievements, seasonal onboarding, and visible proof of active community work.
 
-For logged-in members, it should work as a structured activity dashboard: members can quickly see current notices, upcoming events, active studies/projects, challenges, social activities, and recent outcomes without digging through Discord.
+For logged-in members, it should work as a structured member dashboard: members can check the calendar, important notices, active or recruiting studies/projects, challenges, social activities, their own applications, and recent outcomes without digging through Discord or using admin permissions.
 
 For organizers, it should become an operations console: team members can register activities, set visibility, route people to official event pages when needed, and inspect participation analytics.
 
-After grill-me refinement, the first demo is no longer a pure mock bridge. It should include a Firebase-backed thin slice: Google Auth, Firestore Activity CRUD, and Gemini-based writing assistance inside the organizer authoring flow. Mock/seed data still exists to make the Saturday demo feel deep, but the core "write activity -> save -> member home updates" loop should actually work.
+These are different products for different roles. The operator console creates and maintains the source of truth, but the presentation center for logged-in users should be the member dashboard.
+
+After grill-me refinement, the first demo is no longer a pure mock bridge. It should include a Firebase-backed thin slice: Google Auth, Firestore Activity CRUD, and Gemini-based writing assistance inside the organizer authoring flow. Mock/seed data still exists to make the Saturday demo feel deep, but the core "write activity -> save -> member dashboard updates" loop should actually work.
 
 ## Problem Statement
 
@@ -27,7 +29,7 @@ The homepage should not replace Discord. It should become the canonical, structu
 
 - The public site can feel like a creative portfolio for the chapter, not a generic club page.
 - Seasonal onboarding can change for recruiting, Build with AI, seminars, demo days, and other campaigns.
-- Members get a single place to understand "what is happening now."
+- Members get a single place to understand "what is happening now," what is scheduled next, and what they personally need to act on.
 - Organizers get participation analytics that help improve community operations.
 - Gemini helps operators turn rough activity notes into structured summaries and audience-specific copy.
 - Discord becomes an announcement channel fed by the website, not the source of truth.
@@ -36,8 +38,8 @@ The homepage should not replace Discord. It should become the canonical, structu
 
 1. The homepage is not a Discord replacement. It is the official structured hub for chapter activities.
 2. The external page should lead with brand and achievements, while seasonal campaigns are swappable presentation layers.
-3. The logged-in member home should make current chapter activity visible at a glance.
-4. The admin system should become the source of truth for notices, activities, events, and publishing.
+3. The logged-in member dashboard should make schedules, notices, open studies/projects, and personal application state visible at a glance.
+4. The admin system should become the source of truth for notices, activities, events, and publishing, but it should not define the primary member UX.
 5. Discord should receive announcements from the website through webhook/bot integration.
 6. The 2026-05-16 presentation should include a real Firebase-backed product loop, while avoiding full production infrastructure.
 7. Long-term architecture should be Next.js plus Firebase/Google Cloud-first, with Docker/Cloud Run maturity deferred until after the prototype.
@@ -57,7 +59,7 @@ Logged-in user who has not yet been approved as a chapter member.
 
 ### Member
 
-Approved active chapter member. Can view members-only content, apply to activities, participate in challenges, and submit selected long-form records such as reviews or retrospectives.
+Approved active chapter member. Can view members-only content, check schedules and important notices, browse active studies/projects, apply to activities, participate in challenges, and submit selected long-form records such as reviews or retrospectives.
 
 ### Alumni
 
@@ -96,17 +98,18 @@ System-level operator. Can manage roles, system settings, dangerous edits, integ
 - Allow seasonal visual themes and motion assets.
 - Keep Build with AI as a campaign/season, not the permanent product identity.
 
-### Member Home
+### Member Dashboard
 
-The first logged-in screen must separate activity categories rather than merge everything into one feed:
+The first logged-in screen must be useful to a normal approved member before it exposes authoring or operator concerns. It should separate activity categories rather than merge everything into one feed:
 
-1. Pinned notices.
-2. Upcoming activities.
+1. Calendar / upcoming schedule.
+2. Pinned and recent notices.
 3. My applications / my next sessions.
-4. Active studies and projects.
+4. Active or recruiting studies and projects.
 5. Challenges and social activities.
 6. Showcase/gallery preview.
 7. Participation snapshot.
+8. Member proposal and record authoring below the read-first dashboard content.
 
 ### Content And Activity Management
 
@@ -118,12 +121,15 @@ The first logged-in screen must separate activity categories rather than merge e
 - Members can propose or open studies.
 - Members can propose projects, with organizer/team review before official recruiting.
 - Members can write long-form records such as event reviews, study retrospectives, project retrospectives, and technical posts.
-- Free-form discussion board is out of scope for first launch. Discord remains the place for live conversation.
+- A live free-form chat replacement is out of scope for first launch. Discord remains the place for live conversation.
+- Board-like member surfaces are in scope: notice board, study/project board, record list, and activity detail flows. PoolC `/board` is a reference for browsing rhythm, category navigation, detail pages, and permission-aware writing rather than a requirement to clone every free-board feature.
 - Good long-form posts can be promoted into showcase/gallery surfaces.
 
 ### Activity And Session Model
 
 Reference projects:
+
+- [PoolC `/board`](https://poolc.org/board) is the closest reference for member-facing board rhythm: category navigation, list scanning, detail reading, and permission-aware writing. For GDGoC CNU, that rhythm should inform notices, studies/projects, records, and activity detail surfaces before a general free-form board is added.
 
 - [Palkia](https://github.com/PoolC/Palkia) backend separates `Activity` and `Session`.
 - [Dialga](https://github.com/PoolC/Dialga) frontend exposes activity list, activity detail, activity form, and session attendance flows.
@@ -218,7 +224,7 @@ Flow:
 1. Operator writes rough title, body notes, type, visibility, and registration information.
 2. Operator clicks an AI assistance action.
 3. Gemini returns structured suggestions in a side panel:
-   - Card summary for member home.
+   - Card summary for member dashboard.
    - Member-facing copy.
    - Public-facing copy.
    - Suggested tags.
@@ -270,7 +276,7 @@ Build a working prototype that has real product flow and shallow but structured 
 The goal is to show:
 
 1. A public home with brand, achievements, and seasonal onboarding.
-2. A member home with structured activity visibility.
+2. A member dashboard with structured activity visibility.
 3. An organizer/admin screen for publishing content and seeing participation analytics.
 
 This is not a static throwaway mockup. It should be implemented as a bridge:
@@ -447,7 +453,7 @@ Saturday demo must prioritize `users` and `activities`. `notices`, `showcases`, 
 - Firebase Auth.
 - Firestore Activity CRUD.
 - Gemini Activity writing assistance.
-- Activity appears on member home after creation.
+- Activity appears on member dashboard after creation.
 - Role gate for admin/member surfaces.
 - Seed/mock analytics and showcases to make the demo narrative credible.
 - Optional: activity application/cancel flow.
@@ -480,13 +486,15 @@ Saturday demo must prioritize `users` and `activities`. `notices`, `showcases`, 
 - Featured activities.
 - Recruiting or campaign CTA slot.
 
-### Screen 2: Member Home
+### Screen 2: Member Dashboard
 
-- Pinned notices.
-- Upcoming events.
-- Active studies/projects.
+- Calendar / upcoming schedule.
+- Pinned and recent notices.
+- My applications and next commitments.
+- Active or recruiting studies/projects.
 - Challenges and social activities.
 - Gallery/showcase archive preview.
+- Member proposal and record authoring below the dashboard summary.
 
 ### Screen 3: Organizer/Admin
 
@@ -515,8 +523,8 @@ Saturday demo must prioritize `users` and `activities`. `notices`, `showcases`, 
 ### For The Saturday Demo
 
 - A viewer can understand the public brand and community momentum in under 30 seconds.
-- A member can see current chapter activity without reading Discord.
-- An organizer can create an Activity through Firebase-backed CRUD and see it reflected in the member home.
+- A member can see the calendar, important notices, open studies/projects, and their own application state without reading Discord or using admin permissions.
+- An organizer can create an Activity through Firebase-backed CRUD and see it reflected in the member dashboard.
 - An organizer can use Gemini suggestions while drafting an Activity.
 - Admin/member route access visibly respects role gates.
 - The prototype feels like a real product direction, not a static slide.
@@ -524,7 +532,7 @@ Saturday demo must prioritize `users` and `activities`. `notices`, `showcases`, 
 ### For The First Real Release
 
 - Operators can publish notices/events/activities from an admin interface.
-- Members can see structured activity sections after login.
+- Members can see a structured dashboard after login: calendar, notices, studies/projects, applications, and next commitments.
 - Visibility rules work for public and members-only content.
 - Participation can be recorded and analyzed.
 - Discord receives announcements from website publishing.
@@ -538,7 +546,7 @@ Before implementation, create the Saturday demo plan as a Firebase-backed thin v
 3. Implement real Activity CRUD in Firestore.
 4. Implement role-gated admin/member route access.
 5. Implement Gemini suggestion panel inside Activity authoring.
-6. Build member home sections in the approved priority order.
+6. Build member dashboard sections in the approved priority order.
 7. Build public home with brand, achievements, seasonal hero, and showcase preview.
 8. Add seed/mock data for analytics and showcases where real data is too shallow.
 9. Defer Docker, Cloud Run, production security hardening, real Discord bot execution, and external imports until after the presentation prototype.

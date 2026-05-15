@@ -3,6 +3,7 @@ import type {
   ActivityVisibility,
   UserRole,
 } from './activity.ts';
+import { canReadPublishedResource } from './role-access-policy.ts';
 
 export type ShowcaseKind =
   | 'achievement'
@@ -44,35 +45,13 @@ const showcaseStatuses = new Set<ActivityStatus>([
   'archived',
 ]);
 
-const roleVisibilityRank: Record<UserRole, number> = {
-  visitor: 0,
-  guest: 0,
-  member: 1,
-  alumni: 1,
-  team_member: 2,
-  organizer: 2,
-  admin: 2,
-};
-
-const showcaseVisibilityRank: Record<ActivityVisibility, number> = {
-  public: 0,
-  member: 1,
-  operator: 2,
-};
-
 export function listVisibleShowcases(
   showcases: Showcase[],
   role: UserRole,
 ): Showcase[] {
-  const allowedRank = roleVisibilityRank[role];
-
-  return showcases.filter((showcase) => {
-    if (showcase.status !== 'published') {
-      return false;
-    }
-
-    return showcaseVisibilityRank[showcase.visibility] <= allowedRank;
-  });
+  return showcases.filter((showcase) =>
+    canReadPublishedResource(role, showcase),
+  );
 }
 
 export function getSafeShowcaseHref(href: unknown): string | undefined {

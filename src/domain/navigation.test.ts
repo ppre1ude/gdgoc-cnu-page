@@ -7,6 +7,23 @@ import {
 } from './navigation.ts';
 
 describe('primary navigation', () => {
+  it('exposes the member dashboard hub and first-class member category routes', () => {
+    assert.deepEqual(
+      getPrimaryNavigationItems('member').map((item) => ({
+        href: item.href,
+        label: item.label,
+      })),
+      [
+        { href: '/member', label: 'Dashboard' },
+        { href: '/calendar', label: 'Calendar' },
+        { href: '/notices', label: 'Notices' },
+        { href: '/studies', label: 'Studies' },
+        { href: '/projects', label: 'Projects' },
+        { href: '/records', label: 'Records' },
+      ],
+    );
+  });
+
   it('does not expose individual admin tools in the top navigation', () => {
     const hrefs = getPrimaryNavigationItems('team_member').map((item) => item.href);
 
@@ -59,11 +76,19 @@ describe('primary navigation', () => {
     }
   });
 
-  it('returns no primary navigation item below a primary route', () => {
+  it('keeps admin grouped after member category routes for operator roles', () => {
     for (const audience of ['team_member', 'organizer', 'admin'] as const) {
       assert.deepEqual(
         getPrimaryNavigationItems(audience).map((item) => item.href),
-        ['/', '/member', '/admin'],
+        [
+          '/member',
+          '/calendar',
+          '/notices',
+          '/studies',
+          '/projects',
+          '/records',
+          '/admin',
+        ],
       );
     }
   });

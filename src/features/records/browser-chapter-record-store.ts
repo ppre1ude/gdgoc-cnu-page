@@ -1,26 +1,36 @@
 'use client';
 
-import type { ActivityVisibility, UserRole } from '@/domain/activity';
 import type { ChapterRecord } from '@/domain/chapter-record';
 import {
   type ChapterRecordStore,
   createInMemoryChapterRecordStore,
 } from '@/domain/chapter-record-service';
+import {
+  listProductionFirestoreDocuments,
+  resolveBrowserDataAdapterMode,
+} from '@/domain/data-adapter-split';
+import {
+  getReadablePublishedVisibilities,
+  shouldUseUnfilteredContentRead,
+} from '@/domain/role-access-policy';
 import { getFirestoreDb, hasFirebaseConfig } from '@/lib/firebase/client';
 import { seedChapterRecords } from './seed-chapter-records';
 
 const storageKey = 'gdgoc-cnu.chapterRecords';
 
 export function createBrowserChapterRecordStore(): ChapterRecordStore {
-  if (typeof window === 'undefined') {
-    return createInMemoryChapterRecordStore(seedChapterRecords);
-  }
+  const adapterMode = resolveBrowserDataAdapterMode({
+    firebaseConfigured: hasFirebaseConfig(),
+    hasBrowserRuntime: typeof window !== 'undefined',
+  });
 
-  if (hasFirebaseConfig()) {
+  if (adapterMode === 'production_firestore') {
     return createFirestoreChapterRecordStore();
   }
 
-  return createLocalStorageChapterRecordStore();
+  return adapterMode === 'server_demo_memory'
+    ? createInMemoryChapterRecordStore(seedChapterRecords)
+    : createLocalStorageChapterRecordStore();
 }
 
 function createLocalStorageChapterRecordStore(): ChapterRecordStore {
@@ -122,34 +132,23 @@ function createFirestoreChapterRecordStore(): ChapterRecordStore {
       );
       const recordsCollection = collection(getFirestoreDb(), 'chapterRecords');
       const snapshot = await getDocs(
-        shouldListAllForRole(role)
+        shouldUseUnfilteredContentRead(role)
           ? recordsCollection
           : query(
               recordsCollection,
               where('status', '==', 'published'),
-              where('visibility', 'in', getVisibleRecordVisibilities(role)),
+              where(
+                'visibility',
+                'in',
+                getReadablePublishedVisibilities(role ?? 'visitor'),
+              ),
             ),
       );
 
-      if (snapshot.empty) {
-        return seedChapterRecords;
-      }
-
-      return snapshot.docs.map((item) => item.data() as ChapterRecord);
+      return listProductionFirestoreDocuments(
+        snapshot,
+        (data) => data as ChapterRecord,
+      );
     },
   };
-}
-
-function shouldListAllForRole(role: UserRole | undefined) {
-  return role === undefined || ['team_member', 'organizer', 'admin'].includes(role);
-}
-
-function getVisibleRecordVisibilities(
-  role: UserRole | undefined,
-): ActivityVisibility[] {
-  if (role === 'member' || role === 'alumni') {
-    return ['public', 'member'];
-  }
-
-  return ['public'];
 }

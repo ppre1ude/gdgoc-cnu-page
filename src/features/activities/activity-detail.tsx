@@ -14,19 +14,13 @@ import {
   getApplicationStateByActivity,
 } from '@/domain/activity-participation-service';
 import { getVisibleActivityById } from '@/domain/activity-service';
-import {
-  demoRoleOptions,
-  useAuthSession,
-} from '@/features/auth/auth-session-provider';
+import { useAuthSession } from '@/features/auth/auth-session-provider';
 import {
   WdsBadge,
   WdsButton,
   WdsEmptyState,
-  WdsField,
   WdsLinkButton,
-  WdsSelect,
   WdsTextLinkButton,
-  type WdsSelectOption,
 } from '@/components/wds-form-controls';
 import {
   WdsActionRow,
@@ -58,20 +52,11 @@ const applicationStateLabel: Record<ActivityApplicationState, string> = {
   approved: '승인됨',
 };
 
-const demoRoleSelectOptions: WdsSelectOption<UserRole>[] = demoRoleOptions.map(
-  (role) => ({
-    label: role,
-    value: role,
-  }),
-);
-
 export function ActivityDetail({ activityId }: { activityId: string }) {
   const store = useMemo(() => createBrowserActivityStore(), []);
   const applicationStore = useMemo(() => createBrowserActivityApplicationStore(), []);
   const {
-    isFirebaseConfigured,
     role,
-    setDemoRole,
     status,
     userId,
   } = useAuthSession();
@@ -116,15 +101,6 @@ export function ActivityDetail({ activityId }: { activityId: string }) {
     }
 
     setMessage(access.message);
-  }
-
-  async function changeDemoRole(nextRole: UserRole) {
-    if (isFirebaseConfigured) {
-      return;
-    }
-
-    setDemoRole(nextRole);
-    await refreshDetail(nextRole, userId);
   }
 
   async function handleApply() {
@@ -206,14 +182,6 @@ export function ActivityDetail({ activityId }: { activityId: string }) {
               <h2>{activity ? activity.title : '활동 상세'}</h2>
               <p>{message}</p>
             </div>
-            <WdsField className="demo-role-field" label="현재 역할">
-              <WdsSelect
-                disabled={isFirebaseConfigured}
-                onValueChange={(nextRole) => void changeDemoRole(nextRole)}
-                options={demoRoleSelectOptions}
-                value={role}
-              />
-            </WdsField>
           </div>
         </section>
 

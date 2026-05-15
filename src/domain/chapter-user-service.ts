@@ -1,5 +1,10 @@
 import type { UserRole } from './activity.ts';
 import type { ChapterUser, RoleChangeLog } from './chapter-user.ts';
+import {
+  isAdminRole,
+  isAssignableUserRole,
+  isOperatorRole,
+} from './role-access-policy.ts';
 
 export type ChapterUserStore = {
   saveUser(user: ChapterUser): Promise<ChapterUser>;
@@ -46,12 +51,6 @@ export type EnsureGoogleGuestAccountInput = {
   email: string;
   now: string;
 };
-
-const memberApprovalRoles = new Set<UserRole>([
-  'team_member',
-  'organizer',
-  'admin',
-]);
 
 export function createInMemoryChapterUserStore(
   initialUsers: ChapterUser[] = [],
@@ -138,7 +137,7 @@ export async function approveGuestToMember(
   store: ChapterUserStore,
   input: ApproveGuestToMemberInput,
 ): Promise<ChapterUser> {
-  if (!memberApprovalRoles.has(input.actorRole)) {
+  if (!isOperatorRole(input.actorRole)) {
     throw new Error('Only operators can approve guests into members.');
   }
 
@@ -176,7 +175,7 @@ export async function changeUserRole(
   store: ChapterUserStore,
   input: ChangeUserRoleInput,
 ): Promise<ChapterUser> {
-  if (input.actorRole !== 'admin') {
+  if (!isAdminRole(input.actorRole)) {
     throw new Error('Only admins can change user roles.');
   }
 
@@ -186,7 +185,7 @@ export async function changeUserRole(
     throw new Error('Chapter user does not exist.');
   }
 
-  if (input.nextRole === 'visitor') {
+  if (!isAssignableUserRole(input.nextRole)) {
     throw new Error('Persisted users cannot be changed to visitor.');
   }
 

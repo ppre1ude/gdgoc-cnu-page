@@ -91,21 +91,12 @@ service cloud.firestore {
         && request.resource.data.id == resource.data.id
         && request.resource.data.role == resource.data.role
         && request.resource.data.createdAt == resource.data.createdAt;
-      allow update: if isOperator()
-        && resource.data.role == 'guest'
-        && request.resource.data.role == 'member'
-        && changedOnly(['role', 'updatedAt']);
-      allow update: if isAdmin()
-        && request.resource.data.role != 'visitor'
-        && changedOnly(['role', 'updatedAt']);
       allow delete: if false;
     }
 
     match /roleChangeLogs/{logId} {
       allow read: if isOperator();
-      allow create: if isOperator()
-        && request.resource.data.actorId == request.auth.uid
-        && request.resource.data.actorRole == currentRole();
+      allow create: if false;
       allow update, delete: if false;
     }
 

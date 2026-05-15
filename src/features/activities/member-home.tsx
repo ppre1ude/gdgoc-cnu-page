@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import {
   type FormEvent,
   type ReactNode,
@@ -11,32 +12,35 @@ import {
 import type { Activity, UserRole } from '@/domain/activity';
 import {
   type ActivityProposalType,
-  listHomeActivities,
   proposeMemberActivity,
 } from '@/domain/activity-service';
-import { getLoginHref, getPublicJoinHref } from '@/domain/auth-flow';
-import { listVisibleActivities } from '@/domain/activity';
+import { getPublicOnboardingHref } from '@/domain/auth-flow';
 import type { ActivityApplicationState } from '@/domain/activity-application';
 import { submitGuestProfile } from '@/domain/chapter-user-service';
 import type { ChapterRecord, ChapterRecordKind } from '@/domain/chapter-record';
+import type { Notice } from '@/domain/notice';
 import {
-  listHomeChapterRecords,
   submitChapterRecord,
 } from '@/domain/chapter-record-service';
-import { describeMemberHomeAccess } from '@/domain/member-access';
-import type { Notice } from '@/domain/notice';
-import { listVisibleNotices } from '@/domain/notice';
-import { listHomeNotices } from '@/domain/notice-service';
 import type { Showcase } from '@/domain/showcase';
-import { listVisibleShowcases } from '@/domain/showcase';
-import { listHomeShowcases } from '@/domain/showcase-service';
 import {
   applyForActivity,
   cancelApplicationForActivity,
-  getApplicationStateByActivity,
-  listMemberApplicationSummaries,
   type MemberApplicationSummary,
 } from '@/domain/activity-participation-service';
+import {
+  buildMemberHomeSnapshot,
+  isMemberHomeSnapshotCurrent,
+  type MemberHomeSnapshot,
+} from '@/domain/member-home-snapshot';
+import {
+  getMemberDashboardSectionHref,
+  getVisibleMemberDashboardSections,
+  type MemberDashboardSection,
+  type MemberDashboardSectionId,
+} from '@/domain/member-dashboard-sections';
+import { describeMemberHomeAccess } from '@/domain/member-access';
+import { koreanCopy } from '@/domain/korean-copy';
 import { formatKoreanDateTime } from '@/lib/format-korean-date-time';
 import { ActivityCard } from '@/components/activity-card';
 import { ChapterRecordCard } from '@/components/chapter-record-card';
@@ -70,20 +74,13 @@ import {
   type GuestProfileFormState,
   toGuestProfileForm,
 } from '@/features/users/guest-profile-form';
-import {
-  demoRoleOptions,
-  useAuthSession,
-} from '@/features/auth/auth-session-provider';
+import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserActivityApplicationStore } from './browser-activity-application-store';
 import { createBrowserActivityStore } from './browser-activity-store';
 import { createBrowserNoticeStore } from '../notices/browser-notice-store';
 import { createBrowserShowcaseStore } from '../showcases/browser-showcase-store';
 import { createBrowserChapterUserStore } from '../users/browser-chapter-user-store';
 import { createBrowserChapterRecordStore } from '../records/browser-chapter-record-store';
-import { seedActivities } from './seed-activities';
-import { seedNotices } from '../notices/seed-notices';
-import { seedChapterRecords } from '../records/seed-chapter-records';
-import { seedShowcases } from '../showcases/seed-showcases';
 
 type MemberProposalFormState = {
   title: string;
@@ -99,6 +96,12 @@ type MemberRecordFormState = {
   kind: ChapterRecordKind;
   tags: string;
 };
+
+type MemberHomeProps = {
+  initialSectionId?: MemberDashboardSectionId;
+};
+
+type MemberDashboardCounts = Partial<Record<MemberDashboardSectionId, string>>;
 
 const memberFormSurfaceSx = {
   display: 'grid',
@@ -132,12 +135,6 @@ const defaultMemberRecord: MemberRecordFormState = {
   tags: '',
 };
 
-const demoRoleSelectOptions: readonly WdsSelectOption<UserRole>[] =
-  demoRoleOptions.map((role) => ({
-    label: role,
-    value: role,
-  }));
-
 const activityProposalTypeOptions = [
   { label: 'Study', value: 'study' },
   { label: 'Project', value: 'project' },
@@ -149,11 +146,11 @@ const chapterRecordKindOptions = [
   { label: 'Technical Note', value: 'technical_note' },
 ] satisfies readonly WdsSelectOption<ChapterRecordKind>[];
 
-export function MemberHome() {
+const memberHomeCopy = koreanCopy.memberHome;
+
+export function MemberHome({ initialSectionId = 'overview' }: MemberHomeProps) {
   const {
-    isFirebaseConfigured,
     role,
-    setDemoRole,
     status: authStatus,
     userId,
   } = useAuthSession();
@@ -163,35 +160,23 @@ export function MemberHome() {
   const showcaseStore = useMemo(() => createBrowserShowcaseStore(), []);
   const userStore = useMemo(() => createBrowserChapterUserStore(), []);
   const recordStore = useMemo(() => createBrowserChapterRecordStore(), []);
-  const [activities, setActivities] = useState<Activity[]>(
-    listVisibleActivities(seedActivities, 'visitor'),
-  );
-  const [notices, setNotices] = useState<Notice[]>(
-    listVisibleNotices(seedNotices, 'visitor'),
-  );
-  const [showcases, setShowcases] = useState<Showcase[]>(
-    listVisibleShowcases(seedShowcases, 'visitor'),
-  );
-  const [records, setRecords] = useState<ChapterRecord[]>(seedChapterRecords);
-  const [applicationStates, setApplicationStates] = useState<
-    Record<string, ActivityApplicationState>
-  >({});
+  const [snapshot, setSnapshot] = useState<MemberHomeSnapshot | null>(null);
   const [guestProfile, setGuestProfile] =
     useState<GuestProfileFormState>(defaultGuestProfile);
-  const [guestProfileMessage, setGuestProfileMessage] = useState(
-    '승인에 필요한 정보를 제출하면 운영진 승인 큐에서 바로 확인할 수 있습니다.',
+  const [guestProfileMessage, setGuestProfileMessage] = useState<string>(
+    memberHomeCopy.guestProfile.initialMessage,
   );
 
   const [proposal, setProposal] = useState<MemberProposalFormState>(
     defaultMemberProposal,
   );
-  const [proposalMessage, setProposalMessage] = useState(
-    '스터디는 바로 멤버 홈에 공개되고, 프로젝트는 운영진 검토 후 공개됩니다.',
+  const [proposalMessage, setProposalMessage] = useState<string>(
+    memberHomeCopy.proposal.initialMessage,
   );
   const [recordDraft, setRecordDraft] =
     useState<MemberRecordFormState>(defaultMemberRecord);
-  const [recordMessage, setRecordMessage] = useState(
-    '회고와 기술 노트는 운영진 검토 후 멤버 홈에 게시됩니다.',
+  const [recordMessage, setRecordMessage] = useState<string>(
+    memberHomeCopy.recordForm.initialMessage,
   );
 
   useEffect(() => {
@@ -206,33 +191,17 @@ export function MemberHome() {
   }, [authStatus, role, userId]);
 
   async function refreshMemberHome(currentRole: UserRole, currentUserId: string) {
-    const access = describeMemberHomeAccess(currentRole);
-    const contentRole = getMemberHomeContentRole(currentRole);
-    const [
-      nextActivities,
-      nextApplicationStates,
-      nextNotices,
-      nextShowcases,
-      nextRecords,
-    ] = await Promise.all([
-      listHomeActivities(store, contentRole),
-      access.canApplyToActivities
-        ? getApplicationStateByActivity(applicationStore, currentUserId)
-        : Promise.resolve({}),
-      listHomeNotices(noticeStore, contentRole),
-      listHomeShowcases(showcaseStore, contentRole),
-      listHomeChapterRecords(recordStore, contentRole),
-    ]);
-
-    setActivities(nextActivities);
-    setApplicationStates(nextApplicationStates);
-    setNotices(nextNotices);
-    setShowcases(nextShowcases);
-    setRecords(nextRecords);
-  }
-
-  function changeDemoRole(nextRole: UserRole) {
-    setDemoRole(nextRole);
+    setSnapshot(
+      await buildMemberHomeSnapshot({
+        activityStore: store,
+        applicationStore,
+        noticeStore,
+        recordStore,
+        role: currentRole,
+        showcaseStore,
+        userId: currentUserId,
+      }),
+    );
   }
 
   async function loadGuestProfile(currentUserId: string) {
@@ -247,9 +216,7 @@ export function MemberHome() {
   }
 
   async function handleApply(activity: Activity) {
-    const confirmed = window.confirm(
-      '이 활동에 참여 신청하시겠습니까? 운영진 승인 후 참여가 확정됩니다.',
-    );
+    const confirmed = window.confirm(memberHomeCopy.confirmations.apply);
 
     if (!confirmed) {
       return;
@@ -264,9 +231,7 @@ export function MemberHome() {
   }
 
   async function handleCancel(activity: Activity) {
-    const confirmed = window.confirm(
-      '정말 취소하시겠습니까? 승인된 신청을 취소하면 다시 신청 시 운영진 승인을 다시 받아야 합니다.',
-    );
+    const confirmed = window.confirm(memberHomeCopy.confirmations.cancel);
 
     if (!confirmed) {
       return;
@@ -298,9 +263,7 @@ export function MemberHome() {
       },
     });
 
-    setGuestProfileMessage(
-      '승인 요청 정보가 저장되었습니다. 운영진 승인 화면에서 바로 확인할 수 있습니다.',
-    );
+    setGuestProfileMessage(memberHomeCopy.guestProfile.savedMessage);
     await loadGuestProfile(userId);
   }
 
@@ -322,8 +285,8 @@ export function MemberHome() {
     setProposal(defaultMemberProposal);
     setProposalMessage(
       created.proposalStatus === 'pending_review'
-        ? '프로젝트 제안이 운영진 검토 대기열에 저장되었습니다.'
-        : '스터디 제안이 저장되어 멤버 홈에 바로 반영되었습니다.',
+        ? memberHomeCopy.proposal.projectSavedMessage
+        : memberHomeCopy.proposal.studySavedMessage,
     );
     await refreshMemberHome(role, userId);
   }
@@ -345,174 +308,352 @@ export function MemberHome() {
     });
 
     setRecordDraft(defaultMemberRecord);
-    setRecordMessage('긴 글 기록이 운영진 검토 대기열에 저장되었습니다.');
+    setRecordMessage(memberHomeCopy.recordForm.savedMessage);
     await refreshMemberHome(role, userId);
   }
 
-  const upcoming = activities.filter((activity) => activity.startsAt);
-  const studiesAndProjects = activities.filter((activity) =>
-    ['study', 'project'].includes(activity.type),
+  const currentSnapshot = isMemberHomeSnapshotCurrent(snapshot, { role, userId })
+    ? snapshot
+    : null;
+  const applicationStates = currentSnapshot?.applicationStates ?? {};
+  const notices = currentSnapshot?.notices ?? [];
+  const showcases = currentSnapshot?.showcases ?? [];
+  const records = currentSnapshot?.records ?? [];
+  const upcoming = currentSnapshot?.sections.upcomingActivities ?? [];
+  const studiesAndProjects = currentSnapshot?.sections.studiesAndProjects ?? [];
+  const challenges = currentSnapshot?.sections.challengesAndSocialActivities ?? [];
+  const memberApplicationSummaries =
+    currentSnapshot?.memberApplicationSummaries ?? [];
+  const dashboardCalendarActivities =
+    currentSnapshot?.dashboard.calendarActivities ?? upcoming;
+  const dashboardImportantNotices =
+    currentSnapshot?.dashboard.importantNotices ?? notices;
+  const dashboardMyNextCommitments =
+    currentSnapshot?.dashboard.myNextCommitments ?? memberApplicationSummaries;
+  const dashboardOpenStudyProjects =
+    currentSnapshot?.dashboard.openStudyProjects ?? studiesAndProjects;
+  const dashboardOpenStudies = dashboardOpenStudyProjects.filter(
+    (activity) => activity.type === 'study',
   );
-  const challenges = activities.filter((activity) =>
-    ['challenge', 'social'].includes(activity.type),
-  );
-  const activeApplicationCount = Object.values(applicationStates).filter(
-    (state) => state === 'applied' || state === 'approved',
-  ).length;
-  const memberApplicationSummaries = listMemberApplicationSummaries(
-    activities,
-    applicationStates,
+  const dashboardOpenProjects = dashboardOpenStudyProjects.filter(
+    (activity) => activity.type === 'project',
   );
   const access = describeMemberHomeAccess(role);
-  const canApplyToActivities = Boolean(access?.canApplyToActivities);
-  const canProposeActivities = canApplyToActivities;
+  const canApplyToActivities =
+    currentSnapshot?.canApplyToActivities ?? access.canApplyToActivities;
+  const canProposeActivities =
+    currentSnapshot?.canProposeActivities ?? canApplyToActivities;
+  const visibleSections = getVisibleMemberDashboardSections({
+    canApplyToActivities,
+    canProposeActivities,
+  });
+  const selectedSection =
+    visibleSections.find((section) => section.id === initialSectionId) ??
+    visibleSections[0];
+  const dashboardCounts: MemberDashboardCounts = {
+    applications: `${dashboardMyNextCommitments.length}개`,
+    calendar: `${dashboardCalendarActivities.length}개`,
+    community: `${challenges.length}개`,
+    notices: `${dashboardImportantNotices.length}개`,
+    projects: `${dashboardOpenProjects.length}개`,
+    records: `${records.length}개`,
+    showcase: `${showcases.length}개`,
+    studies: `${dashboardOpenStudies.length}개`,
+  };
 
   return (
     <main className="page">
-      <div className="container">
+      <div className="container member-dashboard-container">
         <WdsPageHeader
-          description="공지, 이벤트, 스터디, 프로젝트를 한 화면에서 확인하는 멤버용 홈입니다. 현재 데모는 activity 데이터를 Firebase 또는 localStorage bridge에서 읽습니다."
-          eyebrow="Member Home"
-          title="지금 우리 챕터에서 진행 중인 활동"
+          description={memberHomeCopy.header.description}
+          eyebrow={memberHomeCopy.header.eyebrow}
+          title={memberHomeCopy.header.title}
         />
 
-        <section className="section section-compact">
-          <div className="access-panel">
-            <div>
-              <WdsBadgeGroup>
-                <WdsBadge tone="blue">
-                  {isFirebaseConfigured ? '현재 역할' : 'Demo Role'}
-                </WdsBadge>
-                <WdsBadge>{access.status}</WdsBadge>
-              </WdsBadgeGroup>
-              <h2>{getAccessPanelTitle(access?.status)}</h2>
-              <p>{access.message}</p>
-            </div>
-            <div className="access-panel-side">
-              {role === 'visitor' ? (
-                <div className="access-panel-actions">
-                  <WdsLinkButton href={getLoginHref('/member')} tone="primary">
-                    Google 로그인
-                  </WdsLinkButton>
-                  <WdsTextLinkButton href={getPublicJoinHref()}>
-                    가입 화면
-                  </WdsTextLinkButton>
-                </div>
-              ) : null}
-              {role === 'guest' ? (
-                <div className="access-panel-actions">
-                  <WdsLinkButton href={getPublicJoinHref()} tone="primary">
-                    가입 정보 제출
-                  </WdsLinkButton>
-                </div>
-              ) : null}
-              <WdsField
-                className="demo-role-field"
-                label={isFirebaseConfigured ? '현재 역할' : 'Demo 역할'}
-              >
-                <WdsSelect
-                  disabled={authStatus !== 'demo'}
-                  onValueChange={changeDemoRole}
-                  options={demoRoleSelectOptions}
-                  value={role}
-                />
-              </WdsField>
-            </div>
+        <div className="member-dashboard-shell">
+          <MemberDashboardSidebar
+            accessMessage={access.message}
+            counts={dashboardCounts}
+            role={role}
+            selectedSectionId={selectedSection.id}
+            sections={visibleSections}
+            statusLabel={getAccessPanelTitle(access?.status)}
+          />
+
+          <div className="member-dashboard-content">
+            {selectedSection.id === 'overview' ? (
+              <MemberDashboardOverview
+                accessMessage={access.message}
+                canApplyToActivities={canApplyToActivities}
+                dashboardCalendarActivities={dashboardCalendarActivities}
+                dashboardMyNextCommitments={dashboardMyNextCommitments}
+                dashboardOpenProjects={dashboardOpenProjects}
+                dashboardOpenStudies={dashboardOpenStudies}
+                guestProfile={guestProfile}
+                guestProfileMessage={guestProfileMessage}
+                onGuestProfileChange={setGuestProfile}
+                onGuestProfileSubmit={handleGuestProfileSubmit}
+                role={role}
+                statusLabel={getAccessPanelTitle(access?.status)}
+              />
+            ) : null}
+
+            {selectedSection.id === 'calendar' ? (
+              <MemberCalendarSection
+                activities={dashboardCalendarActivities}
+                applicationStates={applicationStates}
+              />
+            ) : null}
+
+            {selectedSection.id === 'notices' ? (
+              <ImportantNoticeSection
+                notices={dashboardImportantNotices.slice(0, 6)}
+              />
+            ) : null}
+
+            {selectedSection.id === 'applications' ? (
+              <MemberApplicationsSection summaries={dashboardMyNextCommitments} />
+            ) : null}
+
+            {selectedSection.id === 'studies' ? (
+              <ActivitySection
+                activities={dashboardOpenStudies}
+                applicationStates={applicationStates}
+                description="모집 중이거나 진행 중인 스터디를 먼저 확인하고, 더 많은 스터디는 전용 목록에서 살펴봅니다."
+                moreHref="/studies"
+                onApply={canApplyToActivities ? handleApply : undefined}
+                onCancel={canApplyToActivities ? handleCancel : undefined}
+                title="스터디 현황"
+              />
+            ) : null}
+
+            {selectedSection.id === 'projects' ? (
+              <ActivitySection
+                activities={dashboardOpenProjects}
+                applicationStates={applicationStates}
+                description="진행 중인 프로젝트와 새로 열릴 프로젝트 기회를 확인하고 신청합니다."
+                moreHref="/projects"
+                onApply={canApplyToActivities ? handleApply : undefined}
+                onCancel={canApplyToActivities ? handleCancel : undefined}
+                title="프로젝트 현황"
+              />
+            ) : null}
+
+            {selectedSection.id === 'community' ? (
+              <ActivitySection
+                activities={challenges}
+                applicationStates={applicationStates}
+                description={memberHomeCopy.activitySections.challenges.description}
+                onApply={canApplyToActivities ? handleApply : undefined}
+                onCancel={canApplyToActivities ? handleCancel : undefined}
+                title={memberHomeCopy.activitySections.challenges.title}
+              />
+            ) : null}
+
+            {selectedSection.id === 'showcase' ? (
+              <ShowcasePreviewSection showcases={showcases.slice(0, 3)} />
+            ) : null}
+
+            {selectedSection.id === 'records' ? (
+              <ChapterRecordSection records={records.slice(0, 3)} />
+            ) : null}
+
+            {selectedSection.id === 'propose' ? (
+              <MemberProposalForm
+                message={proposalMessage}
+                onChange={setProposal}
+                onSubmit={handleProposalSubmit}
+                value={proposal}
+              />
+            ) : null}
+
+            {selectedSection.id === 'write-record' ? (
+              <MemberRecordForm
+                message={recordMessage}
+                onChange={setRecordDraft}
+                onSubmit={handleRecordSubmit}
+                value={recordDraft}
+              />
+            ) : null}
           </div>
-        </section>
-
-        {role === 'guest' ? (
-          <section className="section section-compact">
-            <GuestProfileForm
-              message={guestProfileMessage}
-              onChange={setGuestProfile}
-              onSubmit={handleGuestProfileSubmit}
-              value={guestProfile}
-            />
-          </section>
-        ) : null}
-
-        {canProposeActivities ? (
-          <MemberProposalForm
-            message={proposalMessage}
-            onChange={setProposal}
-            onSubmit={handleProposalSubmit}
-            value={proposal}
-          />
-        ) : null}
-
-        {canProposeActivities ? (
-          <MemberRecordForm
-            message={recordMessage}
-            onChange={setRecordDraft}
-            onSubmit={handleRecordSubmit}
-            value={recordDraft}
-          />
-        ) : null}
-
-        <section className="section section-compact">
-          <WdsSectionHeader
-            description="운영진이 고정한 중요한 공지를 먼저 보여줍니다."
-            title="공지사항"
-          />
-          <NoticeBoard notices={notices.slice(0, 6)} />
-        </section>
-
-        <ShowcasePreviewSection showcases={showcases.slice(0, 3)} />
-
-        <ChapterRecordSection records={records.slice(0, 3)} />
-
-        <WdsResponsiveGrid columns={3} offset="lg">
-          <WdsSurfaceCard>
-            <WdsBadge tone="green">Participation</WdsBadge>
-            <h3>
-              {canApplyToActivities
-                ? `${activeApplicationCount}개 활동 참여 중`
-                : '활동 신청 제한'}
-            </h3>
-            <p>
-              {canApplyToActivities
-                ? '참여 신청을 누르면 이 숫자와 카드 상태가 바로 바뀝니다.'
-                : access?.message ?? '역할 정보를 확인한 뒤 신청 가능 여부를 표시합니다.'}
-            </p>
-          </WdsSurfaceCard>
-          <WdsSurfaceCard>
-            <WdsBadge tone="blue">Next Action</WdsBadge>
-            <h3>{activities.length}개 활동 열람 가능</h3>
-            <p>Firebase 설정 전에는 localStorage bridge로 같은 흐름을 검증합니다.</p>
-          </WdsSurfaceCard>
-        </WdsResponsiveGrid>
-
-        {canApplyToActivities ? (
-          <MemberApplicationsSection summaries={memberApplicationSummaries} />
-        ) : null}
-
-        <ActivitySection
-          activities={upcoming}
-          applicationStates={applicationStates}
-          description="오프라인 이벤트와 일정이 있는 활동을 우선 표시합니다."
-          onApply={canApplyToActivities ? handleApply : undefined}
-          onCancel={canApplyToActivities ? handleCancel : undefined}
-          title="다가오는 활동"
-        />
-        <ActivitySection
-          activities={studiesAndProjects}
-          applicationStates={applicationStates}
-          description="장기적으로 이어지는 학습과 제작 활동입니다."
-          onApply={canApplyToActivities ? handleApply : undefined}
-          onCancel={canApplyToActivities ? handleCancel : undefined}
-          title="스터디 / 프로젝트"
-        />
-        <ActivitySection
-          activities={challenges}
-          applicationStates={applicationStates}
-          description="챕터 참여를 높이기 위한 챌린지와 친목 활동입니다."
-          onApply={canApplyToActivities ? handleApply : undefined}
-          onCancel={canApplyToActivities ? handleCancel : undefined}
-          title="챌린지 / 친목"
-        />
+        </div>
       </div>
     </main>
+  );
+}
+
+function MemberDashboardSidebar({
+  accessMessage,
+  counts,
+  role,
+  sections,
+  selectedSectionId,
+  statusLabel,
+}: {
+  accessMessage: string;
+  counts: MemberDashboardCounts;
+  role: UserRole;
+  sections: readonly MemberDashboardSection[];
+  selectedSectionId: MemberDashboardSectionId;
+  statusLabel: string;
+}) {
+  return (
+    <aside className="member-dashboard-sidebar">
+      <div className="member-sidebar-status">
+        <WdsBadgeGroup>
+          <WdsBadge tone="blue">{memberHomeCopy.access.currentRoleLabel}</WdsBadge>
+          <WdsBadge>{statusLabel}</WdsBadge>
+        </WdsBadgeGroup>
+        <strong>Member Workspace</strong>
+        <p>{accessMessage}</p>
+      </div>
+
+      <div className="member-sidebar-controls">
+        {role === 'visitor' ? (
+          <WdsLinkButton href={getPublicOnboardingHref()} tone="primary">
+            {memberHomeCopy.access.googleLoginLabel}
+          </WdsLinkButton>
+        ) : null}
+        {role === 'guest' ? (
+          <WdsLinkButton href={getPublicOnboardingHref()} tone="primary">
+            {memberHomeCopy.access.guestSubmitLabel}
+          </WdsLinkButton>
+        ) : null}
+      </div>
+
+      <nav className="member-dashboard-nav" aria-label="Member dashboard sections">
+        {sections.map((section) => {
+          const isActive = section.id === selectedSectionId;
+
+          return (
+            <Link
+              aria-current={isActive ? 'page' : undefined}
+              className={
+                isActive
+                  ? 'member-dashboard-nav-item member-dashboard-nav-item-active'
+                  : 'member-dashboard-nav-item'
+              }
+              href={getMemberDashboardSectionHref(section.id)}
+              key={section.id}
+            >
+              <span>
+                <strong>{section.label}</strong>
+                <small>{section.title}</small>
+              </span>
+              {counts[section.id] ? (
+                <em aria-label={`${section.label} count`}>
+                  {counts[section.id]}
+                </em>
+              ) : null}
+            </Link>
+          );
+        })}
+      </nav>
+    </aside>
+  );
+}
+
+function MemberDashboardOverview({
+  accessMessage,
+  canApplyToActivities,
+  dashboardCalendarActivities,
+  dashboardMyNextCommitments,
+  dashboardOpenProjects,
+  dashboardOpenStudies,
+  guestProfile,
+  guestProfileMessage,
+  onGuestProfileChange,
+  onGuestProfileSubmit,
+  role,
+  statusLabel,
+}: {
+  accessMessage: string;
+  canApplyToActivities: boolean;
+  dashboardCalendarActivities: Activity[];
+  dashboardMyNextCommitments: MemberApplicationSummary[];
+  dashboardOpenProjects: Activity[];
+  dashboardOpenStudies: Activity[];
+  guestProfile: GuestProfileFormState;
+  guestProfileMessage: string;
+  onGuestProfileChange: (value: GuestProfileFormState) => void;
+  onGuestProfileSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  role: UserRole;
+  statusLabel: string;
+}) {
+  return (
+    <section className="member-dashboard-overview">
+      <WdsSectionHeader
+        description="오늘 확인할 역할, 일정, 공지, 참여 상태를 한 화면에서 정리합니다."
+        title="Overview"
+      />
+
+      <div className="access-panel">
+        <div>
+          <WdsBadgeGroup>
+            <WdsBadge tone="blue">{memberHomeCopy.access.currentRoleLabel}</WdsBadge>
+            <WdsBadge>{statusLabel}</WdsBadge>
+          </WdsBadgeGroup>
+          <h2>{statusLabel}</h2>
+          <p>{accessMessage}</p>
+        </div>
+        {role === 'visitor' || role === 'guest' ? (
+          <div className="access-panel-actions">
+            <WdsLinkButton href={getPublicOnboardingHref()} tone="primary">
+              {role === 'visitor'
+                ? memberHomeCopy.access.googleLoginLabel
+                : memberHomeCopy.access.guestSubmitLabel}
+            </WdsLinkButton>
+          </div>
+        ) : null}
+      </div>
+
+      {role === 'guest' ? (
+        <GuestProfileForm
+          message={guestProfileMessage}
+          onChange={onGuestProfileChange}
+          onSubmit={onGuestProfileSubmit}
+          value={guestProfile}
+        />
+      ) : null}
+
+      <WdsResponsiveGrid columns={3} offset="lg">
+        <WdsSurfaceCard>
+          <WdsBadge tone="blue">Calendar</WdsBadge>
+          <h3>
+            {memberHomeCopy.dashboard.summaryCards.schedule.title(
+              dashboardCalendarActivities.length,
+            )}
+          </h3>
+          <p>{memberHomeCopy.dashboard.summaryCards.schedule.description}</p>
+        </WdsSurfaceCard>
+        <WdsSurfaceCard>
+          <WdsBadge tone="green">My Status</WdsBadge>
+          <h3>
+            {canApplyToActivities
+              ? memberHomeCopy.dashboard.summaryCards.commitments.title(
+                dashboardMyNextCommitments.length,
+              )
+              : memberHomeCopy.summaryCards.participation.applyLimitedTitle}
+          </h3>
+          <p>
+            {canApplyToActivities
+              ? memberHomeCopy.dashboard.summaryCards.commitments.description
+              : memberHomeCopy.summaryCards.participation.fallbackMessage}
+          </p>
+        </WdsSurfaceCard>
+        <WdsSurfaceCard>
+          <WdsBadge tone="blue">Board</WdsBadge>
+          <h3>
+            {memberHomeCopy.dashboard.summaryCards.studyProjects.title(
+              dashboardOpenStudies.length + dashboardOpenProjects.length,
+            )}
+          </h3>
+          <p>
+            {memberHomeCopy.dashboard.summaryCards.studyProjects.description}
+          </p>
+        </WdsSurfaceCard>
+      </WdsResponsiveGrid>
+    </section>
   );
 }
 
@@ -560,22 +701,19 @@ function MemberProposalForm({
       <MemberFormSurface onSubmit={onSubmit}>
         <div>
           <WdsBadge tone="blue">Member Proposal</WdsBadge>
-          <h2>스터디 / 프로젝트 제안</h2>
-          <p>
-            멤버가 직접 스터디를 열거나 프로젝트 아이디어를 제안할 수 있습니다. 프로젝트는
-            운영진 승인 후 멤버 홈에 공개됩니다.
-          </p>
+          <h2>{memberHomeCopy.proposal.title}</h2>
+          <p>{memberHomeCopy.proposal.intro}</p>
         </div>
 
         <WdsResponsiveGrid columns={2}>
-          <WdsField label="활동 유형">
+          <WdsField label={memberHomeCopy.proposal.fieldLabels.type}>
             <WdsSelect
               onValueChange={(nextValue) => updateField('type', nextValue)}
               options={activityProposalTypeOptions}
               value={value.type}
             />
           </WdsField>
-          <WdsField label="일정">
+          <WdsField label={memberHomeCopy.proposal.fieldLabels.startsAt}>
             <WdsInput
               onChange={(event) => updateField('startsAt', event.target.value)}
               type="datetime-local"
@@ -584,7 +722,7 @@ function MemberProposalForm({
           </WdsField>
         </WdsResponsiveGrid>
 
-        <WdsField label="제목">
+        <WdsField label={memberHomeCopy.proposal.fieldLabels.title}>
           <WdsInput
             onChange={(event) => updateField('title', event.target.value)}
             required
@@ -592,7 +730,7 @@ function MemberProposalForm({
           />
         </WdsField>
 
-        <WdsField label="요약">
+        <WdsField label={memberHomeCopy.proposal.fieldLabels.summary}>
           <WdsTextArea
             onChange={(event) => updateField('summary', event.target.value)}
             required
@@ -603,7 +741,7 @@ function MemberProposalForm({
         <WdsFormActions
           actions={
             <WdsButton tone="primary" type="submit">
-              제안 제출
+              {memberHomeCopy.proposal.submitLabel}
             </WdsButton>
           }
           helper={message}
@@ -636,22 +774,19 @@ function MemberRecordForm({
       <MemberFormSurface onSubmit={onSubmit}>
         <div>
           <WdsBadge tone="green">Chapter Record</WdsBadge>
-          <h2>회고 / 리뷰 / 기술 노트 작성</h2>
-          <p>
-            Discord에 묻히기 쉬운 긴 글을 홈페이지 기록으로 남깁니다. 제출된 글은 운영진
-            검토 후 멤버 홈에 게시됩니다.
-          </p>
+          <h2>{memberHomeCopy.recordForm.title}</h2>
+          <p>{memberHomeCopy.recordForm.intro}</p>
         </div>
 
         <WdsResponsiveGrid columns={2}>
-          <WdsField label="기록 유형">
+          <WdsField label={memberHomeCopy.recordForm.fieldLabels.kind}>
             <WdsSelect
               onValueChange={(nextValue) => updateField('kind', nextValue)}
               options={chapterRecordKindOptions}
               value={value.kind}
             />
           </WdsField>
-          <WdsField label="태그">
+          <WdsField label={memberHomeCopy.recordForm.fieldLabels.tags}>
             <WdsInput
               onChange={(event) => updateField('tags', event.target.value)}
               placeholder="Gemini, Firebase"
@@ -660,7 +795,7 @@ function MemberRecordForm({
           </WdsField>
         </WdsResponsiveGrid>
 
-        <WdsField label="제목">
+        <WdsField label={memberHomeCopy.recordForm.fieldLabels.title}>
           <WdsInput
             onChange={(event) => updateField('title', event.target.value)}
             required
@@ -668,7 +803,7 @@ function MemberRecordForm({
           />
         </WdsField>
 
-        <WdsField label="요약">
+        <WdsField label={memberHomeCopy.recordForm.fieldLabels.summary}>
           <WdsTextArea
             onChange={(event) => updateField('summary', event.target.value)}
             required
@@ -676,7 +811,7 @@ function MemberRecordForm({
           />
         </WdsField>
 
-        <WdsField label="본문">
+        <WdsField label={memberHomeCopy.recordForm.fieldLabels.body}>
           <WdsTextArea
             onChange={(event) => updateField('body', event.target.value)}
             required
@@ -687,7 +822,7 @@ function MemberRecordForm({
         <WdsFormActions
           actions={
             <WdsButton tone="primary" type="submit">
-              기록 제출
+              {memberHomeCopy.recordForm.submitLabel}
             </WdsButton>
           }
           helper={message}
@@ -697,12 +832,87 @@ function MemberRecordForm({
   );
 }
 
+function MemberCalendarSection({
+  activities,
+  applicationStates,
+}: {
+  activities: Activity[];
+  applicationStates: Record<string, ActivityApplicationState>;
+}) {
+  return (
+    <section className="section section-compact">
+      <WdsSectionHeader
+        description={memberHomeCopy.dashboard.calendar.description}
+        title={memberHomeCopy.dashboard.calendar.title}
+        trailingContent={
+          <WdsTextLinkButton href="/calendar">전체 일정</WdsTextLinkButton>
+        }
+      />
+      {activities.length > 0 ? (
+        <WdsQueue as="div">
+          {activities.map((activity) => {
+            const applicationState = applicationStates[activity.id];
+
+            return (
+              <WdsQueueRow
+                actions={
+                  <WdsTextLinkButton
+                    href={`/activities/${encodeURIComponent(activity.id)}`}
+                  >
+                    {memberHomeCopy.applications.detailLabel}
+                  </WdsTextLinkButton>
+                }
+                as="article"
+                key={activity.id}
+              >
+                <div>
+                  <WdsBadgeGroup>
+                    <WdsBadge tone="blue">{activity.type}</WdsBadge>
+                    {applicationState ? (
+                      <WdsBadge tone="green">
+                        {getApplicationStateLabel(applicationState)}
+                      </WdsBadge>
+                    ) : null}
+                  </WdsBadgeGroup>
+                  <strong>{activity.title}</strong>
+                  <p className="helper-text">
+                    {activity.startsAt
+                      ? formatKoreanDateTime(activity.startsAt)
+                      : memberHomeCopy.applications.unscheduled}
+                  </p>
+                </div>
+              </WdsQueueRow>
+            );
+          })}
+        </WdsQueue>
+      ) : (
+        <WdsEmptyState>{memberHomeCopy.dashboard.calendar.empty}</WdsEmptyState>
+      )}
+    </section>
+  );
+}
+
+function ImportantNoticeSection({ notices }: { notices: Notice[] }) {
+  return (
+    <section className="section section-compact">
+      <WdsSectionHeader
+        description={memberHomeCopy.dashboard.notices.description}
+        title={memberHomeCopy.dashboard.notices.title}
+        trailingContent={
+          <WdsTextLinkButton href="/notices">전체 공지</WdsTextLinkButton>
+        }
+      />
+      <NoticeBoard notices={notices} />
+    </section>
+  );
+}
+
 function ShowcasePreviewSection({ showcases }: { showcases: Showcase[] }) {
   return (
     <section className="section section-compact">
       <WdsSectionHeader
-        description="최근 활동 성과, 회고, 프로젝트 결과를 activity와 분리된 아카이브로 모아 보여줍니다."
-        title="쇼케이스"
+        description={memberHomeCopy.showcase.description}
+        title={memberHomeCopy.showcase.title}
       />
       {showcases.length > 0 ? (
         <WdsResponsiveGrid columns={3}>
@@ -711,7 +921,7 @@ function ShowcasePreviewSection({ showcases }: { showcases: Showcase[] }) {
           ))}
         </WdsResponsiveGrid>
       ) : (
-        <WdsEmptyState>아직 표시할 쇼케이스가 없습니다.</WdsEmptyState>
+        <WdsEmptyState>{memberHomeCopy.showcase.empty}</WdsEmptyState>
       )}
     </section>
   );
@@ -721,8 +931,11 @@ function ChapterRecordSection({ records }: { records: ChapterRecord[] }) {
   return (
     <section className="section section-compact">
       <WdsSectionHeader
-        description="회고, 리뷰, 기술 노트처럼 Discord보다 오래 남겨야 하는 글을 모아 보여줍니다."
-        title="긴 글 기록"
+        description={memberHomeCopy.records.description}
+        title={memberHomeCopy.records.title}
+        trailingContent={
+          <WdsTextLinkButton href="/records">전체 기록</WdsTextLinkButton>
+        }
       />
       {records.length > 0 ? (
         <WdsResponsiveGrid columns={3}>
@@ -731,7 +944,7 @@ function ChapterRecordSection({ records }: { records: ChapterRecord[] }) {
           ))}
         </WdsResponsiveGrid>
       ) : (
-        <WdsEmptyState>아직 게시된 긴 글 기록이 없습니다.</WdsEmptyState>
+        <WdsEmptyState>{memberHomeCopy.records.empty}</WdsEmptyState>
       )}
     </section>
   );
@@ -745,8 +958,8 @@ function MemberApplicationsSection({
   return (
     <section className="section section-compact">
       <WdsSectionHeader
-        description="내가 신청한 활동의 승인 상태와 다음 일정을 별도 목록으로 확인합니다."
-        title="내 신청 현황"
+        description={memberHomeCopy.applications.description}
+        title={memberHomeCopy.applications.title}
       />
       {summaries.length > 0 ? (
         <WdsQueue>
@@ -763,19 +976,19 @@ function MemberApplicationsSection({
                 <p className="helper-text">
                   {activity.startsAt
                     ? formatKoreanDateTime(activity.startsAt)
-                    : '일정 미정'}
+                    : memberHomeCopy.applications.unscheduled}
                 </p>
               </div>
               <WdsTextLinkButton
                 href={`/activities/${encodeURIComponent(activity.id)}`}
               >
-                자세히
+                {memberHomeCopy.applications.detailLabel}
               </WdsTextLinkButton>
             </WdsQueueRow>
           ))}
         </WdsQueue>
       ) : (
-        <WdsEmptyState>아직 신청 중인 활동이 없습니다.</WdsEmptyState>
+        <WdsEmptyState>{memberHomeCopy.applications.empty}</WdsEmptyState>
       )}
     </section>
   );
@@ -785,6 +998,7 @@ function ActivitySection({
   activities,
   applicationStates,
   description,
+  moreHref,
   onApply,
   onCancel,
   title,
@@ -792,13 +1006,22 @@ function ActivitySection({
   activities: Activity[];
   applicationStates: Record<string, ActivityApplicationState>;
   description: string;
+  moreHref?: string;
   onApply?: (activity: Activity) => void;
   onCancel?: (activity: Activity) => void;
   title: string;
 }) {
   return (
     <section className="section">
-      <WdsSectionHeader description={description} title={title} />
+      <WdsSectionHeader
+        description={description}
+        title={title}
+        trailingContent={
+          moreHref ? (
+            <WdsTextLinkButton href={moreHref}>전체 보기</WdsTextLinkButton>
+          ) : null
+        }
+      />
       {activities.length > 0 ? (
         <WdsResponsiveGrid columns={3}>
           {activities.map((activity) => (
@@ -812,41 +1035,33 @@ function ActivitySection({
           ))}
         </WdsResponsiveGrid>
       ) : (
-        <WdsEmptyState>아직 표시할 활동이 없습니다.</WdsEmptyState>
+        <WdsEmptyState>{memberHomeCopy.activitySections.empty}</WdsEmptyState>
       )}
     </section>
   );
 }
 
-function getMemberHomeContentRole(role: UserRole): UserRole {
-  if (role === 'visitor' || role === 'guest') {
-    return role;
-  }
-
-  return 'member';
-}
-
 function getAccessPanelTitle(status?: string) {
   switch (status) {
     case 'login_required':
-      return '로그인이 필요합니다';
+      return memberHomeCopy.statusLabels.access.login_required;
     case 'pending_approval':
-      return '운영진 승인 대기 중';
+      return memberHomeCopy.statusLabels.access.pending_approval;
     case 'alumni':
-      return 'Alumni 보기 모드';
+      return memberHomeCopy.statusLabels.access.alumni;
     case 'active_member':
-      return '멤버 홈 이용 가능';
+      return memberHomeCopy.statusLabels.access.active_member;
     default:
-      return '역할 확인 중';
+      return memberHomeCopy.statusLabels.access.unknown;
   }
 }
 
 function getApplicationStateLabel(state: ActivityApplicationState) {
   switch (state) {
     case 'applied':
-      return '운영진 승인 대기 중';
+      return memberHomeCopy.statusLabels.application.applied;
     case 'approved':
-      return '승인됨';
+      return memberHomeCopy.statusLabels.application.approved;
   }
 }
 

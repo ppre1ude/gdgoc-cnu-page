@@ -4,14 +4,14 @@ import { describe, it } from 'node:test';
 import { createDemoEnvironmentReadiness } from './demo-environment.ts';
 
 describe('demo environment readiness', () => {
-  it('marks demo bridge as ready when Firebase is not configured', () => {
+  it('requires live Firebase auth instead of marking demo bridge as ready', () => {
     const readiness = createDemoEnvironmentReadiness({
-      authStatus: 'demo',
+      authStatus: 'signed_out',
       firebaseConfigured: false,
       geminiConfigured: false,
     });
 
-    assert.equal(readiness.overallStatus, 'demo_ready');
+    assert.equal(readiness.overallStatus, 'needs_attention');
     assert.deepEqual(
       readiness.items.map((item) => ({
         id: item.id,
@@ -19,7 +19,7 @@ describe('demo environment readiness', () => {
       })),
       [
         { id: 'firebase', status: 'action_needed' },
-        { id: 'auth', status: 'demo_ready' },
+        { id: 'auth', status: 'action_needed' },
         { id: 'gemini', status: 'fallback_ready' },
       ],
     );

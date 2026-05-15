@@ -8,12 +8,12 @@ Owner: GDGoC CNU 운영진
 
 GDGoC CNU needs a homepage that works as the official, structured hub for chapter activity.
 
-Today, activity information is fragmented across Notion, Discord, gdg.community.dev, offline operations, and individual announcements. Discord is good for live conversation, but it is not a good source of truth for structured chapter activity. Notion has been useful, but it depends on operators manually maintaining pages and does not provide a polished public brand surface, role-aware member experience, or operational analytics.
+Today, activity information is fragmented across Notion, Discord, gdg.community.dev, offline operations, and individual announcements. Discord is good for live conversation, but it is not a good source of truth for structured chapter activity. Notion has been useful, but it depends on operators manually maintaining pages and does not provide a polished public brand surface, member-first dashboard experience, or operational analytics.
 
 The chapter needs a single place where:
 
 - External visitors can quickly understand that GDGoC CNU is active, credible, and worth joining.
-- Logged-in members can see the activities, notices, studies, projects, challenges, and events that matter now.
+- Logged-in members can check the calendar, important notices, active studies/projects, open applications, and their own upcoming commitments without needing admin permissions.
 - Operators can register and manage activities without editing static pages manually.
 - Participation can be tracked well enough to improve operations and member engagement.
 - Google technologies, especially Firebase and Gemini, are visibly used in the Build with AI demo.
@@ -22,11 +22,13 @@ The immediate demonstration target is Saturday, 2026-05-16. The demo must show a
 
 The core user action is:
 
-> A user can view what is happening in the chapter at a glance.
+> An approved member can open the member dashboard and understand what is happening next, which notices matter, which studies/projects are open, and what they have already applied to.
 
-For the demo, the core state-changing operator action is:
+The demo must be evaluated from the member role first. Admin and team-member flows exist to create source-of-truth content, but the presentation center should be the member experience.
 
-> An operator creates or edits an activity, optionally with Gemini writing assistance, stores it in Firebase, and the activity appears on the member home.
+For the demo, the supporting state-changing operator action is:
+
+> An operator creates or edits an activity, optionally with Gemini writing assistance, stores it in Firebase, and the activity appears on the member dashboard.
 
 If feasible in the same slice, a member can apply to an activity and see their participation state change.
 
@@ -39,9 +41,12 @@ Build a Next.js application using Wanted Montage Web Design System and Firebase.
    - Shows selected public activities, achievements, seasonal onboarding content, and showcase items.
    - Supports seasonal visual replacement, including future motion graphics or designer-created campaign modules.
 
-2. Member home
+2. Member dashboard
    - Available after login.
-   - Shows pinned notices, upcoming activities, the user's applications, active studies/projects, challenges/social activities, showcase previews, and a lightweight participation snapshot.
+   - Acts as the logged-in member routing hub.
+   - Shows the member calendar, pinned notices, the user's applications, active studies/projects, challenges/social activities, showcase previews, and a lightweight participation snapshot.
+   - Prioritizes reading and deciding what to join before member authoring or operator controls.
+   - Routes members into first-class Calendar, Notices, Studies, Projects, Records, and activity detail destinations.
    - Treats the website as a structured source of truth, while Discord remains the conversation channel.
 
 3. Operator dashboard
@@ -61,9 +66,74 @@ The product should be built as a real MVP plus demo bridge:
 
 - Real Firebase-backed CRUD for activities.
 - Real auth and role gating where practical.
-- Real member home reflection after activity creation.
+- Real member dashboard reflection after activity creation.
 - Seed/mock bridge for analytics and showcase depth if full data entry is not ready.
 - Clear separation between production data models and mock/demo data.
+
+## Member-First Product Flow
+
+The primary logged-in product is the member dashboard, not the operator console.
+
+The approved member flow should be:
+
+1. Open `/member`.
+2. Land on the Dashboard, the central member hub.
+3. See a concise summary of what is happening now, what matters, and what the member personally needs to do next.
+4. Check the next scheduled events, study meetings, project milestones, or challenge deadlines through the dashboard calendar preview.
+5. Move from the dashboard into the full Calendar when schedule depth is needed.
+6. Read pinned or recent official notices from the dashboard, then move into the Notices board for the full list and details.
+7. Browse active or recruiting Studies and Projects from dashboard previews, then move into their dedicated board-like destinations.
+8. Apply to a relevant activity or follow the external registration link when required.
+9. Confirm their own application state and next commitments on the dashboard and on activity detail pages.
+10. Optionally propose a study/project or submit a record after the primary dashboard information has been surfaced.
+
+The dashboard is the trunk of the logged-in member experience. Calendar, Notices, Studies, Projects, Records, and activity detail pages are branches from that trunk. Calendar is important, but it is not the product center by itself; the dashboard is where schedule, announcements, opportunities, and personal participation state are combined.
+
+## Member IA And Top Navigation
+
+The logged-in member navigation should follow a PoolC-like category rhythm while preserving the GDGoC CNU domain.
+
+Target top navigation:
+
+1. `Dashboard`
+   - Main logged-in member hub.
+   - Current implementation may keep `/member` as the route, but product copy should call it Dashboard.
+   - A future `/dashboard` route may become the canonical path, with `/member` kept as a compatibility alias or redirect.
+
+2. `Calendar`
+   - Focused schedule view for upcoming events, study meetings, project milestones, and challenge deadlines.
+   - Extends the dashboard calendar preview instead of replacing the dashboard.
+
+3. `Notices`
+   - Official notice board.
+   - Pinned and recent notices appear on Dashboard; the full board lives here.
+
+4. `Studies`
+   - Board-like destination for active, recruiting, proposed, or archived studies.
+   - Can share data/model code with activities, but the member IA should expose it as a clear destination.
+
+5. `Projects`
+   - Board-like destination for active, recruiting, proposed, or archived projects.
+   - Should support status scanning and application/proposal flows.
+
+6. `Records`
+   - Long-form records, retrospectives, reviews, technical writeups, and archived chapter knowledge.
+   - Dashboard may show recent records, but the full browsing flow belongs here.
+
+7. `Admin`
+   - Operator console entry.
+   - Visible only to team_member, organizer, and admin roles.
+
+The top navigation must not make operator work feel like the default member product. Admin supports the member experience; it is not the center of the logged-in IA.
+
+The operator flow should support this member flow:
+
+1. Create or edit activities, notices, showcases, records, and roles in the operator console.
+2. Approve project proposals and participation where needed.
+3. Maintain sessions, attendance, and analytics for operations.
+4. Keep the member dashboard accurate and trustworthy.
+
+This means the prototype should not be judged complete because an admin can create content. It should be judged by whether an approved member can understand schedules, notices, open studies/projects, and their own participation state without using admin permissions.
 
 ## User Stories
 
@@ -101,7 +171,7 @@ The product should be built as a real MVP plus demo bridge:
 
 ### Member
 
-15. As a member, I want to open the member home and immediately see what is happening in the chapter so that I can decide where to participate.
+15. As a member, I want to open the member dashboard and immediately see what is happening in the chapter so that I can decide where to participate.
 
 16. As a member, I want pinned notices to appear first so that urgent or important information is hard to miss.
 
@@ -134,6 +204,14 @@ The product should be built as a real MVP plus demo bridge:
 30. As a member, I want a lightweight participation snapshot to help me understand my involvement without feeling like the site is only a monitoring tool.
 
 31. As a member, I want responsive mobile layout so that checking notices and events works well during campus life.
+
+Member story clarification:
+
+- The first member screen is a dashboard, not a content authoring tool.
+- The dashboard should expose a calendar or timeline section before lower-priority proposal forms.
+- Notices should behave like an official notice board: easy to scan, clearly pinned when important, and separate from applications.
+- Studies and projects should behave like a board of current opportunities: active, recruiting, pending review, closed, or archived.
+- "My applications" and "my next commitments" should be first-class dashboard sections, because they answer what the member personally needs to do next.
 
 ### Member Content Contributor
 
@@ -197,7 +275,7 @@ The product should be built as a real MVP plus demo bridge:
 
 57. As an operator author, I want to write rough title/body notes/type/visibility/registration information and ask Gemini for help so that I can draft faster.
 
-58. As an operator author, I want Gemini to propose a member-home card summary so that activity cards stay concise.
+58. As an operator author, I want Gemini to propose a member-dashboard card summary so that activity cards stay concise.
 
 59. As an operator author, I want Gemini to propose member-facing copy so that internal instructions are clear and action-oriented.
 
@@ -297,16 +375,27 @@ Recommended modules:
    - Public activity/showcase feed.
    - Join/login path.
 
-5. Member home
-   - Pinned notices.
-   - Upcoming activities.
+5. Member dashboard
+   - Logged-in member routing hub.
+   - Calendar/timeline for upcoming activities and sessions.
+   - Pinned and recent notices.
    - My applications and sessions.
-   - Active studies/projects.
+   - Active/recruiting studies.
+   - Active/recruiting projects.
    - Challenges/social activities.
    - Showcase preview.
    - Participation snapshot.
+   - Lower-priority member proposal and record authoring.
 
-6. Operator dashboard
+6. Member category routes
+   - Dashboard routes members into deeper category destinations.
+   - Calendar route for full schedule browsing.
+   - Notices route for the official notice board.
+   - Studies route for study discovery, status, and applications/proposals.
+   - Projects route for project discovery, status, and applications/proposals.
+   - Records route for retrospectives, reviews, technical writeups, and archives.
+
+7. Operator dashboard
    - Activity CRUD first.
    - Gemini-assisted authoring.
    - Notice CRUD later.
@@ -315,13 +404,13 @@ Recommended modules:
    - Analytics later.
    - Showcase management later.
 
-7. AI assistance
+8. AI assistance
    - Protected server endpoint for Gemini.
    - Structured output contract.
    - Side-panel suggestion UI.
    - Operator-controlled apply/edit/save flow.
 
-8. Analytics
+9. Analytics
    - Pure domain calculations where possible.
    - Firestore query adapters and denormalized records for production data.
    - Demo data adapter where live data is not deep enough.
@@ -415,6 +504,7 @@ Role rules:
 1. Notices
    - Create/edit/publish: team_member, organizer where assigned, admin.
    - Read: depends on visibility.
+   - Member-facing browse route belongs under Notices, not the operator console.
 
 2. Official events and challenges
    - Create/edit/publish: team_member, organizer where assigned, admin.
@@ -423,29 +513,40 @@ Role rules:
 3. Studies
    - Member can propose or create.
    - Approval requirement remains open; default should avoid unnecessary friction unless publication risk appears.
+   - Member-facing browse route belongs under Studies even if the underlying domain type is `activity`.
 
 4. Projects
    - Member can propose.
    - Operator approval is likely required before official recruiting/public visibility.
+   - Member-facing browse route belongs under Projects even if the underlying domain type is `activity`.
 
 5. Long-form records
    - Member can write retrospectives, reviews, and technical posts.
    - Operator can promote strong records to showcase.
+   - Member-facing browse route belongs under Records.
 
 6. Free-form forum
-   - Out of scope for first release because Discord already serves live conversation.
+   - A live free-form chat replacement is out of scope for first release because Discord already serves live conversation.
+   - Board-like member surfaces are in scope: notice board, study/project board, record list, and activity detail flows. PoolC `/board` is a reference for the browsing rhythm of these surfaces, not a mandate to clone every free-board feature immediately.
 
-### Member Home Priority
+### Member Dashboard Priority
 
-The member home should prioritize:
+The member dashboard should prioritize:
 
-1. Pinned notices.
-2. Upcoming activities.
-3. My applications and my next sessions.
-4. Active studies and projects.
-5. Challenges and social activities.
-6. Showcase/gallery preview.
-7. Participation snapshot.
+1. Dashboard-level next actions: what is happening next, what matters, and what I need to do.
+2. Member calendar preview / upcoming schedule.
+3. Pinned notices.
+4. My applications and my next sessions.
+5. Active or recruiting studies.
+6. Active or recruiting projects.
+7. Challenges and social activities.
+8. Recent records or showcase/gallery preview.
+9. Participation snapshot.
+10. Member-created study/project proposals and long-form record authoring.
+
+The dashboard should not lead with admin-only controls, authoring forms, or analytics. Those are important, but they are not the first question a normal member is trying to answer.
+
+The dashboard should include clear links into Calendar, Notices, Studies, Projects, Records, and activity detail pages. These links are not secondary decoration; they are the core routing mechanism of the member product.
 
 ### Analytics Decisions
 
@@ -469,7 +570,7 @@ Flow:
 2. Operator clicks an AI assistance action.
 3. Server sends the draft context to Gemini.
 4. Gemini returns structured suggestions:
-   - Short card summary for member home.
+   - Short card summary for member dashboard.
    - Member-facing announcement copy.
    - Public-facing promotional copy.
    - Suggested tags.
@@ -478,14 +579,14 @@ Flow:
 6. Operator applies selected suggestions.
 7. Operator edits final content.
 8. Operator saves to Firebase.
-9. Member home reflects the saved activity.
+9. Member dashboard reflects the saved activity.
 
 Rules:
 
 1. AI output must not silently overwrite official content.
 2. Operator confirmation is required before save.
 3. The Gemini API key must not be exposed to the browser in production.
-4. The demo should clearly show the story: AI helps write the activity, Firebase stores it, member home updates from Firebase.
+4. The demo should clearly show the story: AI helps write the activity, Firebase stores it, member dashboard updates from Firebase.
 
 ### Delivery Phases
 
@@ -499,14 +600,14 @@ Required:
 4. Activity CRUD backed by Firestore.
 5. Activity create/edit form for operators.
 6. Gemini-assisted activity drafting in the authoring flow.
-7. Member home that reads activities from Firestore and shows newly created activities.
-8. Seed/demo bridge for enough homepage/member-home depth.
+7. Member dashboard that reads activities from Firestore and shows newly created activities inside schedule, board-like sections, and personal application state.
+8. Seed/demo bridge for enough homepage/member-dashboard depth.
 9. Public homepage with polished chapter/campaign framing.
 
 Strongly preferred:
 
 1. Member application action for an activity.
-2. Application state shown on member home.
+2. Application state shown on member dashboard.
 3. Basic admin/operator dashboard navigation.
 4. Minimal analytics cards using seed or real data.
 
@@ -576,13 +677,13 @@ Testing should verify externally visible behavior and domain rules, not private 
 3. Activity CRUD integration:
    - Operator creates activity.
    - Firestore stores it.
-   - Member home reads it.
+   - Member dashboard reads it.
    - Visibility rules are applied.
 
 4. Application integration:
    - Member applies to activity.
    - Application record is stored.
-   - Member home shows updated state.
+   - Member dashboard shows updated state.
    - Operator dashboard sees the applicant.
 
 5. Gemini assistance integration with a mocked AI provider:
@@ -599,7 +700,7 @@ Testing should verify externally visible behavior and domain rules, not private 
    - Create activity.
    - Use AI assistance or mocked AI assistance.
    - Save.
-   - Open member home.
+   - Open member dashboard.
    - Confirm new activity appears.
 
 2. If application flow is included:
@@ -614,10 +715,11 @@ Testing should verify externally visible behavior and domain rules, not private 
    - Showcase preview.
    - Login/join entry.
 
-4. Member home responsive checks:
+4. Member dashboard responsive checks:
+   - Calendar/upcoming schedule remains visible.
    - Pinned notices remain prominent.
-   - Activity cards do not overflow.
-   - Dense dashboard content remains scannable.
+   - Study/project cards do not overflow.
+   - My applications and next commitments remain scannable.
 
 5. Operator dashboard responsive checks:
    - Forms remain usable.
@@ -676,12 +778,24 @@ The following are intentionally out of scope for the first Saturday demo:
 
 ### Reference Project Findings
 
+PoolC informs two different parts of this product.
+
+PoolC `/board` is the closest reference for the member-facing browsing rhythm, and PoolC's top navigation is the reference for exposing large content categories instead of hiding them inside one overloaded page:
+
+- A member chooses a board-like category.
+- The member scans a list.
+- The member opens a detail page.
+- The member writes only when the category and permissions make sense.
+- Comments, scraps, and richer social interactions can be added later if the chapter needs them.
+
+For GDGoC CNU, the dashboard remains the center and the first board-like categories should be Notices, Studies, Projects, Records, and activity details. Calendar is a schedule-focused branch from the dashboard, not a replacement for the dashboard. This does not mean the first release should replace Discord with a general free-form discussion board.
+
 The PoolC Palkia/Dialga reference supports the Activity/Session split:
 
 - Palkia separates activity-level concepts from session-level attendance.
 - Dialga exposes activity list/detail/form and session attendance flows.
 
-This PRD adopts the same domain principle but does not copy implementation details directly. GDGoC CNU needs a broader public/member/operator homepage product, not only an attendance management tool.
+This PRD adopts the same domain principle but does not copy implementation details directly. GDGoC CNU needs a broader public/member/operator homepage product, where the member dashboard is the primary logged-in experience and the operator console supports it.
 
 ### Open Questions
 
@@ -715,7 +829,6 @@ The Saturday demo succeeds if it shows:
 
 5. Firestore persistence.
 
-6. Member home reflecting the newly created activity.
+6. Member dashboard reflecting the newly created activity in a member-relevant section.
 
 7. A credible path from prototype to operational chapter platform.
-

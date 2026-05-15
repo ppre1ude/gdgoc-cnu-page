@@ -7,6 +7,10 @@ import {
   listVisibleActivities,
   type UserRole,
 } from './activity.ts';
+import {
+  isActiveMemberRole,
+  isOperatorRole,
+} from './role-access-policy.ts';
 
 export type ActivityStore = {
   create(activity: Activity): Promise<Activity>;
@@ -66,14 +70,6 @@ export type UpdateActivityInput = {
   now: string;
 };
 
-const operatorRoles = new Set<UserRole>(['team_member', 'organizer', 'admin']);
-const activeMemberRoles = new Set<UserRole>([
-  'member',
-  'team_member',
-  'organizer',
-  'admin',
-]);
-
 export function createInMemoryActivityStore(
   initialActivities: Activity[] = [],
 ): ActivityStore {
@@ -105,14 +101,14 @@ export async function createActivity(
   store: ActivityStore,
   input: CreateActivityInput,
 ): Promise<Activity> {
-  if (!operatorRoles.has(input.actorRole)) {
+  if (!isOperatorRole(input.actorRole)) {
     throw new Error('Only operators can create official activities.');
   }
 
   const registrationFields = getRegistrationFields(input);
   const contentFields = getRequiredActivityContentFields(input);
 
-  return store.create({
+  return store.create(omitUndefinedActivityFields({
     id: `activity-${crypto.randomUUID()}`,
     ...contentFields,
     type: input.type,
@@ -122,14 +118,14 @@ export async function createActivity(
     ...registrationFields,
     createdAt: input.now,
     updatedAt: input.now,
-  });
+  }));
 }
 
 export async function updateActivity(
   store: ActivityStore,
   input: UpdateActivityInput,
 ): Promise<Activity> {
-  if (!operatorRoles.has(input.actorRole)) {
+  if (!isOperatorRole(input.actorRole)) {
     throw new Error('Only operators can update activities.');
   }
 
@@ -147,7 +143,7 @@ export async function updateActivity(
     ...activityWithoutRegistrationFields
   } = activity;
 
-  return store.save({
+  return store.save(omitUndefinedActivityFields({
     ...activityWithoutRegistrationFields,
     ...contentFields,
     type: input.type,
@@ -156,14 +152,14 @@ export async function updateActivity(
     startsAt: input.startsAt,
     ...registrationFields,
     updatedAt: input.now,
-  });
+  }));
 }
 
 export async function archiveActivity(
   store: ActivityStore,
   input: ArchiveActivityInput,
 ): Promise<Activity> {
-  if (!operatorRoles.has(input.actorRole)) {
+  if (!isOperatorRole(input.actorRole)) {
     throw new Error('Only operators can archive activities.');
   }
 
@@ -180,14 +176,14 @@ export async function proposeMemberActivity(
   store: ActivityStore,
   input: ProposeMemberActivityInput,
 ): Promise<Activity> {
-  if (!activeMemberRoles.has(input.actorRole)) {
+  if (!isActiveMemberRole(input.actorRole)) {
     throw new Error('Only active members can propose activities.');
   }
 
   const isStudy = input.type === 'study';
   const contentFields = getRequiredActivityContentFields(input);
 
-  return store.create({
+  return store.create(omitUndefinedActivityFields({
     id: `activity-${crypto.randomUUID()}`,
     ...contentFields,
     type: input.type,
@@ -202,14 +198,14 @@ export async function proposeMemberActivity(
     proposalReviewedByUserId: isStudy ? input.actorUserId : undefined,
     createdAt: input.now,
     updatedAt: input.now,
-  });
+  }));
 }
 
 export async function listPendingActivityProposals(
   store: ActivityStore,
   actorRole: UserRole,
 ): Promise<Activity[]> {
-  if (!operatorRoles.has(actorRole)) {
+  if (!isOperatorRole(actorRole)) {
     throw new Error('Only operators can list pending activity proposals.');
   }
 
@@ -233,7 +229,7 @@ export async function acceptActivityProposal(
   store: ActivityStore,
   input: AcceptActivityProposalInput,
 ): Promise<Activity> {
-  if (!operatorRoles.has(input.actorRole)) {
+  if (!isOperatorRole(input.actorRole)) {
     throw new Error('Only operators can approve activity proposals.');
   }
 
@@ -359,4 +355,10 @@ function getRequiredActivityContentFields(input: {
     title,
     summary,
   };
+}
+
+function omitUndefinedActivityFields(activity: Activity): Activity {
+  return Object.fromEntries(
+    Object.entries(activity).filter(([, value]) => value !== undefined),
+  ) as Activity;
 }

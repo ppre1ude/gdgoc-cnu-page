@@ -5,7 +5,12 @@ import type {
   SessionAttendance,
 } from './activity-session.ts';
 import { summarizeSessionAttendance } from './activity-session.ts';
+import {
+  isActivityUpcoming,
+  isSessionRecentlyEnded,
+} from './activity-schedule.ts';
 import type { ChapterUser, RoleChangeLog } from './chapter-user.ts';
+import { isActiveMemberRole } from './role-access-policy.ts';
 
 export type OperatorAnalyticsInput = {
   activities?: Activity[];
@@ -66,13 +71,6 @@ export type OperatorAnalytics = {
   upcomingActivityCapacityFillRate: number;
 };
 
-const activeMemberRoles = new Set<UserRole>([
-  'member',
-  'team_member',
-  'organizer',
-  'admin',
-]);
-
 export function calculateOperatorAnalytics(
   input: OperatorAnalyticsInput,
 ): OperatorAnalytics {
@@ -81,7 +79,7 @@ export function calculateOperatorAnalytics(
   );
   const activeMemberIds = new Set(
     input.users
-      .filter((user) => activeMemberRoles.has(user.role))
+      .filter((user) => isActiveMemberRole(user.role))
       .map((user) => user.id),
   );
   const activeMemberApplications = activeApplications.filter((application) =>
@@ -134,7 +132,7 @@ export function calculateOperatorAnalytics(
 
   return {
     activeMemberCount: input.users.filter((user) =>
-      activeMemberRoles.has(user.role),
+      isActiveMemberRole(user.role),
     ).length,
     activityFunnels,
     activityTypeAttendanceRates:
@@ -178,10 +176,8 @@ function getUpcomingActivityRates({
   applications: ActivityApplication[];
   now: string;
 }) {
-  const nowTime = Date.parse(now);
   const upcomingActivities = activities.filter(
-    (activity) =>
-      activity.startsAt !== undefined && Date.parse(activity.startsAt) > nowTime,
+    (activity) => isActivityUpcoming(activity, now),
   );
   const upcomingActivityIds = new Set(
     upcomingActivities.map((activity) => activity.id),
@@ -273,14 +269,12 @@ function getRecentEndedSessions({
   now: string;
   sessions: ActivitySession[];
 }) {
-  const nowTime = Date.parse(now);
-  const recentStartTime = nowTime - 30 * 24 * 60 * 60 * 1000;
-
-  return sessions.filter((session) => {
-    const sessionEndTime = Date.parse(session.endsAt);
-
-    return sessionEndTime <= nowTime && sessionEndTime >= recentStartTime;
-  });
+  return sessions.filter((session) =>
+    isSessionRecentlyEnded(session, {
+      now,
+      recentWindowDays: 30,
+    }),
+  );
 }
 
 function getActivityTypeAttendanceRates(

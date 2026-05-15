@@ -1,27 +1,37 @@
 'use client';
 
-import type { ActivityVisibility, UserRole } from '@/domain/activity';
 import type { Showcase } from '@/domain/showcase';
 import { normalizeShowcase, normalizeShowcases } from '@/domain/showcase';
 import {
   type ShowcaseStore,
   createInMemoryShowcaseStore,
 } from '@/domain/showcase-service';
+import {
+  listProductionFirestoreDocuments,
+  resolveBrowserDataAdapterMode,
+} from '@/domain/data-adapter-split';
+import {
+  getReadablePublishedVisibilities,
+  shouldUseUnfilteredContentRead,
+} from '@/domain/role-access-policy';
 import { getFirestoreDb, hasFirebaseConfig } from '@/lib/firebase/client';
 import { seedShowcases } from './seed-showcases';
 
 const storageKey = 'gdgoc-cnu.showcases';
 
 export function createBrowserShowcaseStore(): ShowcaseStore {
-  if (typeof window === 'undefined') {
-    return createInMemoryShowcaseStore(seedShowcases);
-  }
+  const adapterMode = resolveBrowserDataAdapterMode({
+    firebaseConfigured: hasFirebaseConfig(),
+    hasBrowserRuntime: typeof window !== 'undefined',
+  });
 
-  if (hasFirebaseConfig()) {
+  if (adapterMode === 'production_firestore') {
     return createFirestoreShowcaseStore();
   }
 
-  return createLocalStorageShowcaseStore();
+  return adapterMode === 'server_demo_memory'
+    ? createInMemoryShowcaseStore(seedShowcases)
+    : createLocalStorageShowcaseStore();
 }
 
 function createLocalStorageShowcaseStore(): ShowcaseStore {
@@ -109,34 +119,20 @@ function createFirestoreShowcaseStore(): ShowcaseStore {
       );
       const showcasesCollection = collection(getFirestoreDb(), 'showcases');
       const snapshot = await getDocs(
-        shouldListAllForRole(role)
+        shouldUseUnfilteredContentRead(role)
           ? showcasesCollection
           : query(
               showcasesCollection,
               where('status', '==', 'published'),
-              where('visibility', 'in', getVisibleShowcaseVisibilities(role)),
+              where(
+                'visibility',
+                'in',
+                getReadablePublishedVisibilities(role ?? 'visitor'),
+              ),
             ),
       );
 
-      if (snapshot.empty) {
-        return seedShowcases;
-      }
-
-      return normalizeShowcases(snapshot.docs.map((item) => item.data()));
+      return normalizeShowcases(listProductionFirestoreDocuments(snapshot));
     },
   };
-}
-
-function shouldListAllForRole(role: UserRole | undefined) {
-  return role === undefined || ['team_member', 'organizer', 'admin'].includes(role);
-}
-
-function getVisibleShowcaseVisibilities(
-  role: UserRole | undefined,
-): ActivityVisibility[] {
-  if (role === 'member' || role === 'alumni') {
-    return ['public', 'member'];
-  }
-
-  return ['public'];
 }

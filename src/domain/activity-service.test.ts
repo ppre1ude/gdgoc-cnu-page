@@ -87,6 +87,23 @@ describe('activity authoring flow', () => {
     assert.equal(pendingProposals[0]?.id, proposal.id);
   });
 
+  it('omits an unscheduled member proposal startsAt field from the stored activity', async () => {
+    const store = createInMemoryActivityStore();
+
+    const proposal = await proposeMemberActivity(store, {
+      actorRole: 'member',
+      actorUserId: 'member-1',
+      title: 'Campus Map Assistant',
+      summary: 'Prototype a Gemini powered campus navigation helper.',
+      type: 'project',
+      now: '2026-05-12T09:00:00.000Z',
+    });
+    const [storedProposal] = await store.list('team_member');
+
+    assert.equal(Object.hasOwn(proposal, 'startsAt'), false);
+    assert.equal(Object.hasOwn(storedProposal ?? {}, 'startsAt'), false);
+  });
+
   it('lets an operator approve a pending project proposal for member home', async () => {
     const store = createInMemoryActivityStore();
     const proposal = await proposeMemberActivity(store, {

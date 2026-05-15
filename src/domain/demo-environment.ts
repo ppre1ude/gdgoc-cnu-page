@@ -1,12 +1,10 @@
 export type DemoEnvironmentAuthStatus =
   | 'loading'
-  | 'demo'
   | 'signed_out'
   | 'signed_in';
 
 export type DemoEnvironmentItemStatus =
   | 'ready'
-  | 'demo_ready'
   | 'fallback_ready'
   | 'action_needed';
 
@@ -19,7 +17,6 @@ export type DemoEnvironmentItem = {
 
 export type DemoEnvironmentOverallStatus =
   | 'live_ready'
-  | 'demo_ready'
   | 'needs_attention';
 
 export type DemoEnvironmentReadiness = {
@@ -73,12 +70,12 @@ function getAuthItem(
   authStatus: DemoEnvironmentAuthStatus,
   firebaseConfigured: boolean,
 ): DemoEnvironmentItem {
-  if (!firebaseConfigured || authStatus === 'demo') {
+  if (!firebaseConfigured) {
     return {
-      description: 'Demo role selector로 역할별 화면과 권한 흐름을 검증합니다.',
+      description: 'Firebase Auth 설정이 필요합니다. demo role 우회는 배포 시연에서 사용하지 않습니다.',
       id: 'auth',
       label: 'Auth',
-      status: 'demo_ready',
+      status: 'action_needed',
     };
   }
 
@@ -146,11 +143,5 @@ function getOverallStatus(
     return 'live_ready';
   }
 
-  const authItem = items.find((item) => item.id === 'auth');
-
-  if (authItem?.status === 'action_needed') {
-    return 'needs_attention';
-  }
-
-  return 'demo_ready';
+  return 'needs_attention';
 }

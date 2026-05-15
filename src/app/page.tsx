@@ -9,7 +9,7 @@ import {
   onboardingValueBadges,
   onboardingValueProcess,
 } from '@/domain/public-home-onboarding';
-import { getLoginHref, getPublicJoinHref } from '@/domain/auth-flow';
+import { getLoginHref, getPublicOnboardingHref } from '@/domain/auth-flow';
 import { PublicActivitySection } from '@/features/activities/public-activity-section';
 import { PublicShowcaseSection } from '@/features/showcases/public-showcase-section';
 
@@ -51,7 +51,7 @@ export default function PublicHomePage() {
               <span>서로의 성장을 돕고 그 경험을 커뮤니티에 나눕니다.</span>
             </p>
             <div className="hero-actions">
-              <WdsLinkButton href={getPublicJoinHref()} tone="primary">
+              <WdsLinkButton href={getPublicOnboardingHref()} tone="primary">
                 멤버로 참여하기
               </WdsLinkButton>
               <WdsLinkButton href={getLoginHref('/member')} tone="secondary">

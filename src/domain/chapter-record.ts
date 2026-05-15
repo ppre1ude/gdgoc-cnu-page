@@ -1,4 +1,5 @@
 import type { ActivityVisibility, UserRole } from './activity.ts';
+import { canReadPublishedResource } from './role-access-policy.ts';
 
 export type ChapterRecordKind = 'retrospective' | 'review' | 'technical_note';
 export type ChapterRecordStatus =
@@ -28,33 +29,9 @@ export type ChapterRecord = {
   updatedAt: string;
 };
 
-const roleVisibilityRank: Record<UserRole, number> = {
-  visitor: 0,
-  guest: 0,
-  member: 1,
-  alumni: 1,
-  team_member: 2,
-  organizer: 2,
-  admin: 2,
-};
-
-const recordVisibilityRank: Record<ActivityVisibility, number> = {
-  public: 0,
-  member: 1,
-  operator: 2,
-};
-
 export function listVisibleChapterRecords(
   records: ChapterRecord[],
   role: UserRole,
 ): ChapterRecord[] {
-  const allowedRank = roleVisibilityRank[role];
-
-  return records.filter((record) => {
-    if (record.status !== 'published') {
-      return false;
-    }
-
-    return recordVisibilityRank[record.visibility] <= allowedRank;
-  });
+  return records.filter((record) => canReadPublishedResource(role, record));
 }

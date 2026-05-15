@@ -1,24 +1,12 @@
-import type { UserRole } from './activity.ts';
-
 const memberHomeHref = '/member';
-const joinHref = '/join';
 const loginHref = '/login';
 
-export type JoinFlowAuthStatus =
-  | 'loading'
-  | 'demo'
-  | 'signed_out'
-  | 'signed_in';
+export function getPublicOnboardingHref() {
+  return getLoginHref(memberHomeHref);
+}
 
-export type JoinFlowState =
-  | 'loading'
-  | 'login_required'
-  | 'demo_guest_required'
-  | 'profile'
-  | 'already_member';
-
-export function getPublicJoinHref() {
-  return joinHref;
+export function getLegacyJoinRedirectHref() {
+  return getPublicOnboardingHref();
 }
 
 export function getLoginHref(nextPath = memberHomeHref) {
@@ -49,34 +37,6 @@ export function getRouteNextPath(
   const query = normalizeSearchParams(searchParams);
 
   return resolveSafeNextPath(`${safePathname}${query}`);
-}
-
-export function getJoinFlowState({
-  isFirebaseConfigured,
-  role,
-  status,
-}: {
-  isFirebaseConfigured: boolean;
-  role: UserRole;
-  status: JoinFlowAuthStatus;
-}): JoinFlowState {
-  if (status === 'loading') {
-    return 'loading';
-  }
-
-  if (!isFirebaseConfigured && status === 'demo' && role !== 'guest') {
-    return 'demo_guest_required';
-  }
-
-  if ((status === 'signed_in' || status === 'demo') && role === 'guest') {
-    return 'profile';
-  }
-
-  if (role === 'visitor' || status === 'signed_out') {
-    return 'login_required';
-  }
-
-  return 'already_member';
 }
 
 export function resolveSafeNextPath(nextPath: string | null | undefined) {

@@ -18,7 +18,6 @@ import { signInWithPopupOrRedirect } from './firebase-google-sign-in';
 
 export type AuthSessionStatus =
   | 'loading'
-  | 'demo'
   | 'signed_out'
   | 'signed_in';
 
@@ -28,25 +27,12 @@ export type AuthSession = {
   errorMessage?: string;
   isFirebaseConfigured: boolean;
   role: UserRole;
-  setDemoRole: (role: UserRole) => void;
   signInWithGoogle: () => Promise<void>;
   signOutCurrentUser: () => Promise<void>;
   status: AuthSessionStatus;
   userId: string;
 };
 
-export const demoRoleStorageKey = 'gdgoc-cnu.demoRole';
-export const demoRoleOptions: UserRole[] = [
-  'visitor',
-  'guest',
-  'member',
-  'alumni',
-  'team_member',
-  'organizer',
-  'admin',
-];
-
-const defaultDemoRole: UserRole = 'team_member';
 const visitorUserId = 'visitor';
 
 const AuthSessionContext = createContext<AuthSession | null>(null);
@@ -61,18 +47,17 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
     >
   >({
     role: 'visitor',
-    status: isFirebaseConfigured ? 'loading' : 'demo',
+    status: isFirebaseConfigured ? 'loading' : 'signed_out',
     userId: visitorUserId,
   });
 
   useEffect(() => {
     if (!isFirebaseConfigured) {
-      const savedRole =
-        typeof window === 'undefined'
-          ? null
-          : window.localStorage.getItem(demoRoleStorageKey);
-      const initialRole = isUserRole(savedRole) ? savedRole : defaultDemoRole;
-      setSessionState(createDemoSessionState(initialRole));
+      setSessionState({
+        role: 'visitor',
+        status: 'signed_out',
+        userId: visitorUserId,
+      });
       return;
     }
 
@@ -148,15 +133,6 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  function setDemoRole(role: UserRole) {
-    if (isFirebaseConfigured) {
-      return;
-    }
-
-    window.localStorage.setItem(demoRoleStorageKey, role);
-    setSessionState(createDemoSessionState(role));
-  }
-
   async function signInWithGoogle() {
     if (!isFirebaseConfigured) {
       return;
@@ -186,7 +162,6 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
       value={{
         ...sessionState,
         isFirebaseConfigured,
-        setDemoRole,
         signInWithGoogle,
         signOutCurrentUser,
       }}
@@ -204,46 +179,4 @@ export function useAuthSession() {
   }
 
   return session;
-}
-
-export function isUserRole(value: string | null): value is UserRole {
-  return demoRoleOptions.includes(value as UserRole);
-}
-
-function createDemoSessionState(role: UserRole) {
-  return {
-    displayName: getDemoDisplayName(role),
-    email: `${role}.demo@example.com`,
-    role,
-    status: 'demo' as const,
-    userId: getDemoUserId(role),
-  };
-}
-
-function getDemoUserId(role: UserRole) {
-  if (role === 'guest') {
-    return 'demo-guest';
-  }
-
-  if (role === 'team_member' || role === 'organizer') {
-    return 'seed-user-team-1';
-  }
-
-  if (role === 'admin') {
-    return 'seed-user-admin-1';
-  }
-
-  if (role === 'visitor') {
-    return visitorUserId;
-  }
-
-  return 'demo-member';
-}
-
-function getDemoDisplayName(role: UserRole) {
-  if (role === 'visitor') {
-    return 'Visitor';
-  }
-
-  return `Demo ${role}`;
 }
