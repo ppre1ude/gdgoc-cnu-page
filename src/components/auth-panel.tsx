@@ -1,8 +1,12 @@
 'use client';
 
+import { usePathname, useSearchParams } from 'next/navigation';
+
 import type { UserRole } from '@/domain/activity';
+import { getRouteLoginHref } from '@/domain/auth-flow';
 import {
   WdsButton,
+  WdsLinkButton,
   WdsSelect,
   type WdsSelectOption,
 } from '@/components/wds-form-controls';
@@ -17,14 +21,14 @@ const demoRoleSelectOptions = demoRoleOptions.map((option) => ({
 })) satisfies WdsSelectOption<UserRole>[];
 
 export function AuthPanel() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const {
     displayName,
     email,
-    errorMessage,
     isFirebaseConfigured,
     role,
     setDemoRole,
-    signInWithGoogle,
     signOutCurrentUser,
     status,
   } = useAuthSession();
@@ -63,13 +67,12 @@ export function AuthPanel() {
   }
 
   return (
-    <WdsButton
-      onClick={signInWithGoogle}
+    <WdsLinkButton
+      href={getRouteLoginHref(pathname, searchParams)}
       size="small"
       tone="ghost"
-      type="button"
     >
-      {errorMessage ? 'Auth 재시도' : 'Google 로그인'}
-    </WdsButton>
+      Google 로그인
+    </WdsLinkButton>
   );
 }

@@ -14,9 +14,9 @@ import {
   listHomeActivities,
   proposeMemberActivity,
 } from '@/domain/activity-service';
+import { getLoginHref, getPublicJoinHref } from '@/domain/auth-flow';
 import { listVisibleActivities } from '@/domain/activity';
 import type { ActivityApplicationState } from '@/domain/activity-application';
-import type { ChapterUser } from '@/domain/chapter-user';
 import { submitGuestProfile } from '@/domain/chapter-user-service';
 import type { ChapterRecord, ChapterRecordKind } from '@/domain/chapter-record';
 import {
@@ -58,11 +58,18 @@ import {
   WdsEmptyState,
   WdsField,
   WdsInput,
+  WdsLinkButton,
   WdsSelect,
   WdsTextArea,
   WdsTextLinkButton,
   type WdsSelectOption,
 } from '@/components/wds-form-controls';
+import {
+  defaultGuestProfile,
+  GuestProfileForm,
+  type GuestProfileFormState,
+  toGuestProfileForm,
+} from '@/features/users/guest-profile-form';
 import {
   demoRoleOptions,
   useAuthSession,
@@ -77,16 +84,6 @@ import { seedActivities } from './seed-activities';
 import { seedNotices } from '../notices/seed-notices';
 import { seedChapterRecords } from '../records/seed-chapter-records';
 import { seedShowcases } from '../showcases/seed-showcases';
-
-type GuestProfileFormState = {
-  displayName: string;
-  email: string;
-  department: string;
-  cohort: string;
-  studentId: string;
-  interests: string;
-  motivation: string;
-};
 
 type MemberProposalFormState = {
   title: string;
@@ -118,16 +115,6 @@ const memberFormSurfaceSx = {
     lineHeight: 1.6,
     margin: 0,
   },
-};
-
-const defaultGuestProfile: GuestProfileFormState = {
-  displayName: 'Build with AI Guest',
-  email: 'guest.demo@example.com',
-  department: '',
-  cohort: '',
-  studentId: '',
-  interests: '',
-  motivation: '',
 };
 
 const defaultMemberProposal: MemberProposalFormState = {
@@ -401,27 +388,48 @@ export function MemberHome() {
               <h2>{getAccessPanelTitle(access?.status)}</h2>
               <p>{access.message}</p>
             </div>
-            <WdsField
-              className="demo-role-field"
-              label={isFirebaseConfigured ? '현재 역할' : 'Demo 역할'}
-            >
-              <WdsSelect
-                disabled={authStatus !== 'demo'}
-                onValueChange={changeDemoRole}
-                options={demoRoleSelectOptions}
-                value={role}
-              />
-            </WdsField>
+            <div className="access-panel-side">
+              {role === 'visitor' ? (
+                <div className="access-panel-actions">
+                  <WdsLinkButton href={getLoginHref('/member')} tone="primary">
+                    Google 로그인
+                  </WdsLinkButton>
+                  <WdsTextLinkButton href={getPublicJoinHref()}>
+                    가입 화면
+                  </WdsTextLinkButton>
+                </div>
+              ) : null}
+              {role === 'guest' ? (
+                <div className="access-panel-actions">
+                  <WdsLinkButton href={getPublicJoinHref()} tone="primary">
+                    가입 정보 제출
+                  </WdsLinkButton>
+                </div>
+              ) : null}
+              <WdsField
+                className="demo-role-field"
+                label={isFirebaseConfigured ? '현재 역할' : 'Demo 역할'}
+              >
+                <WdsSelect
+                  disabled={authStatus !== 'demo'}
+                  onValueChange={changeDemoRole}
+                  options={demoRoleSelectOptions}
+                  value={role}
+                />
+              </WdsField>
+            </div>
           </div>
         </section>
 
         {role === 'guest' ? (
-          <GuestProfileForm
-            message={guestProfileMessage}
-            onChange={setGuestProfile}
-            onSubmit={handleGuestProfileSubmit}
-            value={guestProfile}
-          />
+          <section className="section section-compact">
+            <GuestProfileForm
+              message={guestProfileMessage}
+              onChange={setGuestProfile}
+              onSubmit={handleGuestProfileSubmit}
+              value={guestProfile}
+            />
+          </section>
         ) : null}
 
         {canProposeActivities ? (
@@ -687,117 +695,6 @@ function MemberRecordForm({
       </MemberFormSurface>
     </section>
   );
-}
-
-function GuestProfileForm({
-  message,
-  onChange,
-  onSubmit,
-  value,
-}: {
-  message: string;
-  onChange: (value: GuestProfileFormState) => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-  value: GuestProfileFormState;
-}) {
-  function updateField(
-    field: keyof GuestProfileFormState,
-    nextValue: string,
-  ) {
-    onChange({
-      ...value,
-      [field]: nextValue,
-    });
-  }
-
-  return (
-    <section className="section section-compact">
-      <MemberFormSurface onSubmit={onSubmit}>
-        <div>
-          <WdsBadge tone="green">Guest Profile</WdsBadge>
-          <h2>멤버 승인 요청 정보</h2>
-          <p>
-            운영진이 guest 계정을 member로 승인하기 전에 확인할 기본 정보를
-            제출합니다.
-          </p>
-        </div>
-
-        <WdsResponsiveGrid columns={2}>
-          <WdsField label="이름">
-            <WdsInput
-              onChange={(event) => updateField('displayName', event.target.value)}
-              required
-              value={value.displayName}
-            />
-          </WdsField>
-          <WdsField label="이메일">
-            <WdsInput
-              onChange={(event) => updateField('email', event.target.value)}
-              required
-              type="email"
-              value={value.email}
-            />
-          </WdsField>
-          <WdsField label="학과">
-            <WdsInput
-              onChange={(event) => updateField('department', event.target.value)}
-              placeholder="예: 컴퓨터융합학부"
-              value={value.department}
-            />
-          </WdsField>
-          <WdsField label="기수 또는 학년">
-            <WdsInput
-              onChange={(event) => updateField('cohort', event.target.value)}
-              placeholder="예: 3기, 2학년"
-              value={value.cohort}
-            />
-          </WdsField>
-          <WdsField label="학번">
-            <WdsInput
-              onChange={(event) => updateField('studentId', event.target.value)}
-              value={value.studentId}
-            />
-          </WdsField>
-          <WdsField label="관심 분야">
-            <WdsInput
-              onChange={(event) => updateField('interests', event.target.value)}
-              placeholder="예: Firebase, Gemini, 프론트엔드"
-              value={value.interests}
-            />
-          </WdsField>
-        </WdsResponsiveGrid>
-
-        <WdsField label="참여 동기">
-          <WdsTextArea
-            onChange={(event) => updateField('motivation', event.target.value)}
-            placeholder="GDGoC CNU에서 하고 싶은 활동을 적어주세요."
-            value={value.motivation}
-          />
-        </WdsField>
-
-        <WdsFormActions
-          actions={
-            <WdsButton tone="primary" type="submit">
-              승인 요청 정보 저장
-            </WdsButton>
-          }
-          helper={message}
-        />
-      </MemberFormSurface>
-    </section>
-  );
-}
-
-function toGuestProfileForm(user: ChapterUser): GuestProfileFormState {
-  return {
-    cohort: user.cohort ?? '',
-    department: user.department ?? '',
-    displayName: user.displayName,
-    email: user.email,
-    interests: user.interests ?? '',
-    motivation: user.motivation ?? '',
-    studentId: user.studentId ?? '',
-  };
 }
 
 function ShowcasePreviewSection({ showcases }: { showcases: Showcase[] }) {

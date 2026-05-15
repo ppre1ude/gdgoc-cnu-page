@@ -1082,6 +1082,21 @@ textarea {
   margin: 0;
 }
 
+.access-panel-side {
+  align-items: flex-end;
+  display: grid;
+  gap: 12px;
+  justify-items: end;
+}
+
+.access-panel-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 .demo-role-field {
   min-width: 180px;
 }
@@ -1173,6 +1188,35 @@ textarea {
 
 .page {
   padding: 44px 0 72px;
+}
+
+.auth-flow-page {
+  min-height: calc(100vh - 65px);
+}
+
+.auth-flow-container {
+  display: grid;
+  gap: 24px;
+  max-width: 760px;
+}
+
+.auth-flow-card {
+  display: grid;
+  gap: 18px;
+}
+
+.auth-flow-copy h2 {
+  color: var(--text-strong);
+  font-size: 24px;
+  letter-spacing: 0;
+  line-height: 1.3;
+  margin: 0 0 8px;
+}
+
+.auth-flow-copy p {
+  color: var(--text-muted);
+  line-height: 1.65;
+  margin: 0;
 }
 
 .form {
@@ -1527,6 +1571,15 @@ textarea {
   .access-panel {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .access-panel-side {
+    align-items: stretch;
+    justify-items: stretch;
+  }
+
+  .access-panel-actions {
+    justify-content: flex-start;
   }
 
   .demo-role-field {
