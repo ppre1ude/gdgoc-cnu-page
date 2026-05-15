@@ -266,22 +266,26 @@ export function ActivityAdmin() {
       now,
     };
 
-    const savedActivity = editingActivityId
-      ? await updateActivity(store, {
-        ...activityFields,
-        activityId: editingActivityId,
-      })
-      : await createActivity(store, activityFields);
-    await loadOrSyncDefaultActivitySession(sessionStore, savedActivity);
-    setMessage(
-      editingActivityId
-        ? 'Activity가 수정되었습니다. Member Home에서 바로 확인할 수 있습니다.'
-        : 'Activity가 저장되었습니다. Member Home에서 바로 확인할 수 있습니다.',
-    );
-    setDraft(initialDraft);
-    setEditingActivityId(null);
-    setSuggestion(null);
-    await refreshDashboard();
+    try {
+      const savedActivity = editingActivityId
+        ? await updateActivity(store, {
+          ...activityFields,
+          activityId: editingActivityId,
+        })
+        : await createActivity(store, activityFields);
+      await loadOrSyncDefaultActivitySession(sessionStore, savedActivity);
+      setMessage(
+        editingActivityId
+          ? 'Activity가 수정되었습니다. Member Home에서 바로 확인할 수 있습니다.'
+          : 'Activity가 저장되었습니다. Member Home에서 바로 확인할 수 있습니다.',
+      );
+      setDraft(initialDraft);
+      setEditingActivityId(null);
+      setSuggestion(null);
+      await refreshDashboard();
+    } catch (error) {
+      setMessage(describeActivitySaveError(error));
+    }
   }
 
   function startEditing(activity: Activity) {
@@ -529,7 +533,7 @@ export function ActivityAdmin() {
                   </WdsButton>
                 </div>
               ) : null}
-              <p className="helper-text">{message}</p>
+              <p className="helper-text" aria-live="polite">{message}</p>
             </form>
           </WdsSurfaceCard>
 
@@ -784,4 +788,26 @@ function toDateTimeLocalValue(value: string | undefined) {
 
 function isExternalRegistrationMode(mode: ActivityRegistrationMode) {
   return mode === 'external' || mode === 'hybrid';
+}
+
+function describeActivitySaveError(error: unknown) {
+  const fallbackMessage = 'Activity를 저장하지 못했습니다. 입력값을 확인한 뒤 다시 시도하세요.';
+
+  if (!(error instanceof Error)) {
+    return fallbackMessage;
+  }
+
+  if (error.message.includes('Activity title is required')) {
+    return 'Activity를 저장하려면 제목을 입력해야 합니다.';
+  }
+
+  if (error.message.includes('Activity summary is required')) {
+    return 'Activity를 저장하려면 운영진 메모 / 본문을 입력해야 합니다.';
+  }
+
+  if (error.message.includes('External registration URL is required')) {
+    return '외부 등록 또는 내부 신청 + 외부 등록 방식에는 외부 등록 URL이 필요합니다.';
+  }
+
+  return `${fallbackMessage} ${error.message}`;
 }

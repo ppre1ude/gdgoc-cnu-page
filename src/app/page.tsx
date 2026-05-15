@@ -1,4 +1,5 @@
-import { WdsLinkButton } from '@/components/wds-form-controls';
+import { WdsBadge, WdsLinkButton } from '@/components/wds-form-controls';
+import { WdsSurfaceCard } from '@/components/wds-layout-primitives';
 import {
   onboardingBrandPoints,
   onboardingPosterPipeline,
@@ -96,7 +97,7 @@ export default function PublicHomePage() {
       >
         <div className="container campaign-bridge-grid">
           <div>
-            <span className="badge badge-blue">GDGoC CNU Values</span>
+            <WdsBadge tone="blue">GDGoC CNU Values</WdsBadge>
             <h2 id="values-title">함께 배우고, 프로젝트로 성장하는 방식</h2>
           </div>
           <p>
@@ -149,29 +150,29 @@ export default function PublicHomePage() {
 
       <section className="section">
         <div className="container grid grid-3">
-          <div className="card">
-            <span className="badge badge-blue">Connect</span>
+          <WdsSurfaceCard as="article">
+            <WdsBadge tone="blue">Connect</WdsBadge>
             <h3>함께할 사람을 만납니다</h3>
             <p>
               학교 안팎의 동료, 멘토, 파트너와 연결되어 더 넓은 개발자
               네트워크를 만듭니다.
             </p>
-          </div>
-          <div className="card">
-            <span className="badge">Learn</span>
+          </WdsSurfaceCard>
+          <WdsSurfaceCard as="article">
+            <WdsBadge>Learn</WdsBadge>
             <h3>실습으로 기술을 익힙니다</h3>
             <p>
               Google 기술과 AI를 직접 다루고, 서로 설명하며 배움을 공유합니다.
             </p>
-          </div>
-          <div className="card">
-            <span className="badge badge-green">Grow</span>
+          </WdsSurfaceCard>
+          <WdsSurfaceCard as="article">
+            <WdsBadge tone="green">Grow</WdsBadge>
             <h3>프로젝트로 경험을 쌓습니다</h3>
             <p>
               아이디어를 작은 결과물로 구현하며 협업과 문제 해결 경험을
               쌓습니다.
             </p>
-          </div>
+          </WdsSurfaceCard>
         </div>
       </section>
     </main>
