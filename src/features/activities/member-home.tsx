@@ -14,7 +14,7 @@ import {
   listHomeActivities,
   proposeMemberActivity,
 } from '@/domain/activity-service';
-import { getLoginHref, getPublicJoinHref } from '@/domain/auth-flow';
+import { getPublicOnboardingHref } from '@/domain/auth-flow';
 import { listVisibleActivities } from '@/domain/activity';
 import type { ActivityApplicationState } from '@/domain/activity-application';
 import { submitGuestProfile } from '@/domain/chapter-user-service';
@@ -391,17 +391,14 @@ export function MemberHome() {
             <div className="access-panel-side">
               {role === 'visitor' ? (
                 <div className="access-panel-actions">
-                  <WdsLinkButton href={getLoginHref('/member')} tone="primary">
+                  <WdsLinkButton href={getPublicOnboardingHref()} tone="primary">
                     Google 로그인
                   </WdsLinkButton>
-                  <WdsTextLinkButton href={getPublicJoinHref()}>
-                    가입 화면
-                  </WdsTextLinkButton>
                 </div>
               ) : null}
               {role === 'guest' ? (
                 <div className="access-panel-actions">
-                  <WdsLinkButton href={getPublicJoinHref()} tone="primary">
+                  <WdsLinkButton href={getPublicOnboardingHref()} tone="primary">
                     가입 정보 제출
                   </WdsLinkButton>
                 </div>

@@ -1,5 +1,7 @@
-import { JoinScreen } from '@/features/users/join-screen';
+import { redirect } from 'next/navigation';
+
+import { getLegacyJoinRedirectHref } from '@/domain/auth-flow';
 
 export default function JoinPage() {
-  return <JoinScreen />;
+  redirect(getLegacyJoinRedirectHref());
 }
