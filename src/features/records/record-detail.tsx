@@ -9,11 +9,8 @@ import { getRecordKindLabel } from '@/components/chapter-record-card';
 import {
   WdsBadge,
   WdsEmptyState,
-  WdsField,
   WdsLinkButton,
-  WdsSelect,
   WdsTextLinkButton,
-  type WdsSelectOption,
 } from '@/components/wds-form-controls';
 import {
   WdsActionRow,
@@ -21,24 +18,14 @@ import {
   WdsDashboardLayout,
   WdsSurfaceCard,
 } from '@/components/wds-layout-primitives';
-import {
-  demoRoleOptions,
-  useAuthSession,
-} from '@/features/auth/auth-session-provider';
+import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { formatKoreanDate } from '@/lib/format-korean-date-time';
 import { createBrowserChapterRecordStore } from './browser-chapter-record-store';
-
-const demoRoleSelectOptions = demoRoleOptions.map((role) => ({
-  label: role,
-  value: role,
-})) satisfies WdsSelectOption<UserRole>[];
 
 export function RecordDetail({ recordId }: { recordId: string }) {
   const store = useMemo(() => createBrowserChapterRecordStore(), []);
   const {
-    isFirebaseConfigured,
     role,
-    setDemoRole,
     status,
   } = useAuthSession();
   const [record, setRecord] = useState<ChapterRecord | null>(null);
@@ -65,15 +52,6 @@ export function RecordDetail({ recordId }: { recordId: string }) {
     );
   }
 
-  async function changeDemoRole(nextRole: UserRole) {
-    if (isFirebaseConfigured) {
-      return;
-    }
-
-    setDemoRole(nextRole);
-    await refreshDetail(nextRole);
-  }
-
   return (
     <main className="page">
       <div className="container">
@@ -96,14 +74,6 @@ export function RecordDetail({ recordId }: { recordId: string }) {
               <h2>{record ? record.title : '챕터 기록 상세'}</h2>
               <p>{message}</p>
             </div>
-            <WdsField className="demo-role-field" label="현재 역할">
-              <WdsSelect
-                disabled={isFirebaseConfigured}
-                onValueChange={(nextRole) => void changeDemoRole(nextRole)}
-                options={demoRoleSelectOptions}
-                value={role}
-              />
-            </WdsField>
           </div>
         </section>
 

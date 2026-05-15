@@ -74,10 +74,7 @@ import {
   type GuestProfileFormState,
   toGuestProfileForm,
 } from '@/features/users/guest-profile-form';
-import {
-  demoRoleOptions,
-  useAuthSession,
-} from '@/features/auth/auth-session-provider';
+import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserActivityApplicationStore } from './browser-activity-application-store';
 import { createBrowserActivityStore } from './browser-activity-store';
 import { createBrowserNoticeStore } from '../notices/browser-notice-store';
@@ -138,12 +135,6 @@ const defaultMemberRecord: MemberRecordFormState = {
   tags: '',
 };
 
-const demoRoleSelectOptions: readonly WdsSelectOption<UserRole>[] =
-  demoRoleOptions.map((role) => ({
-    label: role,
-    value: role,
-  }));
-
 const activityProposalTypeOptions = [
   { label: 'Study', value: 'study' },
   { label: 'Project', value: 'project' },
@@ -159,9 +150,7 @@ const memberHomeCopy = koreanCopy.memberHome;
 
 export function MemberHome({ initialSectionId = 'overview' }: MemberHomeProps) {
   const {
-    isFirebaseConfigured,
     role,
-    setDemoRole,
     status: authStatus,
     userId,
   } = useAuthSession();
@@ -213,10 +202,6 @@ export function MemberHome({ initialSectionId = 'overview' }: MemberHomeProps) {
         userId: currentUserId,
       }),
     );
-  }
-
-  function changeDemoRole(nextRole: UserRole) {
-    setDemoRole(nextRole);
   }
 
   async function loadGuestProfile(currentUserId: string) {
@@ -388,15 +373,7 @@ export function MemberHome({ initialSectionId = 'overview' }: MemberHomeProps) {
         <div className="member-dashboard-shell">
           <MemberDashboardSidebar
             accessMessage={access.message}
-            authStatus={authStatus}
             counts={dashboardCounts}
-            currentRoleLabel={
-              isFirebaseConfigured
-                ? memberHomeCopy.access.currentRoleLabel
-                : memberHomeCopy.access.demoRoleLabel
-            }
-            isFirebaseConfigured={isFirebaseConfigured}
-            onRoleChange={changeDemoRole}
             role={role}
             selectedSectionId={selectedSection.id}
             sections={visibleSections}
@@ -414,7 +391,6 @@ export function MemberHome({ initialSectionId = 'overview' }: MemberHomeProps) {
                 dashboardOpenStudies={dashboardOpenStudies}
                 guestProfile={guestProfile}
                 guestProfileMessage={guestProfileMessage}
-                isFirebaseConfigured={isFirebaseConfigured}
                 onGuestProfileChange={setGuestProfile}
                 onGuestProfileSubmit={handleGuestProfileSubmit}
                 role={role}
@@ -508,22 +484,14 @@ export function MemberHome({ initialSectionId = 'overview' }: MemberHomeProps) {
 
 function MemberDashboardSidebar({
   accessMessage,
-  authStatus,
   counts,
-  currentRoleLabel,
-  isFirebaseConfigured,
-  onRoleChange,
   role,
   sections,
   selectedSectionId,
   statusLabel,
 }: {
   accessMessage: string;
-  authStatus: ReturnType<typeof useAuthSession>['status'];
   counts: MemberDashboardCounts;
-  currentRoleLabel: string;
-  isFirebaseConfigured: boolean;
-  onRoleChange: (role: UserRole) => void;
   role: UserRole;
   sections: readonly MemberDashboardSection[];
   selectedSectionId: MemberDashboardSectionId;
@@ -533,9 +501,7 @@ function MemberDashboardSidebar({
     <aside className="member-dashboard-sidebar">
       <div className="member-sidebar-status">
         <WdsBadgeGroup>
-          <WdsBadge tone="blue">
-            {isFirebaseConfigured ? memberHomeCopy.access.currentRoleLabel : 'Demo Role'}
-          </WdsBadge>
+          <WdsBadge tone="blue">{memberHomeCopy.access.currentRoleLabel}</WdsBadge>
           <WdsBadge>{statusLabel}</WdsBadge>
         </WdsBadgeGroup>
         <strong>Member Workspace</strong>
@@ -553,14 +519,6 @@ function MemberDashboardSidebar({
             {memberHomeCopy.access.guestSubmitLabel}
           </WdsLinkButton>
         ) : null}
-        <WdsField className="demo-role-field" label={currentRoleLabel}>
-          <WdsSelect
-            disabled={authStatus !== 'demo'}
-            onValueChange={onRoleChange}
-            options={demoRoleSelectOptions}
-            value={role}
-          />
-        </WdsField>
       </div>
 
       <nav className="member-dashboard-nav" aria-label="Member dashboard sections">
@@ -604,7 +562,6 @@ function MemberDashboardOverview({
   dashboardOpenStudies,
   guestProfile,
   guestProfileMessage,
-  isFirebaseConfigured,
   onGuestProfileChange,
   onGuestProfileSubmit,
   role,
@@ -618,7 +575,6 @@ function MemberDashboardOverview({
   dashboardOpenStudies: Activity[];
   guestProfile: GuestProfileFormState;
   guestProfileMessage: string;
-  isFirebaseConfigured: boolean;
   onGuestProfileChange: (value: GuestProfileFormState) => void;
   onGuestProfileSubmit: (event: FormEvent<HTMLFormElement>) => void;
   role: UserRole;
@@ -634,11 +590,7 @@ function MemberDashboardOverview({
       <div className="access-panel">
         <div>
           <WdsBadgeGroup>
-            <WdsBadge tone="blue">
-              {isFirebaseConfigured
-                ? memberHomeCopy.access.currentRoleLabel
-                : 'Demo Role'}
-            </WdsBadge>
+            <WdsBadge tone="blue">{memberHomeCopy.access.currentRoleLabel}</WdsBadge>
             <WdsBadge>{statusLabel}</WdsBadge>
           </WdsBadgeGroup>
           <h2>{statusLabel}</h2>

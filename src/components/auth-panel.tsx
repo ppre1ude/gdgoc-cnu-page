@@ -2,23 +2,12 @@
 
 import { usePathname, useSearchParams } from 'next/navigation';
 
-import type { UserRole } from '@/domain/activity';
 import { getRouteLoginHref } from '@/domain/auth-flow';
 import {
   WdsButton,
   WdsLinkButton,
-  WdsSelect,
-  type WdsSelectOption,
 } from '@/components/wds-form-controls';
-import {
-  demoRoleOptions,
-  useAuthSession,
-} from '@/features/auth/auth-session-provider';
-
-const demoRoleSelectOptions = demoRoleOptions.map((option) => ({
-  label: option,
-  value: option,
-})) satisfies WdsSelectOption<UserRole>[];
+import { useAuthSession } from '@/features/auth/auth-session-provider';
 
 export function AuthPanel() {
   const pathname = usePathname();
@@ -26,28 +15,9 @@ export function AuthPanel() {
   const {
     displayName,
     email,
-    isFirebaseConfigured,
-    role,
-    setDemoRole,
     signOutCurrentUser,
     status,
   } = useAuthSession();
-
-  if (!isFirebaseConfigured) {
-    return (
-      <div className="auth-role-control">
-        <span className="auth-pill">Demo role</span>
-        <WdsSelect
-          aria-label="Demo role"
-          height={32}
-          onValueChange={setDemoRole}
-          options={demoRoleSelectOptions}
-          value={role}
-          width="160px"
-        />
-      </div>
-    );
-  }
 
   if (status === 'loading') {
     return <span className="auth-pill">Auth 확인 중</span>;

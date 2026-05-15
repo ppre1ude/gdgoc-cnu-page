@@ -34,7 +34,6 @@ export function LoginScreen() {
     errorMessage,
     isFirebaseConfigured,
     role,
-    setDemoRole,
     signInWithGoogle,
     status,
     userId,
@@ -55,14 +54,7 @@ export function LoginScreen() {
     () => resolveSafeNextPath(searchParams.get('next')),
     [searchParams],
   );
-  const canSubmitProfile =
-    (status === 'signed_in' || status === 'demo') && role === 'guest';
-
-  useEffect(() => {
-    if (!isFirebaseConfigured && status === 'demo' && role !== 'guest') {
-      setDemoRole('guest');
-    }
-  }, [isFirebaseConfigured, role, setDemoRole, status]);
+  const canSubmitProfile = status === 'signed_in' && role === 'guest';
 
   useEffect(() => {
     if (status !== 'signed_in' || role === 'guest') {
@@ -193,7 +185,7 @@ export function LoginScreen() {
     );
   }
 
-  if (status === 'loading' || status === 'signed_in' || status === 'demo') {
+  if (status === 'loading' || status === 'signed_in') {
     return (
       <main className="page auth-flow-page">
         <div className="container auth-flow-container">

@@ -8,20 +8,12 @@ import {
   isMemberHomeSnapshotCurrent,
   type MemberHomeSnapshot,
 } from '@/domain/member-home-snapshot';
-import {
-  demoRoleOptions,
-  useAuthSession,
-} from '@/features/auth/auth-session-provider';
+import { useAuthSession } from '@/features/auth/auth-session-provider';
 import { createBrowserActivityApplicationStore } from './browser-activity-application-store';
 import { createBrowserActivityStore } from './browser-activity-store';
 import { createBrowserNoticeStore } from '../notices/browser-notice-store';
 import { createBrowserShowcaseStore } from '../showcases/browser-showcase-store';
 import { createBrowserChapterRecordStore } from '../records/browser-chapter-record-store';
-
-export const memberDemoRoleOptions = demoRoleOptions.map((role) => ({
-  label: role,
-  value: role,
-}));
 
 export function useMemberHomeSnapshot() {
   const authSession = useAuthSession();

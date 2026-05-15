@@ -23,7 +23,6 @@ import { NoticeBoard } from '@/components/notice-board';
 import {
   WdsBadge,
   WdsEmptyState,
-  WdsLinkButton,
   WdsTextLinkButton,
 } from '@/components/wds-form-controls';
 import {
@@ -100,12 +99,6 @@ export function MemberCategoryPage({ category }: MemberCategoryPageProps) {
         />
 
         <MemberFlowTabs activeId={category} />
-
-        <section className="section section-compact">
-          <WdsLinkButton href="/member" tone="secondary">
-            Dashboard로 돌아가기
-          </WdsLinkButton>
-        </section>
 
         {renderCategoryContent({
           applicationStates,

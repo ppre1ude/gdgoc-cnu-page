@@ -211,7 +211,7 @@ export const koreanCopy = {
     defaultDescription: '현재 역할로는 이 화면에 접근할 수 없습니다.',
     defaultTitle: '권한이 필요합니다',
     demoAccessNotice:
-      '데모 환경에서는 상단의 Demo role 선택으로 권한별 화면을 확인할 수 있습니다.',
+      'Firebase Auth 설정이 없어 로그인 기반 권한 확인을 사용할 수 없습니다. Vercel 배포 환경에는 Firebase 환경 변수를 설정해야 합니다.',
     liveAccessNotice:
       '실제 배포 환경에서는 Firebase Auth 로그인과 저장된 사용자 역할을 기준으로 접근을 보호합니다. 권한이 필요하면 운영진에게 역할 승인을 요청하세요.',
     loadingDescription: '로그인 상태와 챕터 역할을 불러오고 있습니다.',

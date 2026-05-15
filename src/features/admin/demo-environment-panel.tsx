@@ -35,13 +35,11 @@ const initialEnvironmentStatus: EnvironmentStatusResponse = {
 
 const statusLabels: Record<DemoEnvironmentItem['status'], string> = {
   action_needed: '설정 필요',
-  demo_ready: 'Demo 준비됨',
   fallback_ready: 'Fallback 준비됨',
   ready: 'Live 준비됨',
 };
 
 const overallLabels = {
-  demo_ready: 'Demo bridge로 발표 가능',
   live_ready: '실제 Firebase/Gemini 연결 준비됨',
   needs_attention: '실제 데모 전 확인 필요',
 };
@@ -135,7 +133,7 @@ export function DemoEnvironmentPanel() {
 }
 
 function getStatusBadgeTone(status: DemoEnvironmentItem['status']): WdsBadgeTone {
-  if (status === 'ready' || status === 'demo_ready') {
+  if (status === 'ready') {
     return 'green';
   }
 
