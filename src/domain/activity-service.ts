@@ -108,7 +108,7 @@ export async function createActivity(
   const registrationFields = getRegistrationFields(input);
   const contentFields = getRequiredActivityContentFields(input);
 
-  return store.create({
+  return store.create(omitUndefinedActivityFields({
     id: `activity-${crypto.randomUUID()}`,
     ...contentFields,
     type: input.type,
@@ -118,7 +118,7 @@ export async function createActivity(
     ...registrationFields,
     createdAt: input.now,
     updatedAt: input.now,
-  });
+  }));
 }
 
 export async function updateActivity(
@@ -143,7 +143,7 @@ export async function updateActivity(
     ...activityWithoutRegistrationFields
   } = activity;
 
-  return store.save({
+  return store.save(omitUndefinedActivityFields({
     ...activityWithoutRegistrationFields,
     ...contentFields,
     type: input.type,
@@ -152,7 +152,7 @@ export async function updateActivity(
     startsAt: input.startsAt,
     ...registrationFields,
     updatedAt: input.now,
-  });
+  }));
 }
 
 export async function archiveActivity(
@@ -183,7 +183,7 @@ export async function proposeMemberActivity(
   const isStudy = input.type === 'study';
   const contentFields = getRequiredActivityContentFields(input);
 
-  return store.create({
+  return store.create(omitUndefinedActivityFields({
     id: `activity-${crypto.randomUUID()}`,
     ...contentFields,
     type: input.type,
@@ -198,7 +198,7 @@ export async function proposeMemberActivity(
     proposalReviewedByUserId: isStudy ? input.actorUserId : undefined,
     createdAt: input.now,
     updatedAt: input.now,
-  });
+  }));
 }
 
 export async function listPendingActivityProposals(
@@ -355,4 +355,10 @@ function getRequiredActivityContentFields(input: {
     title,
     summary,
   };
+}
+
+function omitUndefinedActivityFields(activity: Activity): Activity {
+  return Object.fromEntries(
+    Object.entries(activity).filter(([, value]) => value !== undefined),
+  ) as Activity;
 }
