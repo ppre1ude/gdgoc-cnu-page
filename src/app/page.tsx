@@ -1,5 +1,8 @@
 import { WdsBadge, WdsLinkButton } from '@/components/wds-form-controls';
-import { WdsSurfaceCard } from '@/components/wds-layout-primitives';
+import {
+  WdsResponsiveGrid,
+  WdsSurfaceCard,
+} from '@/components/wds-layout-primitives';
 import {
   onboardingBrandPoints,
   onboardingPosterPipeline,
@@ -149,7 +152,7 @@ export default function PublicHomePage() {
       <PublicActivitySection />
 
       <section className="section">
-        <div className="container grid grid-3">
+        <WdsResponsiveGrid className="container" columns={3}>
           <WdsSurfaceCard as="article">
             <WdsBadge tone="blue">Connect</WdsBadge>
             <h3>함께할 사람을 만납니다</h3>
@@ -173,7 +176,7 @@ export default function PublicHomePage() {
               쌓습니다.
             </p>
           </WdsSurfaceCard>
-        </div>
+        </WdsResponsiveGrid>
       </section>
     </main>
   );
