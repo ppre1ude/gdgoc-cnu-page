@@ -2,12 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-import type { ActivityApplication } from '@/domain/activity-application';
-import type { ActivitySession, SessionAttendance } from '@/domain/activity-session';
-import { loadOrSyncDefaultActivitySession } from '@/domain/activity-session';
-import { listApplicationsForActivity } from '@/domain/activity-participation-service';
 import { listHomeActivities } from '@/domain/activity-service';
 import type { Activity, ActivityType } from '@/domain/activity';
+import { buildActivityParticipationSnapshot } from '@/domain/activity-participation-workflow';
 import {
   calculateOperatorAnalytics,
   type ActivityParticipationFunnel,
@@ -60,43 +57,32 @@ export function OperatorAnalyticsPanel() {
   }, [role]);
 
   async function refreshAnalytics() {
+    const now = new Date().toISOString();
     const [activities, users, roleChangeLogs] = await Promise.all([
       listHomeActivities(activityStore, role),
       userStore.listUsers(),
       userStore.listRoleChangeLogs(),
     ]);
-    const applicationsByActivity = await Promise.all(
-      activities.map((activity) =>
-        listApplicationsForActivity(applicationStore, activity.id),
-      ),
-    );
-    const sessions = (
-      await Promise.all(
-        activities.map((activity) => loadDefaultSessionForActivity(activity)),
-      )
-    ).filter((session): session is ActivitySession => Boolean(session));
-    const attendancesBySession = await Promise.all(
-      sessions.map((session) => attendanceStore.listBySession(session.id)),
-    );
-    const applications: ActivityApplication[] = applicationsByActivity.flat();
-    const sessionAttendances: SessionAttendance[] = attendancesBySession.flat();
+    const participationSnapshot = await buildActivityParticipationSnapshot({
+      activities,
+      applicationStore,
+      attendanceStore,
+      now,
+      sessionStore,
+    });
 
     setAnalytics(
       calculateOperatorAnalytics({
         activities,
         activityCapacityById: getDemoActivityCapacityById(activities),
-        applications,
-        activitySessions: sessions,
-        now: new Date().toISOString(),
+        applications: participationSnapshot.applications,
+        activitySessions: participationSnapshot.sessions,
+        now,
         roleChangeLogs,
-        sessionAttendances,
+        sessionAttendances: participationSnapshot.sessionAttendances,
         users,
       }),
     );
-  }
-
-  async function loadDefaultSessionForActivity(activity: Activity) {
-    return loadOrSyncDefaultActivitySession(sessionStore, activity);
   }
 
   return (

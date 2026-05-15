@@ -17,17 +17,17 @@ import type {
   ActivityVisibility,
 } from '@/domain/activity';
 import type { ActivityApplication } from '@/domain/activity-application';
-import {
-  approveApplicationForActivity,
-  listApplicationsForActivity,
-} from '@/domain/activity-participation-service';
+import { approveApplicationForActivity } from '@/domain/activity-participation-service';
 import {
   type ActivitySession,
-  type SessionAttendance,
+  type SessionAttendanceSummary,
   loadOrSyncDefaultActivitySession,
   markAttendanceForSession,
-  summarizeSessionAttendance,
 } from '@/domain/activity-session';
+import {
+  buildActivityParticipationSnapshot,
+  type ActivityParticipationSnapshot,
+} from '@/domain/activity-participation-workflow';
 import {
   acceptActivityProposal,
   archiveActivity,
@@ -134,15 +134,8 @@ export function ActivityAdmin() {
     listVisibleActivities(seedActivities, role),
   );
   const [pendingProposals, setPendingProposals] = useState<Activity[]>([]);
-  const [applicationsByActivity, setApplicationsByActivity] = useState<
-    Record<string, ActivityApplication[]>
-  >({});
-  const [sessionsByActivity, setSessionsByActivity] = useState<
-    Record<string, ActivitySession | null>
-  >({});
-  const [attendancesBySession, setAttendancesBySession] = useState<
-    Record<string, SessionAttendance[]>
-  >({});
+  const [participationSnapshot, setParticipationSnapshot] =
+    useState<ActivityParticipationSnapshot | null>(null);
   const [suggestion, setSuggestion] = useState<ActivityDraftSuggestion | null>(null);
   const [message, setMessage] = useState(
     'Firebase 설정이 없으면 브라우저 localStorage bridge로 데모가 동작합니다.',
@@ -155,42 +148,21 @@ export function ActivityAdmin() {
 
   async function refreshDashboard() {
     const nextActivities = await listHomeActivities(store, role);
-    const nextSessionsByActivity = Object.fromEntries(
-      await Promise.all(
-        nextActivities.map(async (activity) => [
-          activity.id,
-          await loadDefaultSessionForActivity(activity),
-        ]),
-      ),
-    );
-    const nextApplicationsByActivity = Object.fromEntries(
-      await Promise.all(
-        nextActivities.map(async (activity) => [
-          activity.id,
-          await listApplicationsForActivity(applicationStore, activity.id),
-        ]),
-      ),
-    );
-    const nextAttendancesBySession = Object.fromEntries(
-      await Promise.all(
-        Object.values(nextSessionsByActivity)
-          .filter((session): session is ActivitySession => Boolean(session))
-          .map(async (session) => [
-            session.id,
-            await attendanceStore.listBySession(session.id),
-          ]),
-      ),
-    );
+    const nextParticipationSnapshot = await buildActivityParticipationSnapshot({
+      activities: nextActivities,
+      applicationStore,
+      attendanceStore,
+      now: new Date().toISOString(),
+      sessionStore,
+    });
 
     const nextPendingProposals = operatorRoles.has(role)
       ? await listPendingActivityProposals(store, role)
       : [];
 
     setActivities(nextActivities);
-    setSessionsByActivity(nextSessionsByActivity);
+    setParticipationSnapshot(nextParticipationSnapshot);
     setPendingProposals(nextPendingProposals);
-    setApplicationsByActivity(nextApplicationsByActivity);
-    setAttendancesBySession(nextAttendancesBySession);
   }
 
   async function loadDefaultSessionForActivity(activity: Activity) {
@@ -362,7 +334,8 @@ export function ActivityAdmin() {
     application: ActivityApplication,
   ) {
     const session =
-      sessionsByActivity[activity.id] ?? (await loadDefaultSessionForActivity(activity));
+      participationSnapshot?.sessionsByActivity[activity.id] ??
+      (await loadDefaultSessionForActivity(activity));
 
     if (!session) {
       setMessage('일정이 있는 activity만 출석 처리할 수 있습니다.');
@@ -598,7 +571,8 @@ export function ActivityAdmin() {
                 title="Saved"
               />
               {activities.map((activity) => {
-                const session = sessionsByActivity[activity.id] ?? null;
+                const session =
+                  participationSnapshot?.sessionsByActivity[activity.id] ?? null;
 
                 return (
                   <WdsStack key={activity.id}>
@@ -624,13 +598,26 @@ export function ActivityAdmin() {
                     </WdsActionRow>
                     <ApplicationQueue
                       activity={activity}
-                      applications={applicationsByActivity[activity.id] ?? []}
-                      attendances={
-                        session ? attendancesBySession[session.id] ?? [] : []
+                      applications={
+                        participationSnapshot?.applicationsByActivity[
+                          activity.id
+                        ] ?? []
+                      }
+                      attendedUserIds={
+                        session
+                          ? participationSnapshot?.attendedUserIdsBySession[
+                              session.id
+                            ] ?? []
+                          : []
                       }
                       onApprove={approveApplication}
                       onMarkAttended={markAttended}
                       session={session}
+                      summary={
+                        participationSnapshot?.summariesByActivity[
+                          activity.id
+                        ] ?? null
+                      }
                     />
                   </WdsStack>
                 );
@@ -690,30 +677,24 @@ function ProposalReviewQueue({
 function ApplicationQueue({
   activity,
   applications,
-  attendances,
+  attendedUserIds,
   onApprove,
   onMarkAttended,
   session,
+  summary,
 }: {
   activity: Activity;
   applications: ActivityApplication[];
-  attendances: SessionAttendance[];
+  attendedUserIds: string[];
   onApprove: (application: ActivityApplication) => void;
   onMarkAttended: (
     activity: Activity,
     application: ActivityApplication,
   ) => void;
   session: ActivitySession | null;
+  summary: SessionAttendanceSummary | null;
 }) {
-  const summary = session
-    ? summarizeSessionAttendance({
-        applications,
-        attendances,
-        now: new Date().toISOString(),
-        session,
-      })
-    : null;
-  const attendedUserIds = new Set(attendances.map((attendance) => attendance.userId));
+  const attendedUserIdSet = new Set(attendedUserIds);
 
   if (applications.length === 0) {
     return (
@@ -725,7 +706,7 @@ function ApplicationQueue({
     <WdsQueue>
       {summary ? <AttendanceSummary summary={summary} /> : null}
       {applications.map((application) => {
-        const isAttended = attendedUserIds.has(application.userId);
+        const isAttended = attendedUserIdSet.has(application.userId);
 
         return (
           <WdsQueueRow key={application.id}>
@@ -771,7 +752,7 @@ function ApplicationQueue({
 function AttendanceSummary({
   summary,
 }: {
-  summary: ReturnType<typeof summarizeSessionAttendance>;
+  summary: SessionAttendanceSummary;
 }) {
   return (
     <WdsQueueSummary>
