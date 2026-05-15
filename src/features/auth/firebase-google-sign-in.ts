@@ -7,6 +7,8 @@ export type GoogleSignInDependencies<TAuth, TProvider> = {
 
 export type GoogleSignInResult = 'popup' | 'redirect';
 
+const popupBlockedAuthCode = 'auth/popup-blocked';
+
 export async function signInWithPopupOrRedirect<TAuth, TProvider>({
   auth,
   provider,
@@ -31,15 +33,29 @@ export function isPopupBlockedAuthError(error: unknown): boolean {
     return false;
   }
 
-  const code = 'code' in error ? error.code : undefined;
+  const code = getStringProperty(error, 'code');
 
-  if (code === 'auth/popup-blocked') {
-    return true;
+  if (code) {
+    return code === popupBlockedAuthCode;
   }
 
-  const message = 'message' in error ? error.message : undefined;
+  const message = getStringProperty(error, 'message');
 
+  return isFirebasePopupBlockedMessage(message);
+}
+
+function getStringProperty(
+  value: object,
+  propertyName: 'code' | 'message',
+) {
+  const candidate = (value as Record<string, unknown>)[propertyName];
+  return typeof candidate === 'string' ? candidate : undefined;
+}
+
+function isFirebasePopupBlockedMessage(message: string | undefined) {
   return (
-    typeof message === 'string' && message.includes('auth/popup-blocked')
+    typeof message === 'string' &&
+    message.startsWith('Firebase: Error') &&
+    message.includes(`(${popupBlockedAuthCode})`)
   );
 }

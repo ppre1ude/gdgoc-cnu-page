@@ -52,4 +52,23 @@ describe('Firebase Google sign-in flow', () => {
       true,
     );
   });
+
+  it('does not trust arbitrary popup-blocked message text', () => {
+    assert.equal(
+      isPopupBlockedAuthError(
+        new Error('A custom operation failed with auth/popup-blocked.'),
+      ),
+      false,
+    );
+  });
+
+  it('does not override an unrelated Firebase Auth error code from message text', () => {
+    assert.equal(
+      isPopupBlockedAuthError({
+        code: 'auth/operation-not-allowed',
+        message: 'Firebase: Error (auth/popup-blocked).',
+      }),
+      false,
+    );
+  });
 });

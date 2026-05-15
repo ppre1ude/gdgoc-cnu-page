@@ -64,6 +64,7 @@ import { createBrowserActivityApplicationStore } from './browser-activity-applic
 import { createBrowserActivitySessionStore } from './browser-activity-session-store';
 import { createBrowserActivityStore } from './browser-activity-store';
 import { createBrowserSessionAttendanceStore } from './browser-session-attendance-store';
+import { toOptionalActivityStartIso } from './activity-admin-model';
 import { officialBuildWithAiEventUrl, seedActivities } from './seed-activities';
 
 type AiResponse = {
@@ -259,21 +260,21 @@ export function ActivityAdmin() {
   async function saveActivity(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const now = new Date().toISOString();
-    const activityFields = {
-      actorRole: role,
-      title: draft.title,
-      summary: draft.body,
-      type: draft.type,
-      visibility: draft.visibility,
-      status: draft.status,
-      startsAt: draft.startsAt ? new Date(draft.startsAt).toISOString() : undefined,
-      registrationMode: draft.registrationMode,
-      externalRegistrationUrl: draft.externalRegistrationUrl.trim() || undefined,
-      now,
-    };
-
     try {
+      const now = new Date().toISOString();
+      const activityFields = {
+        actorRole: role,
+        title: draft.title,
+        summary: draft.body,
+        type: draft.type,
+        visibility: draft.visibility,
+        status: draft.status,
+        startsAt: toOptionalActivityStartIso(draft.startsAt),
+        registrationMode: draft.registrationMode,
+        externalRegistrationUrl: draft.externalRegistrationUrl.trim() || undefined,
+        now,
+      };
+
       const savedActivity = editingActivityId
         ? await updateActivity(store, {
           ...activityFields,
@@ -815,6 +816,10 @@ function describeActivitySaveError(error: unknown) {
 
   if (error.message.includes('External registration URL is required')) {
     return '외부 등록 또는 내부 신청 + 외부 등록 방식에는 외부 등록 URL이 필요합니다.';
+  }
+
+  if (error.message.includes('Activity start date is invalid')) {
+    return 'Activity ?쇱젙???щ컮瑜??좎쭨 / ?쒓컙?쇰줈 ?낅젰?댁빞 ?⑸땲??';
   }
 
   return `${fallbackMessage} ${error.message}`;

@@ -25,6 +25,7 @@ import {
   getWdsBadgePresentation,
   getWdsButtonPresentation,
   getWdsTextButtonPresentation,
+  normalizeWdsSelectChangeValue,
   type WdsBadgeTone,
   type WdsButtonTone,
   type WdsSelectOption,
@@ -251,7 +252,15 @@ export function WdsSelect<Value extends string>({
 }: WdsSelectProps<Value>) {
   return (
     <Select
-      onChange={(nextValue) => onValueChange(nextValue as Value)}
+      onChange={(nextValue) => {
+        const normalizedValue = normalizeWdsSelectChangeValue<Value>(nextValue);
+
+        if (normalizedValue === undefined) {
+          return;
+        }
+
+        onValueChange(normalizedValue);
+      }}
       placeholder={placeholder}
       value={value}
       width={width}

@@ -6,6 +6,7 @@ import {
   getWdsBadgePresentation,
   getWdsButtonPresentation,
   getWdsTextButtonPresentation,
+  normalizeWdsSelectChangeValue,
   type WdsSelectOption,
 } from './wds-form-control-model.ts';
 
@@ -63,5 +64,11 @@ describe('WDS form control model', () => {
 
     assert.equal(findWdsSelectLabel(options, 'member'), 'Member');
     assert.equal(findWdsSelectLabel(options, 'operator'), undefined);
+  });
+
+  it('ignores nullable WDS select change payloads', () => {
+    assert.equal(normalizeWdsSelectChangeValue('member'), 'member');
+    assert.equal(normalizeWdsSelectChangeValue(null), undefined);
+    assert.equal(normalizeWdsSelectChangeValue(undefined), undefined);
   });
 });

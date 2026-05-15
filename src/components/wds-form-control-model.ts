@@ -103,3 +103,9 @@ export function findWdsSelectLabel<Value extends string>(
 ) {
   return options.find((option) => option.value === value)?.label;
 }
+
+export function normalizeWdsSelectChangeValue<Value extends string>(
+  value: unknown,
+) {
+  return typeof value === 'string' ? (value as Value) : undefined;
+}
