@@ -28,6 +28,7 @@ import {
   buildActivityParticipationSnapshot,
   type ActivityParticipationSnapshot,
 } from '@/domain/activity-participation-workflow';
+import { koreanCopy } from '@/domain/korean-copy';
 import { isOperatorRole } from '@/domain/role-access-policy';
 import {
   acceptActivityProposal,
@@ -783,27 +784,27 @@ function isExternalRegistrationMode(mode: ActivityRegistrationMode) {
 }
 
 function describeActivitySaveError(error: unknown) {
-  const fallbackMessage = 'Activity를 저장하지 못했습니다. 입력값을 확인한 뒤 다시 시도하세요.';
+  const { saveErrors } = koreanCopy.activityAdmin;
 
   if (!(error instanceof Error)) {
-    return fallbackMessage;
+    return saveErrors.fallback;
   }
 
   if (error.message.includes('Activity title is required')) {
-    return 'Activity를 저장하려면 제목을 입력해야 합니다.';
+    return saveErrors.titleRequired;
   }
 
   if (error.message.includes('Activity summary is required')) {
-    return 'Activity를 저장하려면 운영진 메모 / 본문을 입력해야 합니다.';
+    return saveErrors.summaryRequired;
   }
 
   if (error.message.includes('External registration URL is required')) {
-    return '외부 등록 또는 내부 신청 + 외부 등록 방식에는 외부 등록 URL이 필요합니다.';
+    return saveErrors.externalRegistrationRequired;
   }
 
   if (error.message.includes('Activity start date is invalid')) {
-    return 'Activity ?쇱젙???щ컮瑜??좎쭨 / ?쒓컙?쇰줈 ?낅젰?댁빞 ?⑸땲??';
+    return saveErrors.invalidStartsAt;
   }
 
-  return `${fallbackMessage} ${error.message}`;
+  return `${saveErrors.fallback} ${error.message}`;
 }

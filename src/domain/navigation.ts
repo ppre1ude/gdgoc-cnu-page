@@ -1,4 +1,5 @@
 import type { UserRole } from './activity.ts';
+import { koreanCopy } from './korean-copy.ts';
 import {
   isAdminRole,
   isOperatorRole,
@@ -36,36 +37,31 @@ export function getPrimaryNavigationItems(
 
 const adminNavigationItems: AdminNavigationItemDefinition[] = [
   {
-    description:
-      '활동을 등록하고 Gemini 작성 보조, 신청 승인, 출석 흐름을 확인합니다.',
+    description: koreanCopy.navigation.admin.activities.description,
     href: '/admin/activities',
     requiredAccess: 'operator',
     label: 'Activity Admin',
   },
   {
-    description:
-      '공지사항을 등록하고 핀 고정, 공개 범위, 멤버 홈 노출을 관리합니다.',
+    description: koreanCopy.navigation.admin.notices.description,
     href: '/admin/notices',
     requiredAccess: 'operator',
     label: 'Notice Admin',
   },
   {
-    description:
-      '회고, 리뷰, 기술 노트처럼 오래 남길 챕터 기록을 검토하고 게시합니다.',
+    description: koreanCopy.navigation.admin.records.description,
     href: '/admin/records',
     requiredAccess: 'operator',
     label: 'Record Admin',
   },
   {
-    description:
-      '성과, 회고, 갤러리, 프로젝트 결과를 등록하고 공개 범위를 관리합니다.',
+    description: koreanCopy.navigation.admin.showcases.description,
     href: '/admin/showcases',
     requiredAccess: 'operator',
     label: 'Showcase Admin',
   },
   {
-    description:
-      '가입한 사용자의 역할을 조정하고 변경 이력을 확인합니다.',
+    description: koreanCopy.navigation.admin.roles.description,
     href: '/admin/roles',
     requiredAccess: 'admin',
     label: 'Role Admin',

@@ -32,6 +32,7 @@ import {
   type MemberHomeSnapshot,
 } from '@/domain/member-home-snapshot';
 import { describeMemberHomeAccess } from '@/domain/member-access';
+import { koreanCopy } from '@/domain/korean-copy';
 import { formatKoreanDateTime } from '@/lib/format-korean-date-time';
 import { ActivityCard } from '@/components/activity-card';
 import { ChapterRecordCard } from '@/components/chapter-record-card';
@@ -140,6 +141,8 @@ const chapterRecordKindOptions = [
   { label: 'Technical Note', value: 'technical_note' },
 ] satisfies readonly WdsSelectOption<ChapterRecordKind>[];
 
+const memberHomeCopy = koreanCopy.memberHome;
+
 export function MemberHome() {
   const {
     isFirebaseConfigured,
@@ -157,20 +160,20 @@ export function MemberHome() {
   const [snapshot, setSnapshot] = useState<MemberHomeSnapshot | null>(null);
   const [guestProfile, setGuestProfile] =
     useState<GuestProfileFormState>(defaultGuestProfile);
-  const [guestProfileMessage, setGuestProfileMessage] = useState(
-    '승인에 필요한 정보를 제출하면 운영진 승인 큐에서 바로 확인할 수 있습니다.',
+  const [guestProfileMessage, setGuestProfileMessage] = useState<string>(
+    memberHomeCopy.guestProfile.initialMessage,
   );
 
   const [proposal, setProposal] = useState<MemberProposalFormState>(
     defaultMemberProposal,
   );
-  const [proposalMessage, setProposalMessage] = useState(
-    '스터디는 바로 멤버 홈에 공개되고, 프로젝트는 운영진 검토 후 공개됩니다.',
+  const [proposalMessage, setProposalMessage] = useState<string>(
+    memberHomeCopy.proposal.initialMessage,
   );
   const [recordDraft, setRecordDraft] =
     useState<MemberRecordFormState>(defaultMemberRecord);
-  const [recordMessage, setRecordMessage] = useState(
-    '회고와 기술 노트는 운영진 검토 후 멤버 홈에 게시됩니다.',
+  const [recordMessage, setRecordMessage] = useState<string>(
+    memberHomeCopy.recordForm.initialMessage,
   );
 
   useEffect(() => {
@@ -214,9 +217,7 @@ export function MemberHome() {
   }
 
   async function handleApply(activity: Activity) {
-    const confirmed = window.confirm(
-      '이 활동에 참여 신청하시겠습니까? 운영진 승인 후 참여가 확정됩니다.',
-    );
+    const confirmed = window.confirm(memberHomeCopy.confirmations.apply);
 
     if (!confirmed) {
       return;
@@ -231,9 +232,7 @@ export function MemberHome() {
   }
 
   async function handleCancel(activity: Activity) {
-    const confirmed = window.confirm(
-      '정말 취소하시겠습니까? 승인된 신청을 취소하면 다시 신청 시 운영진 승인을 다시 받아야 합니다.',
-    );
+    const confirmed = window.confirm(memberHomeCopy.confirmations.cancel);
 
     if (!confirmed) {
       return;
@@ -265,9 +264,7 @@ export function MemberHome() {
       },
     });
 
-    setGuestProfileMessage(
-      '승인 요청 정보가 저장되었습니다. 운영진 승인 화면에서 바로 확인할 수 있습니다.',
-    );
+    setGuestProfileMessage(memberHomeCopy.guestProfile.savedMessage);
     await loadGuestProfile(userId);
   }
 
@@ -289,8 +286,8 @@ export function MemberHome() {
     setProposal(defaultMemberProposal);
     setProposalMessage(
       created.proposalStatus === 'pending_review'
-        ? '프로젝트 제안이 운영진 검토 대기열에 저장되었습니다.'
-        : '스터디 제안이 저장되어 멤버 홈에 바로 반영되었습니다.',
+        ? memberHomeCopy.proposal.projectSavedMessage
+        : memberHomeCopy.proposal.studySavedMessage,
     );
     await refreshMemberHome(role, userId);
   }
@@ -312,7 +309,7 @@ export function MemberHome() {
     });
 
     setRecordDraft(defaultMemberRecord);
-    setRecordMessage('긴 글 기록이 운영진 검토 대기열에 저장되었습니다.');
+    setRecordMessage(memberHomeCopy.recordForm.savedMessage);
     await refreshMemberHome(role, userId);
   }
 
@@ -340,9 +337,9 @@ export function MemberHome() {
     <main className="page">
       <div className="container">
         <WdsPageHeader
-          description="공지, 이벤트, 스터디, 프로젝트를 한 화면에서 확인하는 멤버용 홈입니다. 현재 데모는 activity 데이터를 Firebase 또는 localStorage bridge에서 읽습니다."
-          eyebrow="Member Home"
-          title="지금 우리 챕터에서 진행 중인 활동"
+          description={memberHomeCopy.header.description}
+          eyebrow={memberHomeCopy.header.eyebrow}
+          title={memberHomeCopy.header.title}
         />
 
         <section className="section section-compact">
@@ -350,7 +347,9 @@ export function MemberHome() {
             <div>
               <WdsBadgeGroup>
                 <WdsBadge tone="blue">
-                  {isFirebaseConfigured ? '현재 역할' : 'Demo Role'}
+                  {isFirebaseConfigured
+                    ? memberHomeCopy.access.currentRoleLabel
+                    : 'Demo Role'}
                 </WdsBadge>
                 <WdsBadge>{access.status}</WdsBadge>
               </WdsBadgeGroup>
@@ -361,20 +360,24 @@ export function MemberHome() {
               {role === 'visitor' ? (
                 <div className="access-panel-actions">
                   <WdsLinkButton href={getPublicOnboardingHref()} tone="primary">
-                    Google 로그인
+                    {memberHomeCopy.access.googleLoginLabel}
                   </WdsLinkButton>
                 </div>
               ) : null}
               {role === 'guest' ? (
                 <div className="access-panel-actions">
                   <WdsLinkButton href={getPublicOnboardingHref()} tone="primary">
-                    가입 정보 제출
+                    {memberHomeCopy.access.guestSubmitLabel}
                   </WdsLinkButton>
                 </div>
               ) : null}
               <WdsField
                 className="demo-role-field"
-                label={isFirebaseConfigured ? '현재 역할' : 'Demo 역할'}
+                label={
+                  isFirebaseConfigured
+                    ? memberHomeCopy.access.currentRoleLabel
+                    : memberHomeCopy.access.demoRoleLabel
+                }
               >
                 <WdsSelect
                   disabled={authStatus !== 'demo'}
@@ -418,8 +421,8 @@ export function MemberHome() {
 
         <section className="section section-compact">
           <WdsSectionHeader
-            description="운영진이 고정한 중요한 공지를 먼저 보여줍니다."
-            title="공지사항"
+            description={memberHomeCopy.notices.description}
+            title={memberHomeCopy.notices.title}
           />
           <NoticeBoard notices={notices.slice(0, 6)} />
         </section>
@@ -433,19 +436,22 @@ export function MemberHome() {
             <WdsBadge tone="green">Participation</WdsBadge>
             <h3>
               {canApplyToActivities
-                ? `${activeApplicationCount}개 활동 참여 중`
-                : '활동 신청 제한'}
+                ? memberHomeCopy.summaryCards.participation.title(
+                  activeApplicationCount,
+                )
+                : memberHomeCopy.summaryCards.participation.applyLimitedTitle}
             </h3>
             <p>
               {canApplyToActivities
-                ? '참여 신청을 누르면 이 숫자와 카드 상태가 바로 바뀝니다.'
-                : access?.message ?? '역할 정보를 확인한 뒤 신청 가능 여부를 표시합니다.'}
+                ? memberHomeCopy.summaryCards.participation.applyMessage
+                : access?.message ??
+                  memberHomeCopy.summaryCards.participation.fallbackMessage}
             </p>
           </WdsSurfaceCard>
           <WdsSurfaceCard>
             <WdsBadge tone="blue">Next Action</WdsBadge>
-            <h3>{activities.length}개 활동 열람 가능</h3>
-            <p>Firebase 설정 전에는 localStorage bridge로 같은 흐름을 검증합니다.</p>
+            <h3>{memberHomeCopy.summaryCards.nextAction.title(activities.length)}</h3>
+            <p>{memberHomeCopy.summaryCards.nextAction.description}</p>
           </WdsSurfaceCard>
         </WdsResponsiveGrid>
 
@@ -456,26 +462,28 @@ export function MemberHome() {
         <ActivitySection
           activities={upcoming}
           applicationStates={applicationStates}
-          description="오프라인 이벤트와 일정이 있는 활동을 우선 표시합니다."
+          description={memberHomeCopy.activitySections.upcoming.description}
           onApply={canApplyToActivities ? handleApply : undefined}
           onCancel={canApplyToActivities ? handleCancel : undefined}
-          title="다가오는 활동"
+          title={memberHomeCopy.activitySections.upcoming.title}
         />
         <ActivitySection
           activities={studiesAndProjects}
           applicationStates={applicationStates}
-          description="장기적으로 이어지는 학습과 제작 활동입니다."
+          description={
+            memberHomeCopy.activitySections.studiesAndProjects.description
+          }
           onApply={canApplyToActivities ? handleApply : undefined}
           onCancel={canApplyToActivities ? handleCancel : undefined}
-          title="스터디 / 프로젝트"
+          title={memberHomeCopy.activitySections.studiesAndProjects.title}
         />
         <ActivitySection
           activities={challenges}
           applicationStates={applicationStates}
-          description="챕터 참여를 높이기 위한 챌린지와 친목 활동입니다."
+          description={memberHomeCopy.activitySections.challenges.description}
           onApply={canApplyToActivities ? handleApply : undefined}
           onCancel={canApplyToActivities ? handleCancel : undefined}
-          title="챌린지 / 친목"
+          title={memberHomeCopy.activitySections.challenges.title}
         />
       </div>
     </main>
@@ -526,22 +534,19 @@ function MemberProposalForm({
       <MemberFormSurface onSubmit={onSubmit}>
         <div>
           <WdsBadge tone="blue">Member Proposal</WdsBadge>
-          <h2>스터디 / 프로젝트 제안</h2>
-          <p>
-            멤버가 직접 스터디를 열거나 프로젝트 아이디어를 제안할 수 있습니다. 프로젝트는
-            운영진 승인 후 멤버 홈에 공개됩니다.
-          </p>
+          <h2>{memberHomeCopy.proposal.title}</h2>
+          <p>{memberHomeCopy.proposal.intro}</p>
         </div>
 
         <WdsResponsiveGrid columns={2}>
-          <WdsField label="활동 유형">
+          <WdsField label={memberHomeCopy.proposal.fieldLabels.type}>
             <WdsSelect
               onValueChange={(nextValue) => updateField('type', nextValue)}
               options={activityProposalTypeOptions}
               value={value.type}
             />
           </WdsField>
-          <WdsField label="일정">
+          <WdsField label={memberHomeCopy.proposal.fieldLabels.startsAt}>
             <WdsInput
               onChange={(event) => updateField('startsAt', event.target.value)}
               type="datetime-local"
@@ -550,7 +555,7 @@ function MemberProposalForm({
           </WdsField>
         </WdsResponsiveGrid>
 
-        <WdsField label="제목">
+        <WdsField label={memberHomeCopy.proposal.fieldLabels.title}>
           <WdsInput
             onChange={(event) => updateField('title', event.target.value)}
             required
@@ -558,7 +563,7 @@ function MemberProposalForm({
           />
         </WdsField>
 
-        <WdsField label="요약">
+        <WdsField label={memberHomeCopy.proposal.fieldLabels.summary}>
           <WdsTextArea
             onChange={(event) => updateField('summary', event.target.value)}
             required
@@ -569,7 +574,7 @@ function MemberProposalForm({
         <WdsFormActions
           actions={
             <WdsButton tone="primary" type="submit">
-              제안 제출
+              {memberHomeCopy.proposal.submitLabel}
             </WdsButton>
           }
           helper={message}
@@ -602,22 +607,19 @@ function MemberRecordForm({
       <MemberFormSurface onSubmit={onSubmit}>
         <div>
           <WdsBadge tone="green">Chapter Record</WdsBadge>
-          <h2>회고 / 리뷰 / 기술 노트 작성</h2>
-          <p>
-            Discord에 묻히기 쉬운 긴 글을 홈페이지 기록으로 남깁니다. 제출된 글은 운영진
-            검토 후 멤버 홈에 게시됩니다.
-          </p>
+          <h2>{memberHomeCopy.recordForm.title}</h2>
+          <p>{memberHomeCopy.recordForm.intro}</p>
         </div>
 
         <WdsResponsiveGrid columns={2}>
-          <WdsField label="기록 유형">
+          <WdsField label={memberHomeCopy.recordForm.fieldLabels.kind}>
             <WdsSelect
               onValueChange={(nextValue) => updateField('kind', nextValue)}
               options={chapterRecordKindOptions}
               value={value.kind}
             />
           </WdsField>
-          <WdsField label="태그">
+          <WdsField label={memberHomeCopy.recordForm.fieldLabels.tags}>
             <WdsInput
               onChange={(event) => updateField('tags', event.target.value)}
               placeholder="Gemini, Firebase"
@@ -626,7 +628,7 @@ function MemberRecordForm({
           </WdsField>
         </WdsResponsiveGrid>
 
-        <WdsField label="제목">
+        <WdsField label={memberHomeCopy.recordForm.fieldLabels.title}>
           <WdsInput
             onChange={(event) => updateField('title', event.target.value)}
             required
@@ -634,7 +636,7 @@ function MemberRecordForm({
           />
         </WdsField>
 
-        <WdsField label="요약">
+        <WdsField label={memberHomeCopy.recordForm.fieldLabels.summary}>
           <WdsTextArea
             onChange={(event) => updateField('summary', event.target.value)}
             required
@@ -642,7 +644,7 @@ function MemberRecordForm({
           />
         </WdsField>
 
-        <WdsField label="본문">
+        <WdsField label={memberHomeCopy.recordForm.fieldLabels.body}>
           <WdsTextArea
             onChange={(event) => updateField('body', event.target.value)}
             required
@@ -653,7 +655,7 @@ function MemberRecordForm({
         <WdsFormActions
           actions={
             <WdsButton tone="primary" type="submit">
-              기록 제출
+              {memberHomeCopy.recordForm.submitLabel}
             </WdsButton>
           }
           helper={message}
@@ -667,8 +669,8 @@ function ShowcasePreviewSection({ showcases }: { showcases: Showcase[] }) {
   return (
     <section className="section section-compact">
       <WdsSectionHeader
-        description="최근 활동 성과, 회고, 프로젝트 결과를 activity와 분리된 아카이브로 모아 보여줍니다."
-        title="쇼케이스"
+        description={memberHomeCopy.showcase.description}
+        title={memberHomeCopy.showcase.title}
       />
       {showcases.length > 0 ? (
         <WdsResponsiveGrid columns={3}>
@@ -677,7 +679,7 @@ function ShowcasePreviewSection({ showcases }: { showcases: Showcase[] }) {
           ))}
         </WdsResponsiveGrid>
       ) : (
-        <WdsEmptyState>아직 표시할 쇼케이스가 없습니다.</WdsEmptyState>
+        <WdsEmptyState>{memberHomeCopy.showcase.empty}</WdsEmptyState>
       )}
     </section>
   );
@@ -687,8 +689,8 @@ function ChapterRecordSection({ records }: { records: ChapterRecord[] }) {
   return (
     <section className="section section-compact">
       <WdsSectionHeader
-        description="회고, 리뷰, 기술 노트처럼 Discord보다 오래 남겨야 하는 글을 모아 보여줍니다."
-        title="긴 글 기록"
+        description={memberHomeCopy.records.description}
+        title={memberHomeCopy.records.title}
       />
       {records.length > 0 ? (
         <WdsResponsiveGrid columns={3}>
@@ -697,7 +699,7 @@ function ChapterRecordSection({ records }: { records: ChapterRecord[] }) {
           ))}
         </WdsResponsiveGrid>
       ) : (
-        <WdsEmptyState>아직 게시된 긴 글 기록이 없습니다.</WdsEmptyState>
+        <WdsEmptyState>{memberHomeCopy.records.empty}</WdsEmptyState>
       )}
     </section>
   );
@@ -711,8 +713,8 @@ function MemberApplicationsSection({
   return (
     <section className="section section-compact">
       <WdsSectionHeader
-        description="내가 신청한 활동의 승인 상태와 다음 일정을 별도 목록으로 확인합니다."
-        title="내 신청 현황"
+        description={memberHomeCopy.applications.description}
+        title={memberHomeCopy.applications.title}
       />
       {summaries.length > 0 ? (
         <WdsQueue>
@@ -729,19 +731,19 @@ function MemberApplicationsSection({
                 <p className="helper-text">
                   {activity.startsAt
                     ? formatKoreanDateTime(activity.startsAt)
-                    : '일정 미정'}
+                    : memberHomeCopy.applications.unscheduled}
                 </p>
               </div>
               <WdsTextLinkButton
                 href={`/activities/${encodeURIComponent(activity.id)}`}
               >
-                자세히
+                {memberHomeCopy.applications.detailLabel}
               </WdsTextLinkButton>
             </WdsQueueRow>
           ))}
         </WdsQueue>
       ) : (
-        <WdsEmptyState>아직 신청 중인 활동이 없습니다.</WdsEmptyState>
+        <WdsEmptyState>{memberHomeCopy.applications.empty}</WdsEmptyState>
       )}
     </section>
   );
@@ -778,7 +780,7 @@ function ActivitySection({
           ))}
         </WdsResponsiveGrid>
       ) : (
-        <WdsEmptyState>아직 표시할 활동이 없습니다.</WdsEmptyState>
+        <WdsEmptyState>{memberHomeCopy.activitySections.empty}</WdsEmptyState>
       )}
     </section>
   );
@@ -787,24 +789,24 @@ function ActivitySection({
 function getAccessPanelTitle(status?: string) {
   switch (status) {
     case 'login_required':
-      return '로그인이 필요합니다';
+      return memberHomeCopy.statusLabels.access.login_required;
     case 'pending_approval':
-      return '운영진 승인 대기 중';
+      return memberHomeCopy.statusLabels.access.pending_approval;
     case 'alumni':
-      return 'Alumni 보기 모드';
+      return memberHomeCopy.statusLabels.access.alumni;
     case 'active_member':
-      return '멤버 홈 이용 가능';
+      return memberHomeCopy.statusLabels.access.active_member;
     default:
-      return '역할 확인 중';
+      return memberHomeCopy.statusLabels.access.unknown;
   }
 }
 
 function getApplicationStateLabel(state: ActivityApplicationState) {
   switch (state) {
     case 'applied':
-      return '운영진 승인 대기 중';
+      return memberHomeCopy.statusLabels.application.applied;
     case 'approved':
-      return '승인됨';
+      return memberHomeCopy.statusLabels.application.approved;
   }
 }
 

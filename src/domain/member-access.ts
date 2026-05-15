@@ -1,4 +1,5 @@
 import type { UserRole } from './activity.ts';
+import { koreanCopy } from './korean-copy.ts';
 import {
   canApplyToActivities,
   canViewMemberContent,
@@ -21,7 +22,7 @@ const activeMemberAccess = {
   status: 'active_member',
   canViewMemberContent: true,
   canApplyToActivities: true,
-  message: '멤버 홈을 이용할 수 있습니다.',
+  message: koreanCopy.memberAccess.activeMember.message,
 } satisfies MemberHomeAccess;
 
 export function describeMemberHomeAccess(role: UserRole): MemberHomeAccess {
@@ -31,21 +32,21 @@ export function describeMemberHomeAccess(role: UserRole): MemberHomeAccess {
         status: 'login_required',
         canViewMemberContent: false,
         canApplyToActivities: false,
-        message: '멤버 홈을 보려면 로그인이 필요합니다.',
+        message: koreanCopy.memberAccess.visitor.message,
       };
     case 'guest':
       return {
         status: 'pending_approval',
         canViewMemberContent: false,
         canApplyToActivities: false,
-        message: '운영진 승인 후 멤버 홈을 이용할 수 있습니다.',
+        message: koreanCopy.memberAccess.guest.message,
       };
     case 'alumni':
       return {
         status: 'alumni',
         canViewMemberContent: canViewMemberContent(role),
         canApplyToActivities: canApplyToActivities(role),
-        message: '수료 멤버는 멤버 콘텐츠를 볼 수 있지만 활동 신청은 할 수 없습니다.',
+        message: koreanCopy.memberAccess.alumni.message,
       };
     case 'member':
     case 'team_member':
