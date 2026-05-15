@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import {
   type FormEvent,
   type ReactNode,
@@ -32,6 +33,7 @@ import {
   isMemberHomeSnapshotCurrent,
   type MemberHomeSnapshot,
 } from '@/domain/member-home-snapshot';
+import { memberDashboardDestinations } from '@/domain/member-dashboard-destinations';
 import { describeMemberHomeAccess } from '@/domain/member-access';
 import { koreanCopy } from '@/domain/korean-copy';
 import { formatKoreanDateTime } from '@/lib/format-korean-date-time';
@@ -334,6 +336,12 @@ export function MemberHome() {
     currentSnapshot?.dashboard.myNextCommitments ?? memberApplicationSummaries;
   const dashboardOpenStudyProjects =
     currentSnapshot?.dashboard.openStudyProjects ?? studiesAndProjects;
+  const dashboardOpenStudies = dashboardOpenStudyProjects.filter(
+    (activity) => activity.type === 'study',
+  );
+  const dashboardOpenProjects = dashboardOpenStudyProjects.filter(
+    (activity) => activity.type === 'project',
+  );
   const access = describeMemberHomeAccess(role);
   const canApplyToActivities =
     currentSnapshot?.canApplyToActivities ?? access.canApplyToActivities;
@@ -408,6 +416,14 @@ export function MemberHome() {
           </section>
         ) : null}
 
+        <MemberDashboardRouteGrid
+          calendarCount={dashboardCalendarActivities.length}
+          noticesCount={dashboardImportantNotices.length}
+          projectsCount={dashboardOpenProjects.length}
+          recordsCount={records.length}
+          studiesCount={dashboardOpenStudies.length}
+        />
+
         <MemberCalendarSection
           activities={dashboardCalendarActivities}
           applicationStates={applicationStates}
@@ -420,12 +436,22 @@ export function MemberHome() {
         ) : null}
 
         <ActivitySection
-          activities={dashboardOpenStudyProjects}
+          activities={dashboardOpenStudies}
           applicationStates={applicationStates}
-          description={memberHomeCopy.dashboard.studyProjectBoard.description}
+          description="모집 중이거나 진행 중인 스터디를 먼저 확인하고, 더 많은 스터디는 전용 목록에서 살펴봅니다."
+          moreHref="/studies"
           onApply={canApplyToActivities ? handleApply : undefined}
           onCancel={canApplyToActivities ? handleCancel : undefined}
-          title={memberHomeCopy.dashboard.studyProjectBoard.title}
+          title="스터디 현황"
+        />
+        <ActivitySection
+          activities={dashboardOpenProjects}
+          applicationStates={applicationStates}
+          description="진행 중인 프로젝트와 새로 열릴 프로젝트 기회를 확인하고 신청합니다."
+          moreHref="/projects"
+          onApply={canApplyToActivities ? handleApply : undefined}
+          onCancel={canApplyToActivities ? handleCancel : undefined}
+          title="프로젝트 현황"
         />
         <ActivitySection
           activities={challenges}
@@ -470,7 +496,7 @@ export function MemberHome() {
             <WdsBadge tone="blue">Board</WdsBadge>
             <h3>
               {memberHomeCopy.dashboard.summaryCards.studyProjects.title(
-                dashboardOpenStudyProjects.length,
+                dashboardOpenStudies.length + dashboardOpenProjects.length,
               )}
             </h3>
             <p>
@@ -498,6 +524,54 @@ export function MemberHome() {
         ) : null}
       </div>
     </main>
+  );
+}
+
+function MemberDashboardRouteGrid({
+  calendarCount,
+  noticesCount,
+  projectsCount,
+  recordsCount,
+  studiesCount,
+}: {
+  calendarCount: number;
+  noticesCount: number;
+  projectsCount: number;
+  recordsCount: number;
+  studiesCount: number;
+}) {
+  const counts = {
+    calendar: `${calendarCount}개 일정`,
+    notices: `${noticesCount}개 공지`,
+    projects: `${projectsCount}개 프로젝트`,
+    records: `${recordsCount}개 기록`,
+    studies: `${studiesCount}개 스터디`,
+  };
+
+  return (
+    <section className="section section-compact">
+      <WdsSectionHeader
+        description="Dashboard에서 오늘 확인할 항목을 한 번에 훑고, 필요한 카테고리로 바로 이동합니다."
+        title="Dashboard 흐름"
+      />
+      <WdsResponsiveGrid columns={3} dense>
+        {memberDashboardDestinations.map((destination) => (
+          <WdsSurfaceCard
+            as={Link}
+            className="member-route-card"
+            href={destination.href}
+            key={destination.id}
+          >
+            <WdsBadge tone="blue">{destination.label}</WdsBadge>
+            <h3>{destination.title}</h3>
+            <p>{destination.description}</p>
+            <span className="member-route-count">
+              {counts[destination.id]}
+            </span>
+          </WdsSurfaceCard>
+        ))}
+      </WdsResponsiveGrid>
+    </section>
   );
 }
 
@@ -688,6 +762,9 @@ function MemberCalendarSection({
       <WdsSectionHeader
         description={memberHomeCopy.dashboard.calendar.description}
         title={memberHomeCopy.dashboard.calendar.title}
+        trailingContent={
+          <WdsTextLinkButton href="/calendar">전체 일정</WdsTextLinkButton>
+        }
       />
       {activities.length > 0 ? (
         <WdsQueue as="div">
@@ -739,6 +816,9 @@ function ImportantNoticeSection({ notices }: { notices: Notice[] }) {
       <WdsSectionHeader
         description={memberHomeCopy.dashboard.notices.description}
         title={memberHomeCopy.dashboard.notices.title}
+        trailingContent={
+          <WdsTextLinkButton href="/notices">전체 공지</WdsTextLinkButton>
+        }
       />
       <NoticeBoard notices={notices} />
     </section>
@@ -771,6 +851,9 @@ function ChapterRecordSection({ records }: { records: ChapterRecord[] }) {
       <WdsSectionHeader
         description={memberHomeCopy.records.description}
         title={memberHomeCopy.records.title}
+        trailingContent={
+          <WdsTextLinkButton href="/records">전체 기록</WdsTextLinkButton>
+        }
       />
       {records.length > 0 ? (
         <WdsResponsiveGrid columns={3}>
@@ -833,6 +916,7 @@ function ActivitySection({
   activities,
   applicationStates,
   description,
+  moreHref,
   onApply,
   onCancel,
   title,
@@ -840,13 +924,22 @@ function ActivitySection({
   activities: Activity[];
   applicationStates: Record<string, ActivityApplicationState>;
   description: string;
+  moreHref?: string;
   onApply?: (activity: Activity) => void;
   onCancel?: (activity: Activity) => void;
   title: string;
 }) {
   return (
     <section className="section">
-      <WdsSectionHeader description={description} title={title} />
+      <WdsSectionHeader
+        description={description}
+        title={title}
+        trailingContent={
+          moreHref ? (
+            <WdsTextLinkButton href={moreHref}>전체 보기</WdsTextLinkButton>
+          ) : null
+        }
+      />
       {activities.length > 0 ? (
         <WdsResponsiveGrid columns={3}>
           {activities.map((activity) => (

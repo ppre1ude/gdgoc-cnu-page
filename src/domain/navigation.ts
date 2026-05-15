@@ -24,8 +24,12 @@ export function getPrimaryNavigationItems(
   audience: NavigationAudience,
 ): NavigationItem[] {
   const items: NavigationItem[] = [
-    { href: '/', label: 'Public' },
-    { href: '/member', label: 'Member Home' },
+    { href: '/member', label: 'Dashboard' },
+    { href: '/calendar', label: 'Calendar' },
+    { href: '/notices', label: 'Notices' },
+    { href: '/studies', label: 'Studies' },
+    { href: '/projects', label: 'Projects' },
+    { href: '/records', label: 'Records' },
   ];
 
   if (isOperatorRole(audience)) {

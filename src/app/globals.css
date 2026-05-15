@@ -82,8 +82,11 @@ textarea {
 .nav-links {
   align-items: center;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 10px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .nav-link {
@@ -97,6 +100,59 @@ textarea {
 
 .nav-link:hover {
   background: var(--surface-muted);
+  color: var(--text-strong);
+}
+
+.nav-link-active {
+  background: var(--surface-muted);
+  color: var(--text-strong);
+}
+
+.member-route-card {
+  color: inherit;
+  height: 100%;
+  transition:
+    border-color 140ms ease,
+    transform 140ms ease;
+}
+
+.member-route-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.member-route-count {
+  color: var(--text-strong);
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  margin-top: 16px;
+}
+
+.member-flow-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  margin-top: 24px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.member-flow-tab {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  flex: 0 0 auto;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 9px 12px;
+}
+
+.member-flow-tab:hover,
+.member-flow-tab-active {
+  background: var(--surface-muted);
+  border-color: var(--primary);
   color: var(--text-strong);
 }
 
@@ -1065,6 +1121,8 @@ textarea {
   display: flex;
   gap: 18px;
   justify-content: space-between;
+  min-width: 0;
+  overflow: hidden;
   padding: 18px;
 }
 
@@ -1087,6 +1145,7 @@ textarea {
   display: grid;
   gap: 12px;
   justify-items: end;
+  min-width: 0;
 }
 
 .access-panel-actions {
@@ -1098,7 +1157,14 @@ textarea {
 }
 
 .demo-role-field {
+  max-width: 100%;
   min-width: 180px;
+}
+
+.demo-role-field > *,
+.demo-role-field button,
+.demo-role-field input {
+  max-width: 100%;
 }
 
 .profile-summary-list {
@@ -1402,6 +1468,10 @@ textarea {
     flex-direction: column;
   }
 
+  .nav-links {
+    width: 100%;
+  }
+
   .onboarding-ribbon {
     border-width: 2px;
     display: flex;
@@ -1584,6 +1654,7 @@ textarea {
 
   .demo-role-field {
     min-width: 0;
+    width: 100%;
   }
 
   .profile-summary-list div {
