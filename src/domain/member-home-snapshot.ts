@@ -29,6 +29,7 @@ import {
   listHomeShowcases,
   type ShowcaseStore,
 } from './showcase-service.ts';
+import { getMemberHomeContentRole } from './role-access-policy.ts';
 
 export type MemberHomeSnapshotStores = {
   activityStore: ActivityStore;
@@ -122,14 +123,6 @@ export function isMemberHomeSnapshotCurrent(
     snapshot?.role === identity.role &&
     snapshot.userId === identity.userId
   );
-}
-
-function getMemberHomeContentRole(role: UserRole): UserRole {
-  if (role === 'visitor' || role === 'guest') {
-    return role;
-  }
-
-  return 'member';
 }
 
 function getActiveApplicationCount(

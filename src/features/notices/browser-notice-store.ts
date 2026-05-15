@@ -1,8 +1,6 @@
 'use client';
 
-import type { UserRole } from '@/domain/activity';
 import type { Notice } from '@/domain/notice';
-import type { NoticeVisibility } from '@/domain/notice';
 import {
   type NoticeStore,
   createInMemoryNoticeStore,
@@ -11,6 +9,10 @@ import {
   listProductionFirestoreDocuments,
   resolveBrowserDataAdapterMode,
 } from '@/domain/data-adapter-split';
+import {
+  getReadablePublishedVisibilities,
+  shouldUseUnfilteredContentRead,
+} from '@/domain/role-access-policy';
 import { getFirestoreDb, hasFirebaseConfig } from '@/lib/firebase/client';
 import { seedNotices } from './seed-notices';
 
@@ -98,30 +100,20 @@ function createFirestoreNoticeStore(): NoticeStore {
       );
       const noticesCollection = collection(getFirestoreDb(), 'notices');
       const snapshot = await getDocs(
-        shouldListAllForRole(role)
+        shouldUseUnfilteredContentRead(role)
           ? noticesCollection
           : query(
               noticesCollection,
               where('status', '==', 'published'),
-              where('visibility', 'in', getVisibleNoticeVisibilities(role)),
+              where(
+                'visibility',
+                'in',
+                getReadablePublishedVisibilities(role ?? 'visitor'),
+              ),
             ),
       );
 
       return listProductionFirestoreDocuments(snapshot, (data) => data as Notice);
     },
   };
-}
-
-function shouldListAllForRole(role: UserRole | undefined) {
-  return role === undefined || ['team_member', 'organizer', 'admin'].includes(role);
-}
-
-function getVisibleNoticeVisibilities(
-  role: UserRole | undefined,
-): NoticeVisibility[] {
-  if (role === 'member' || role === 'alumni') {
-    return ['public', 'member'];
-  }
-
-  return ['public'];
 }

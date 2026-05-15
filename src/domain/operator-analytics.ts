@@ -10,6 +10,7 @@ import {
   isSessionRecentlyEnded,
 } from './activity-schedule.ts';
 import type { ChapterUser, RoleChangeLog } from './chapter-user.ts';
+import { isActiveMemberRole } from './role-access-policy.ts';
 
 export type OperatorAnalyticsInput = {
   activities?: Activity[];
@@ -70,13 +71,6 @@ export type OperatorAnalytics = {
   upcomingActivityCapacityFillRate: number;
 };
 
-const activeMemberRoles = new Set<UserRole>([
-  'member',
-  'team_member',
-  'organizer',
-  'admin',
-]);
-
 export function calculateOperatorAnalytics(
   input: OperatorAnalyticsInput,
 ): OperatorAnalytics {
@@ -85,7 +79,7 @@ export function calculateOperatorAnalytics(
   );
   const activeMemberIds = new Set(
     input.users
-      .filter((user) => activeMemberRoles.has(user.role))
+      .filter((user) => isActiveMemberRole(user.role))
       .map((user) => user.id),
   );
   const activeMemberApplications = activeApplications.filter((application) =>
@@ -138,7 +132,7 @@ export function calculateOperatorAnalytics(
 
   return {
     activeMemberCount: input.users.filter((user) =>
-      activeMemberRoles.has(user.role),
+      isActiveMemberRole(user.role),
     ).length,
     activityFunnels,
     activityTypeAttendanceRates:

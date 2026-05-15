@@ -5,6 +5,7 @@ import {
   changeUserRole,
   type ChapterUserStore,
 } from './chapter-user-service.ts';
+import { isKnownUserRole } from './role-access-policy.ts';
 
 export type ChapterUserMutationIntent =
   | {
@@ -28,16 +29,6 @@ export type ExecuteChapterUserMutationInput = {
 export type ChapterUserMutationResult = {
   user: ChapterUser;
 };
-
-const userRoles = new Set<UserRole>([
-  'visitor',
-  'guest',
-  'member',
-  'alumni',
-  'team_member',
-  'organizer',
-  'admin',
-]);
 
 export async function executeChapterUserMutation({
   actorId,
@@ -88,7 +79,7 @@ export function parseChapterUserMutationIntent(
   if (
     value.type === 'change_user_role' &&
     typeof value.targetUserId === 'string' &&
-    isUserRole(value.nextRole)
+    isKnownUserRole(value.nextRole)
   ) {
     return {
       nextRole: value.nextRole,
@@ -102,8 +93,4 @@ export function parseChapterUserMutationIntent(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
-}
-
-function isUserRole(value: unknown): value is UserRole {
-  return typeof value === 'string' && userRoles.has(value as UserRole);
 }

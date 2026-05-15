@@ -7,6 +7,10 @@ import {
   listVisibleActivities,
   type UserRole,
 } from './activity.ts';
+import {
+  isActiveMemberRole,
+  isOperatorRole,
+} from './role-access-policy.ts';
 
 export type ActivityStore = {
   create(activity: Activity): Promise<Activity>;
@@ -66,14 +70,6 @@ export type UpdateActivityInput = {
   now: string;
 };
 
-const operatorRoles = new Set<UserRole>(['team_member', 'organizer', 'admin']);
-const activeMemberRoles = new Set<UserRole>([
-  'member',
-  'team_member',
-  'organizer',
-  'admin',
-]);
-
 export function createInMemoryActivityStore(
   initialActivities: Activity[] = [],
 ): ActivityStore {
@@ -105,7 +101,7 @@ export async function createActivity(
   store: ActivityStore,
   input: CreateActivityInput,
 ): Promise<Activity> {
-  if (!operatorRoles.has(input.actorRole)) {
+  if (!isOperatorRole(input.actorRole)) {
     throw new Error('Only operators can create official activities.');
   }
 
@@ -129,7 +125,7 @@ export async function updateActivity(
   store: ActivityStore,
   input: UpdateActivityInput,
 ): Promise<Activity> {
-  if (!operatorRoles.has(input.actorRole)) {
+  if (!isOperatorRole(input.actorRole)) {
     throw new Error('Only operators can update activities.');
   }
 
@@ -163,7 +159,7 @@ export async function archiveActivity(
   store: ActivityStore,
   input: ArchiveActivityInput,
 ): Promise<Activity> {
-  if (!operatorRoles.has(input.actorRole)) {
+  if (!isOperatorRole(input.actorRole)) {
     throw new Error('Only operators can archive activities.');
   }
 
@@ -180,7 +176,7 @@ export async function proposeMemberActivity(
   store: ActivityStore,
   input: ProposeMemberActivityInput,
 ): Promise<Activity> {
-  if (!activeMemberRoles.has(input.actorRole)) {
+  if (!isActiveMemberRole(input.actorRole)) {
     throw new Error('Only active members can propose activities.');
   }
 
@@ -209,7 +205,7 @@ export async function listPendingActivityProposals(
   store: ActivityStore,
   actorRole: UserRole,
 ): Promise<Activity[]> {
-  if (!operatorRoles.has(actorRole)) {
+  if (!isOperatorRole(actorRole)) {
     throw new Error('Only operators can list pending activity proposals.');
   }
 
@@ -233,7 +229,7 @@ export async function acceptActivityProposal(
   store: ActivityStore,
   input: AcceptActivityProposalInput,
 ): Promise<Activity> {
-  if (!operatorRoles.has(input.actorRole)) {
+  if (!isOperatorRole(input.actorRole)) {
     throw new Error('Only operators can approve activity proposals.');
   }
 

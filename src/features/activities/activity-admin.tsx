@@ -28,6 +28,7 @@ import {
   buildActivityParticipationSnapshot,
   type ActivityParticipationSnapshot,
 } from '@/domain/activity-participation-workflow';
+import { isOperatorRole } from '@/domain/role-access-policy';
 import {
   acceptActivityProposal,
   archiveActivity,
@@ -99,8 +100,6 @@ const initialDraft: ActivityDraftFormState = {
   externalRegistrationUrl: officialBuildWithAiEventUrl,
 };
 
-const operatorRoles = new Set(['team_member', 'organizer', 'admin']);
-
 const activityTypeOptions: WdsSelectOption<ActivityType>[] = [
   { label: 'Event', value: 'event' },
   { label: 'Study', value: 'study' },
@@ -156,7 +155,7 @@ export function ActivityAdmin() {
       sessionStore,
     });
 
-    const nextPendingProposals = operatorRoles.has(role)
+    const nextPendingProposals = isOperatorRole(role)
       ? await listPendingActivityProposals(store, role)
       : [];
 

@@ -1,6 +1,5 @@
 'use client';
 
-import type { ActivityVisibility, UserRole } from '@/domain/activity';
 import type { ChapterRecord } from '@/domain/chapter-record';
 import {
   type ChapterRecordStore,
@@ -10,6 +9,10 @@ import {
   listProductionFirestoreDocuments,
   resolveBrowserDataAdapterMode,
 } from '@/domain/data-adapter-split';
+import {
+  getReadablePublishedVisibilities,
+  shouldUseUnfilteredContentRead,
+} from '@/domain/role-access-policy';
 import { getFirestoreDb, hasFirebaseConfig } from '@/lib/firebase/client';
 import { seedChapterRecords } from './seed-chapter-records';
 
@@ -129,12 +132,16 @@ function createFirestoreChapterRecordStore(): ChapterRecordStore {
       );
       const recordsCollection = collection(getFirestoreDb(), 'chapterRecords');
       const snapshot = await getDocs(
-        shouldListAllForRole(role)
+        shouldUseUnfilteredContentRead(role)
           ? recordsCollection
           : query(
               recordsCollection,
               where('status', '==', 'published'),
-              where('visibility', 'in', getVisibleRecordVisibilities(role)),
+              where(
+                'visibility',
+                'in',
+                getReadablePublishedVisibilities(role ?? 'visitor'),
+              ),
             ),
       );
 
@@ -144,18 +151,4 @@ function createFirestoreChapterRecordStore(): ChapterRecordStore {
       );
     },
   };
-}
-
-function shouldListAllForRole(role: UserRole | undefined) {
-  return role === undefined || ['team_member', 'organizer', 'admin'].includes(role);
-}
-
-function getVisibleRecordVisibilities(
-  role: UserRole | undefined,
-): ActivityVisibility[] {
-  if (role === 'member' || role === 'alumni') {
-    return ['public', 'member'];
-  }
-
-  return ['public'];
 }

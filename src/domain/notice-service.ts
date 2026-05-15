@@ -5,6 +5,7 @@ import {
   type NoticeVisibility,
   listVisibleNotices,
 } from './notice.ts';
+import { isOperatorRole } from './role-access-policy.ts';
 
 export type NoticeStore = {
   create(notice: Notice): Promise<Notice>;
@@ -39,8 +40,6 @@ export type ArchiveNoticeInput = {
   now: string;
 };
 
-const operatorRoles = new Set<UserRole>(['team_member', 'organizer', 'admin']);
-
 export function createInMemoryNoticeStore(
   initialNotices: Notice[] = [],
 ): NoticeStore {
@@ -74,7 +73,7 @@ export async function createNotice(
   store: NoticeStore,
   input: CreateNoticeInput,
 ): Promise<Notice> {
-  if (!operatorRoles.has(input.actorRole)) {
+  if (!isOperatorRole(input.actorRole)) {
     throw new Error('Only operators can create notices.');
   }
 
@@ -94,7 +93,7 @@ export async function updateNotice(
   store: NoticeStore,
   input: UpdateNoticeInput,
 ): Promise<Notice> {
-  if (!operatorRoles.has(input.actorRole)) {
+  if (!isOperatorRole(input.actorRole)) {
     throw new Error('Only operators can update notices.');
   }
 
@@ -115,7 +114,7 @@ export async function archiveNotice(
   store: NoticeStore,
   input: ArchiveNoticeInput,
 ): Promise<Notice> {
-  if (!operatorRoles.has(input.actorRole)) {
+  if (!isOperatorRole(input.actorRole)) {
     throw new Error('Only operators can archive notices.');
   }
 

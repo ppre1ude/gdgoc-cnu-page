@@ -8,6 +8,10 @@ import {
   type ChapterRecordStatus,
   listVisibleChapterRecords,
 } from './chapter-record.ts';
+import {
+  isActiveMemberRole,
+  isOperatorRole,
+} from './role-access-policy.ts';
 
 export type ChapterRecordStore = {
   create(record: ChapterRecord): Promise<ChapterRecord>;
@@ -38,14 +42,6 @@ export type PublishChapterRecordInput = {
   showcaseCandidate: boolean;
   now: string;
 };
-
-const operatorRoles = new Set<UserRole>(['team_member', 'organizer', 'admin']);
-const activeMemberRoles = new Set<UserRole>([
-  'member',
-  'team_member',
-  'organizer',
-  'admin',
-]);
 
 export function createInMemoryChapterRecordStore(
   initialRecords: ChapterRecord[] = [],
@@ -78,7 +74,7 @@ export async function submitChapterRecord(
   store: ChapterRecordStore,
   input: SubmitChapterRecordInput,
 ): Promise<ChapterRecord> {
-  if (!activeMemberRoles.has(input.actorRole)) {
+  if (!isActiveMemberRole(input.actorRole)) {
     throw new Error('Only active members can submit chapter records.');
   }
 
@@ -104,7 +100,7 @@ export async function listPendingChapterRecords(
   store: ChapterRecordStore,
   actorRole: UserRole,
 ): Promise<ChapterRecord[]> {
-  if (!operatorRoles.has(actorRole)) {
+  if (!isOperatorRole(actorRole)) {
     throw new Error('Only operators can list pending chapter records.');
   }
 
@@ -126,7 +122,7 @@ export async function publishChapterRecord(
   store: ChapterRecordStore,
   input: PublishChapterRecordInput,
 ): Promise<ChapterRecord> {
-  if (!operatorRoles.has(input.actorRole)) {
+  if (!isOperatorRole(input.actorRole)) {
     throw new Error('Only operators can publish chapter records.');
   }
 

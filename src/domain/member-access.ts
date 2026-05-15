@@ -1,4 +1,8 @@
 import type { UserRole } from './activity.ts';
+import {
+  canApplyToActivities,
+  canViewMemberContent,
+} from './role-access-policy.ts';
 
 export type MemberHomeAccessStatus =
   | 'login_required'
@@ -39,8 +43,8 @@ export function describeMemberHomeAccess(role: UserRole): MemberHomeAccess {
     case 'alumni':
       return {
         status: 'alumni',
-        canViewMemberContent: true,
-        canApplyToActivities: false,
+        canViewMemberContent: canViewMemberContent(role),
+        canApplyToActivities: canApplyToActivities(role),
         message: '수료 멤버는 멤버 콘텐츠를 볼 수 있지만 활동 신청은 할 수 없습니다.',
       };
     case 'member':

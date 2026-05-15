@@ -8,6 +8,7 @@ import {
   WdsPageHeader,
 } from '@/components/wds-layout-primitives';
 import type { UserRole } from '@/domain/activity';
+import { isRoleAllowed } from '@/domain/role-access-policy';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
 
 export function RoleGate({
@@ -16,7 +17,7 @@ export function RoleGate({
   description = '현재 역할로는 이 화면에 접근할 수 없습니다.',
   title = '권한이 필요합니다',
 }: {
-  allowedRoles: UserRole[];
+  allowedRoles: readonly UserRole[];
   children: ReactNode;
   description?: string;
   title?: string;
@@ -37,7 +38,7 @@ export function RoleGate({
     );
   }
 
-  if (!allowedRoles.includes(role)) {
+  if (!isRoleAllowed(role, allowedRoles)) {
     return (
       <main className="page">
         <div className="container">

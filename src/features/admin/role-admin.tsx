@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import type { UserRole } from '@/domain/activity';
 import type { ChapterUser, RoleChangeLog } from '@/domain/chapter-user';
+import type { AssignableUserRole } from '@/domain/role-access-policy';
 import {
   formatKoreanDate,
   formatKoreanDateTime,
@@ -29,7 +30,7 @@ import { createBrowserChapterUserStore } from '../users/browser-chapter-user-sto
 import { createBrowserChapterUserMutationClient } from '../users/browser-chapter-user-mutation-client';
 import { seedChapterUsers } from '../users/seed-chapter-users';
 
-type AccountRole = Exclude<UserRole, 'visitor'>;
+type AccountRole = AssignableUserRole;
 
 const accountRoles: Array<{
   description: string;

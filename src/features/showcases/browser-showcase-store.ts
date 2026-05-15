@@ -1,6 +1,5 @@
 'use client';
 
-import type { ActivityVisibility, UserRole } from '@/domain/activity';
 import type { Showcase } from '@/domain/showcase';
 import { normalizeShowcase, normalizeShowcases } from '@/domain/showcase';
 import {
@@ -11,6 +10,10 @@ import {
   listProductionFirestoreDocuments,
   resolveBrowserDataAdapterMode,
 } from '@/domain/data-adapter-split';
+import {
+  getReadablePublishedVisibilities,
+  shouldUseUnfilteredContentRead,
+} from '@/domain/role-access-policy';
 import { getFirestoreDb, hasFirebaseConfig } from '@/lib/firebase/client';
 import { seedShowcases } from './seed-showcases';
 
@@ -116,30 +119,20 @@ function createFirestoreShowcaseStore(): ShowcaseStore {
       );
       const showcasesCollection = collection(getFirestoreDb(), 'showcases');
       const snapshot = await getDocs(
-        shouldListAllForRole(role)
+        shouldUseUnfilteredContentRead(role)
           ? showcasesCollection
           : query(
               showcasesCollection,
               where('status', '==', 'published'),
-              where('visibility', 'in', getVisibleShowcaseVisibilities(role)),
+              where(
+                'visibility',
+                'in',
+                getReadablePublishedVisibilities(role ?? 'visitor'),
+              ),
             ),
       );
 
       return normalizeShowcases(listProductionFirestoreDocuments(snapshot));
     },
   };
-}
-
-function shouldListAllForRole(role: UserRole | undefined) {
-  return role === undefined || ['team_member', 'organizer', 'admin'].includes(role);
-}
-
-function getVisibleShowcaseVisibilities(
-  role: UserRole | undefined,
-): ActivityVisibility[] {
-  if (role === 'member' || role === 'alumni') {
-    return ['public', 'member'];
-  }
-
-  return ['public'];
 }

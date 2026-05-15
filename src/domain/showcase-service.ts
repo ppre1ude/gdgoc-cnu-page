@@ -11,6 +11,7 @@ import {
   normalizeShowcase,
   normalizeShowcases,
 } from './showcase.ts';
+import { isOperatorRole } from './role-access-policy.ts';
 
 export type ShowcaseStore = {
   create(showcase: Showcase): Promise<Showcase>;
@@ -33,8 +34,6 @@ export type CreateShowcaseInput = {
   now: string;
 };
 
-const operatorRoles = new Set<UserRole>(['team_member', 'organizer', 'admin']);
-
 export function createInMemoryShowcaseStore(
   initialShowcases: Showcase[] = [],
 ): ShowcaseStore {
@@ -55,7 +54,7 @@ export async function createShowcase(
   store: ShowcaseStore,
   input: CreateShowcaseInput,
 ): Promise<Showcase> {
-  if (!operatorRoles.has(input.actorRole)) {
+  if (!isOperatorRole(input.actorRole)) {
     throw new Error('Only operators can create showcases.');
   }
 

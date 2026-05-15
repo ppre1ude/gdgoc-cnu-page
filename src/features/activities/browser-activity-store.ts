@@ -4,11 +4,15 @@ import {
   type ActivityStore,
   createInMemoryActivityStore,
 } from '@/domain/activity-service';
-import type { Activity, ActivityVisibility, UserRole } from '@/domain/activity';
+import type { Activity } from '@/domain/activity';
 import {
   listProductionFirestoreDocuments,
   resolveBrowserDataAdapterMode,
 } from '@/domain/data-adapter-split';
+import {
+  getReadablePublishedVisibilities,
+  shouldUseUnfilteredContentRead,
+} from '@/domain/role-access-policy';
 import { getFirestoreDb, hasFirebaseConfig } from '@/lib/firebase/client';
 import { seedActivities } from './seed-activities';
 
@@ -126,12 +130,16 @@ function createFirestoreActivityStore(): ActivityStore {
       );
       const activitiesCollection = collection(getFirestoreDb(), 'activities');
       const snapshot = await getDocs(
-        shouldListAllForRole(role)
+        shouldUseUnfilteredContentRead(role)
           ? activitiesCollection
           : query(
               activitiesCollection,
               where('status', '==', 'published'),
-              where('visibility', 'in', getVisibleActivityVisibilities(role)),
+              where(
+                'visibility',
+                'in',
+                getReadablePublishedVisibilities(role ?? 'visitor'),
+              ),
             ),
       );
 
@@ -141,18 +149,4 @@ function createFirestoreActivityStore(): ActivityStore {
       );
     },
   };
-}
-
-function shouldListAllForRole(role: UserRole | undefined) {
-  return role === undefined || ['team_member', 'organizer', 'admin'].includes(role);
-}
-
-function getVisibleActivityVisibilities(
-  role: UserRole | undefined,
-): ActivityVisibility[] {
-  if (role === 'member' || role === 'alumni') {
-    return ['public', 'member'];
-  }
-
-  return ['public'];
 }

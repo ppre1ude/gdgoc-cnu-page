@@ -12,6 +12,10 @@ import type { User } from 'firebase/auth';
 
 import type { UserRole } from '@/domain/activity';
 import { ensureGoogleGuestAccount } from '@/domain/chapter-user-service';
+import {
+  isKnownUserRole,
+  userRoles,
+} from '@/domain/role-access-policy';
 import { getFirebaseAuth, hasFirebaseConfig } from '@/lib/firebase/client';
 import { createBrowserChapterUserStore } from '../users/browser-chapter-user-store';
 import { signInWithPopupOrRedirect } from './firebase-google-sign-in';
@@ -36,15 +40,7 @@ export type AuthSession = {
 };
 
 export const demoRoleStorageKey = 'gdgoc-cnu.demoRole';
-export const demoRoleOptions: UserRole[] = [
-  'visitor',
-  'guest',
-  'member',
-  'alumni',
-  'team_member',
-  'organizer',
-  'admin',
-];
+export const demoRoleOptions: UserRole[] = [...userRoles];
 
 const defaultDemoRole: UserRole = 'team_member';
 const visitorUserId = 'visitor';
@@ -207,7 +203,7 @@ export function useAuthSession() {
 }
 
 export function isUserRole(value: string | null): value is UserRole {
-  return demoRoleOptions.includes(value as UserRole);
+  return isKnownUserRole(value);
 }
 
 function createDemoSessionState(role: UserRole) {
