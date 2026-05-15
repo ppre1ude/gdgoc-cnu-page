@@ -7,21 +7,28 @@ import {
   type ShowcaseStore,
   createInMemoryShowcaseStore,
 } from '@/domain/showcase-service';
+import {
+  listProductionFirestoreDocuments,
+  resolveBrowserDataAdapterMode,
+} from '@/domain/data-adapter-split';
 import { getFirestoreDb, hasFirebaseConfig } from '@/lib/firebase/client';
 import { seedShowcases } from './seed-showcases';
 
 const storageKey = 'gdgoc-cnu.showcases';
 
 export function createBrowserShowcaseStore(): ShowcaseStore {
-  if (typeof window === 'undefined') {
-    return createInMemoryShowcaseStore(seedShowcases);
-  }
+  const adapterMode = resolveBrowserDataAdapterMode({
+    firebaseConfigured: hasFirebaseConfig(),
+    hasBrowserRuntime: typeof window !== 'undefined',
+  });
 
-  if (hasFirebaseConfig()) {
+  if (adapterMode === 'production_firestore') {
     return createFirestoreShowcaseStore();
   }
 
-  return createLocalStorageShowcaseStore();
+  return adapterMode === 'server_demo_memory'
+    ? createInMemoryShowcaseStore(seedShowcases)
+    : createLocalStorageShowcaseStore();
 }
 
 function createLocalStorageShowcaseStore(): ShowcaseStore {
@@ -118,11 +125,7 @@ function createFirestoreShowcaseStore(): ShowcaseStore {
             ),
       );
 
-      if (snapshot.empty) {
-        return seedShowcases;
-      }
-
-      return normalizeShowcases(snapshot.docs.map((item) => item.data()));
+      return normalizeShowcases(listProductionFirestoreDocuments(snapshot));
     },
   };
 }

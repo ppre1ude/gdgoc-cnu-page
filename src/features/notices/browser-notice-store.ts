@@ -7,21 +7,28 @@ import {
   type NoticeStore,
   createInMemoryNoticeStore,
 } from '@/domain/notice-service';
+import {
+  listProductionFirestoreDocuments,
+  resolveBrowserDataAdapterMode,
+} from '@/domain/data-adapter-split';
 import { getFirestoreDb, hasFirebaseConfig } from '@/lib/firebase/client';
 import { seedNotices } from './seed-notices';
 
 const storageKey = 'gdgoc-cnu.notices';
 
 export function createBrowserNoticeStore(): NoticeStore {
-  if (typeof window === 'undefined') {
-    return createInMemoryNoticeStore(seedNotices);
-  }
+  const adapterMode = resolveBrowserDataAdapterMode({
+    firebaseConfigured: hasFirebaseConfig(),
+    hasBrowserRuntime: typeof window !== 'undefined',
+  });
 
-  if (hasFirebaseConfig()) {
+  if (adapterMode === 'production_firestore') {
     return createFirestoreNoticeStore();
   }
 
-  return createLocalStorageNoticeStore();
+  return adapterMode === 'server_demo_memory'
+    ? createInMemoryNoticeStore(seedNotices)
+    : createLocalStorageNoticeStore();
 }
 
 function createLocalStorageNoticeStore(): NoticeStore {
@@ -100,11 +107,7 @@ function createFirestoreNoticeStore(): NoticeStore {
             ),
       );
 
-      if (snapshot.empty) {
-        return seedNotices;
-      }
-
-      return snapshot.docs.map((item) => item.data() as Notice);
+      return listProductionFirestoreDocuments(snapshot, (data) => data as Notice);
     },
   };
 }

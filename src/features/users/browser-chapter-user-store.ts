@@ -5,6 +5,10 @@ import {
   type ChapterUserStore,
   createInMemoryChapterUserStore,
 } from '@/domain/chapter-user-service';
+import {
+  listProductionFirestoreDocuments,
+  resolveBrowserDataAdapterMode,
+} from '@/domain/data-adapter-split';
 import { getFirestoreDb, hasFirebaseConfig } from '@/lib/firebase/client';
 import { seedChapterUsers } from './seed-chapter-users';
 
@@ -12,15 +16,18 @@ const usersStorageKey = 'gdgoc-cnu.chapterUsers';
 const roleChangeLogsStorageKey = 'gdgoc-cnu.roleChangeLogs';
 
 export function createBrowserChapterUserStore(): ChapterUserStore {
-  if (typeof window === 'undefined') {
-    return createInMemoryChapterUserStore(seedChapterUsers);
-  }
+  const adapterMode = resolveBrowserDataAdapterMode({
+    firebaseConfigured: hasFirebaseConfig(),
+    hasBrowserRuntime: typeof window !== 'undefined',
+  });
 
-  if (hasFirebaseConfig()) {
+  if (adapterMode === 'production_firestore') {
     return createFirestoreChapterUserStore();
   }
 
-  return createLocalStorageChapterUserStore();
+  return adapterMode === 'server_demo_memory'
+    ? createInMemoryChapterUserStore(seedChapterUsers)
+    : createLocalStorageChapterUserStore();
 }
 
 function createLocalStorageChapterUserStore(): ChapterUserStore {
@@ -106,11 +113,10 @@ function createFirestoreChapterUserStore(): ChapterUserStore {
       const { collection, getDocs } = await import('firebase/firestore');
       const snapshot = await getDocs(collection(getFirestoreDb(), 'chapterUsers'));
 
-      if (snapshot.empty) {
-        return seedChapterUsers;
-      }
-
-      return snapshot.docs.map((item) => item.data() as ChapterUser);
+      return listProductionFirestoreDocuments(
+        snapshot,
+        (data) => data as ChapterUser,
+      );
     },
     async findUser(userId) {
       const { doc, getDoc } = await import('firebase/firestore');
@@ -127,7 +133,10 @@ function createFirestoreChapterUserStore(): ChapterUserStore {
       const { collection, getDocs } = await import('firebase/firestore');
       const snapshot = await getDocs(collection(getFirestoreDb(), 'roleChangeLogs'));
 
-      return snapshot.docs.map((item) => item.data() as RoleChangeLog);
+      return listProductionFirestoreDocuments(
+        snapshot,
+        (data) => data as RoleChangeLog,
+      );
     },
   };
 }

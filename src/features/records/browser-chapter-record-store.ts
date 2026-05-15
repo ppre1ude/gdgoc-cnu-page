@@ -6,21 +6,28 @@ import {
   type ChapterRecordStore,
   createInMemoryChapterRecordStore,
 } from '@/domain/chapter-record-service';
+import {
+  listProductionFirestoreDocuments,
+  resolveBrowserDataAdapterMode,
+} from '@/domain/data-adapter-split';
 import { getFirestoreDb, hasFirebaseConfig } from '@/lib/firebase/client';
 import { seedChapterRecords } from './seed-chapter-records';
 
 const storageKey = 'gdgoc-cnu.chapterRecords';
 
 export function createBrowserChapterRecordStore(): ChapterRecordStore {
-  if (typeof window === 'undefined') {
-    return createInMemoryChapterRecordStore(seedChapterRecords);
-  }
+  const adapterMode = resolveBrowserDataAdapterMode({
+    firebaseConfigured: hasFirebaseConfig(),
+    hasBrowserRuntime: typeof window !== 'undefined',
+  });
 
-  if (hasFirebaseConfig()) {
+  if (adapterMode === 'production_firestore') {
     return createFirestoreChapterRecordStore();
   }
 
-  return createLocalStorageChapterRecordStore();
+  return adapterMode === 'server_demo_memory'
+    ? createInMemoryChapterRecordStore(seedChapterRecords)
+    : createLocalStorageChapterRecordStore();
 }
 
 function createLocalStorageChapterRecordStore(): ChapterRecordStore {
@@ -131,11 +138,10 @@ function createFirestoreChapterRecordStore(): ChapterRecordStore {
             ),
       );
 
-      if (snapshot.empty) {
-        return seedChapterRecords;
-      }
-
-      return snapshot.docs.map((item) => item.data() as ChapterRecord);
+      return listProductionFirestoreDocuments(
+        snapshot,
+        (data) => data as ChapterRecord,
+      );
     },
   };
 }
