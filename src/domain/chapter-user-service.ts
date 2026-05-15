@@ -40,6 +40,13 @@ export type SubmitGuestProfileInput = {
   now: string;
 };
 
+export type EnsureGoogleGuestAccountInput = {
+  id: string;
+  displayName: string;
+  email: string;
+  now: string;
+};
+
 const memberApprovalRoles = new Set<UserRole>([
   'team_member',
   'organizer',
@@ -84,6 +91,26 @@ export async function listPendingGuestUsers(
   return users
     .filter((user) => user.role === 'guest')
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+export async function ensureGoogleGuestAccount(
+  store: ChapterUserStore,
+  input: EnsureGoogleGuestAccountInput,
+): Promise<ChapterUser> {
+  const existingUser = await store.findUser(input.id);
+
+  if (existingUser) {
+    return existingUser;
+  }
+
+  return store.saveUser({
+    id: input.id,
+    displayName: input.displayName,
+    email: input.email,
+    role: 'guest',
+    createdAt: input.now,
+    updatedAt: input.now,
+  });
 }
 
 export async function submitGuestProfile(

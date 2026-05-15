@@ -3,11 +3,15 @@ import {
   type Showcase,
   type ShowcaseKind,
 } from '@/domain/showcase';
+import { Box } from '@wanteddev/wds';
+import type { ElementType } from 'react';
 import { WdsBadge } from '@/components/wds-form-controls';
 import {
   WdsBadgeGroup,
   WdsSurfaceCard,
 } from '@/components/wds-layout-primitives';
+
+const PolymorphicBox = Box as unknown as ElementType;
 
 const showcaseKindLabel: Record<ShowcaseKind, string> = {
   achievement: '성과',
@@ -22,12 +26,48 @@ const showcaseSurfaceSx = {
   padding: 0,
 };
 
+const showcaseBodySx = {
+  padding: '18px',
+};
+
+const showcaseMediaSx = {
+  aspectRatio: '16 / 9',
+  background:
+    'linear-gradient(135deg, rgb(var(--semantic-primary-normal-rgb) / 0.14), transparent 52%), var(--surface-muted)',
+  borderBottom: '1px solid var(--line)',
+  overflow: 'hidden',
+};
+
+const showcaseImageSx = {
+  display: 'block',
+  height: '100%',
+  objectFit: 'cover',
+  width: '100%',
+};
+
+const showcaseEmptyMediaSx = {
+  ...showcaseMediaSx,
+  alignItems: 'flex-end',
+  display: 'flex',
+  padding: '18px',
+};
+
+const showcaseEmptyLabelSx = {
+  background: 'white',
+  border: '1px solid var(--line)',
+  borderRadius: '999px',
+  color: 'var(--text-muted)',
+  fontSize: '12px',
+  fontWeight: 800,
+  padding: '7px 9px',
+};
+
 export function ShowcaseCard({ showcase }: { showcase: Showcase }) {
   const safeHref = getSafeShowcaseHref(showcase.href);
   const content = (
     <>
       <ShowcaseMedia showcase={showcase} />
-      <div className="showcase-card-body">
+      <Box sx={showcaseBodySx}>
         <WdsBadgeGroup>
           <WdsBadge tone="green">
             {showcaseKindLabel[showcase.kind]}
@@ -40,7 +80,7 @@ export function ShowcaseCard({ showcase }: { showcase: Showcase }) {
         </WdsBadgeGroup>
         <h3>{showcase.title}</h3>
         <p>{showcase.summary}</p>
-      </div>
+      </Box>
     </>
   );
 
@@ -48,7 +88,6 @@ export function ShowcaseCard({ showcase }: { showcase: Showcase }) {
     return (
       <WdsSurfaceCard
         as="a"
-        className="showcase-card"
         href={safeHref}
         sx={showcaseSurfaceSx}
       >
@@ -60,7 +99,6 @@ export function ShowcaseCard({ showcase }: { showcase: Showcase }) {
   return (
     <WdsSurfaceCard
       as="article"
-      className="showcase-card"
       sx={showcaseSurfaceSx}
     >
       {content}
@@ -71,15 +109,22 @@ export function ShowcaseCard({ showcase }: { showcase: Showcase }) {
 function ShowcaseMedia({ showcase }: { showcase: Showcase }) {
   if (showcase.imageUrl) {
     return (
-      <div className="showcase-card-media">
-        <img alt="" src={showcase.imageUrl} />
-      </div>
+      <Box sx={showcaseMediaSx}>
+        <PolymorphicBox
+          alt=""
+          as="img"
+          src={showcase.imageUrl}
+          sx={showcaseImageSx}
+        />
+      </Box>
     );
   }
 
   return (
-    <div className="showcase-card-media showcase-card-media-empty">
-      <span>{showcaseKindLabel[showcase.kind]}</span>
-    </div>
+    <Box sx={showcaseEmptyMediaSx}>
+      <PolymorphicBox as="span" sx={showcaseEmptyLabelSx}>
+        {showcaseKindLabel[showcase.kind]}
+      </PolymorphicBox>
+    </Box>
   );
 }

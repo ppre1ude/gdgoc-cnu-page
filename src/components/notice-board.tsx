@@ -1,14 +1,120 @@
-import type { ReactNode } from 'react';
+import { Box, FlexBox, Typography } from '@wanteddev/wds';
+import type { ElementType, ReactNode } from 'react';
 
 import { WdsBadge, WdsEmptyState } from '@/components/wds-form-controls';
 import type { Notice } from '@/domain/notice';
 import { formatKoreanDate } from '@/lib/format-korean-date-time';
+
+const PolymorphicBox = Box as unknown as ElementType;
 
 const visibilityLabel: Record<Notice['visibility'], string> = {
   public: 'Public',
   member: 'Member',
   operator: 'Operator',
 };
+
+const compactNoticeBoardQuery = '@container (max-width: 720px)';
+
+const noticeBoardSx = {
+  background: 'var(--surface)',
+  border: '1px solid var(--line)',
+  borderRadius: 'var(--radius)',
+  containerType: 'inline-size',
+  overflow: 'hidden',
+};
+
+const noticeHeaderSx = {
+  background: 'var(--surface-muted)',
+  borderBottom: '1px solid var(--line)',
+  color: 'var(--text-muted)',
+  fontSize: '12px',
+  fontWeight: 800,
+  '@media (max-width: 560px)': {
+    display: 'none',
+  },
+  [compactNoticeBoardQuery]: {
+    display: 'none',
+  },
+};
+
+const noticeTitleSx = {
+  color: 'var(--text-strong)',
+  display: 'block',
+  fontSize: '16px',
+  letterSpacing: 0,
+  lineHeight: 1.35,
+  overflowWrap: 'break-word' as const,
+  wordBreak: 'keep-all' as const,
+};
+
+const noticeBodySx = {
+  color: 'var(--text-muted)',
+  fontSize: '14px',
+  lineHeight: 1.55,
+  margin: '6px 0 0',
+  overflowWrap: 'break-word' as const,
+  wordBreak: 'keep-all' as const,
+};
+
+const noticeCellSx = {
+  minWidth: 0,
+};
+
+const noticeStatusDateCellSx = {
+  ...noticeCellSx,
+  '@media (max-width: 560px)': {
+    alignItems: 'center',
+    display: 'flex',
+    justifyContent: 'space-between',
+  },
+  [compactNoticeBoardQuery]: {
+    alignItems: 'center',
+    display: 'flex',
+    justifyContent: 'space-between',
+  },
+};
+
+const noticeDateSx = {
+  color: 'var(--text-muted)',
+  fontSize: '13px',
+};
+
+function getNoticeRowSx({
+  columnTemplate,
+  isHeader = false,
+  isPinned = false,
+}: {
+  columnTemplate: string;
+  isHeader?: boolean;
+  isPinned?: boolean;
+}) {
+  return {
+    alignItems: 'center',
+    display: 'grid',
+    gap: '14px',
+    gridTemplateColumns: columnTemplate,
+    padding: '14px 16px',
+    ...(isHeader ? noticeHeaderSx : { borderBottom: '1px solid var(--line)' }),
+    ...(isPinned
+      ? { background: 'rgb(var(--semantic-status-cautionary-rgb) / 0.1)' }
+      : {}),
+    '&:last-child': {
+      borderBottom: 0,
+    },
+    '@media (max-width: 560px)': {
+      ...(isHeader ? { display: 'none' } : {}),
+      alignItems: 'start',
+      gap: '10px',
+      gridTemplateColumns: '1fr',
+    },
+    [compactNoticeBoardQuery]: {
+      ...(isHeader ? { display: 'none' } : {}),
+      alignItems: 'start',
+      gap: '10px',
+      gridTemplateColumns: '1fr',
+    },
+  };
+}
 
 export function NoticeBoard({
   notices,
@@ -23,55 +129,68 @@ export function NoticeBoard({
     return <WdsEmptyState>{emptyMessage}</WdsEmptyState>;
   }
 
+  const columnTemplate = renderActions
+    ? '92px minmax(0, 1fr) 92px 110px 150px'
+    : '92px minmax(0, 1fr) 92px 110px';
+
   return (
-    <div
-      aria-label="공지사항 목록"
-      className={
-        renderActions ? 'notice-board notice-board-with-actions' : 'notice-board'
-      }
-      role="table"
-    >
-      <div className="notice-board-head" role="row">
+    <Box aria-label="공지사항 목록" role="table" sx={noticeBoardSx}>
+      <PolymorphicBox
+        role="row"
+        sx={getNoticeRowSx({ columnTemplate, isHeader: true })}
+      >
         <span role="columnheader">상태</span>
         <span role="columnheader">제목</span>
         <span role="columnheader">범위</span>
         <span role="columnheader">수정일</span>
         {renderActions ? <span role="columnheader">관리</span> : null}
-      </div>
+      </PolymorphicBox>
       {notices.map((notice) => (
-        <article
-          className={
-            notice.pinned
-              ? 'notice-board-row notice-board-row-pinned'
-              : 'notice-board-row'
-          }
+        <PolymorphicBox
+          as="article"
           key={notice.id}
           role="row"
+          sx={getNoticeRowSx({
+            columnTemplate,
+            isPinned: notice.pinned,
+          })}
         >
-          <div className="notice-board-cell notice-board-status" role="cell">
+          <Box role="cell" sx={noticeStatusDateCellSx}>
             {notice.pinned ? (
               <WdsBadge tone="green">Pinned</WdsBadge>
             ) : (
               <WdsBadge>Notice</WdsBadge>
             )}
-          </div>
-          <div className="notice-board-cell notice-board-title" role="cell">
-            <strong>{notice.title}</strong>
-            <p>{notice.body}</p>
-          </div>
-          <div className="notice-board-cell" role="cell">
+          </Box>
+          <Box role="cell" sx={noticeCellSx}>
+            <Typography as="strong" sx={noticeTitleSx}>
+              {notice.title}
+            </Typography>
+            <Typography as="p" sx={noticeBodySx}>
+              {notice.body}
+            </Typography>
+          </Box>
+          <Box role="cell" sx={noticeCellSx}>
             <WdsBadge>{visibilityLabel[notice.visibility]}</WdsBadge>
-          </div>
-          <div className="notice-board-cell notice-board-date" role="cell">
-            {formatKoreanDate(notice.updatedAt)}
-          </div>
+          </Box>
+          <Box role="cell" sx={noticeStatusDateCellSx}>
+            <Typography as="span" sx={noticeDateSx}>
+              {formatKoreanDate(notice.updatedAt)}
+            </Typography>
+          </Box>
           {renderActions ? (
-            <div className="notice-board-cell notice-board-actions" role="cell">
+            <FlexBox
+              alignItems="center"
+              flexWrap="wrap"
+              gap="8px"
+              role="cell"
+              sx={noticeCellSx}
+            >
               {renderActions(notice)}
-            </div>
+            </FlexBox>
           ) : null}
-        </article>
+        </PolymorphicBox>
       ))}
-    </div>
+    </Box>
   );
 }

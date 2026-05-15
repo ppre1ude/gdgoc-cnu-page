@@ -11,7 +11,6 @@ import {
   FormLabel,
   FormMessage,
   Option,
-  OptionContent,
   Select,
   SectionMessage,
   TextArea,
@@ -272,7 +271,7 @@ export function WdsSelect<Value extends string>({
           key={option.value}
           value={option.value}
         >
-          <OptionContent>{option.label}</OptionContent>
+          {option.label}
         </Option>
       ))}
     </Select>

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Suspense } from 'react';
 
 import { getPrimaryNavigationItems } from '@/domain/navigation';
 import { useAuthSession } from '@/features/auth/auth-session-provider';
@@ -27,7 +28,9 @@ export function AppNavigation() {
             {item.label}
           </Link>
         ))}
-        <AuthPanel />
+        <Suspense fallback={null}>
+          <AuthPanel />
+        </Suspense>
       </nav>
     </header>
   );

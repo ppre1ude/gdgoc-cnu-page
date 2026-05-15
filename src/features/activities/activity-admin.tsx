@@ -54,6 +54,9 @@ import {
   WdsDashboardLayout,
   WdsOffset,
   WdsPageHeader,
+  WdsQueue,
+  WdsQueueRow,
+  WdsQueueSummary,
   WdsResponsiveGrid,
   WdsSectionHeader,
   WdsStack,
@@ -656,9 +659,9 @@ function ProposalReviewQueue({
       />
 
       {proposals.length > 0 ? (
-        <div className="application-queue">
+        <WdsQueue>
           {proposals.map((proposal) => (
-            <div className="application-row" key={proposal.id}>
+            <WdsQueueRow key={proposal.id}>
               <div>
                 <strong>{proposal.title}</strong>
                 <div className="helper-text">
@@ -674,9 +677,9 @@ function ProposalReviewQueue({
               >
                 승인
               </WdsButton>
-            </div>
+            </WdsQueueRow>
           ))}
-        </div>
+        </WdsQueue>
       ) : (
         <WdsEmptyState>검토 대기 중인 프로젝트 제안이 없습니다.</WdsEmptyState>
       )}
@@ -719,13 +722,13 @@ function ApplicationQueue({
   }
 
   return (
-    <div className="application-queue">
+    <WdsQueue>
       {summary ? <AttendanceSummary summary={summary} /> : null}
       {applications.map((application) => {
         const isAttended = attendedUserIds.has(application.userId);
 
         return (
-          <div className="application-row" key={application.id}>
+          <WdsQueueRow key={application.id}>
             <div>
               <strong>{application.userId}</strong>
               <div className="helper-text">
@@ -758,10 +761,10 @@ function ApplicationQueue({
                 출석 처리
               </WdsButton>
             )}
-          </div>
+          </WdsQueueRow>
         );
       })}
-    </div>
+    </WdsQueue>
   );
 }
 
@@ -771,12 +774,12 @@ function AttendanceSummary({
   summary: ReturnType<typeof summarizeSessionAttendance>;
 }) {
   return (
-    <div className="attendance-summary">
+    <WdsQueueSummary>
       <WdsBadge>신청 {summary.appliedCount}</WdsBadge>
       <WdsBadge tone="blue">승인 {summary.approvedCount}</WdsBadge>
       <WdsBadge tone="green">참석 {summary.attendedCount}</WdsBadge>
       <WdsBadge>파생 미참석 {summary.derivedAbsentCount}</WdsBadge>
-    </div>
+    </WdsQueueSummary>
   );
 }
 

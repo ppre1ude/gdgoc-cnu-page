@@ -5,6 +5,7 @@ import {
   approveGuestToMember,
   changeUserRole,
   createInMemoryChapterUserStore,
+  ensureGoogleGuestAccount,
   listPendingGuestUsers,
   submitGuestProfile,
 } from './chapter-user-service.ts';
@@ -44,6 +45,49 @@ const adminUser: ChapterUser = {
 };
 
 describe('chapter user guest profile submission flow', () => {
+  it('creates a placeholder guest account for Google login without submitting a profile', async () => {
+    const store = createInMemoryChapterUserStore();
+
+    const guest = await ensureGoogleGuestAccount(store, {
+      id: 'google-user-1',
+      displayName: 'Google User',
+      email: 'google.user@example.com',
+      now: '2026-05-11T10:00:00.000Z',
+    });
+
+    assert.deepEqual(guest, {
+      id: 'google-user-1',
+      displayName: 'Google User',
+      email: 'google.user@example.com',
+      role: 'guest',
+      createdAt: '2026-05-11T10:00:00.000Z',
+      updatedAt: '2026-05-11T10:00:00.000Z',
+    });
+    assert.equal(guest.profileSubmittedAt, undefined);
+  });
+
+  it('keeps an existing chapter user when Google login sync runs again', async () => {
+    const store = createInMemoryChapterUserStore([
+      {
+        ...guestUser,
+        interests: 'Firebase',
+        profileSubmittedAt: '2026-05-11T09:30:00.000Z',
+      },
+    ]);
+
+    const guest = await ensureGoogleGuestAccount(store, {
+      id: 'user-guest-1',
+      displayName: 'Google Renamed',
+      email: 'renamed@example.com',
+      now: '2026-05-11T10:00:00.000Z',
+    });
+
+    assert.equal(guest.displayName, 'Guest User');
+    assert.equal(guest.email, 'guest@example.com');
+    assert.equal(guest.interests, 'Firebase');
+    assert.equal(guest.profileSubmittedAt, '2026-05-11T09:30:00.000Z');
+  });
+
   it('creates a new guest user when the submitter is not found', async () => {
     const store = createInMemoryChapterUserStore();
 

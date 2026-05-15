@@ -11,7 +11,7 @@ import {
 import type { User } from 'firebase/auth';
 
 import type { UserRole } from '@/domain/activity';
-import { submitGuestProfile } from '@/domain/chapter-user-service';
+import { ensureGoogleGuestAccount } from '@/domain/chapter-user-service';
 import { getFirebaseAuth, hasFirebaseConfig } from '@/lib/firebase/client';
 import { createBrowserChapterUserStore } from '../users/browser-chapter-user-store';
 import { signInWithPopupOrRedirect } from './firebase-google-sign-in';
@@ -121,12 +121,11 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
       const existingChapterUser = await userStore.findUser(user.uid);
       const chapterUser =
         existingChapterUser ??
-        (await submitGuestProfile(userStore, {
+        (await ensureGoogleGuestAccount(userStore, {
           displayName: user.displayName ?? user.email ?? 'Google User',
           email: user.email ?? '',
           id: user.uid,
           now: new Date().toISOString(),
-          profile: {},
         }));
 
       setSessionState({
