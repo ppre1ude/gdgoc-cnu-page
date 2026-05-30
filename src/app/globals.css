@@ -12,6 +12,21 @@
   --google-red: #ea4335;
   --google-yellow: #fbbc04;
   --google-green: #34a853;
+  --font-sans:
+    'Pretendard JP Variable',
+    'Pretendard Variable',
+    'Pretendard JP',
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    Roboto,
+    'Helvetica Neue',
+    'Segoe UI',
+    'Apple SD Gothic Neo',
+    'Noto Sans KR',
+    'Malgun Gothic',
+    sans-serif;
   --radius: 8px;
   --shadow: var(--semantic-elevation-shadow-normal-small);
 }
@@ -23,10 +38,12 @@
 html {
   background: var(--background);
   color: var(--text-normal);
+  font-family: var(--font-sans);
   word-break: keep-all;
 }
 
 body {
+  font-family: var(--font-sans);
   margin: 0;
 }
 
@@ -39,32 +56,12 @@ button,
 input,
 select,
 textarea {
+  font-family: var(--font-sans);
   font: inherit;
 }
 
 .app-shell {
   min-height: 100vh;
-}
-
-.top-nav {
-  align-items: center;
-  background: var(--surface);
-  border-bottom: 1px solid var(--line);
-  display: flex;
-  gap: 20px;
-  justify-content: space-between;
-  padding: 14px clamp(20px, 5vw, 56px);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.brand-lockup {
-  align-items: center;
-  display: flex;
-  font-weight: 800;
-  gap: 10px;
-  letter-spacing: 0;
 }
 
 .brand-mark {
@@ -77,35 +74,6 @@ textarea {
   border-radius: 999px;
   height: 9px;
   width: 9px;
-}
-
-.nav-links {
-  align-items: center;
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 10px;
-  min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: thin;
-}
-
-.nav-link {
-  border: 1px solid transparent;
-  border-radius: var(--radius);
-  color: var(--text-muted);
-  font-size: 14px;
-  font-weight: 700;
-  padding: 8px 10px;
-}
-
-.nav-link:hover {
-  background: var(--surface-muted);
-  color: var(--text-strong);
-}
-
-.nav-link-active {
-  background: var(--surface-muted);
-  color: var(--text-strong);
 }
 
 .member-route-card {
@@ -127,33 +95,6 @@ textarea {
   font-size: 13px;
   font-weight: 800;
   margin-top: 16px;
-}
-
-.member-flow-tabs {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 8px;
-  margin-top: 24px;
-  overflow-x: auto;
-  padding-bottom: 2px;
-  scrollbar-width: thin;
-}
-
-.member-flow-tab {
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  color: var(--text-muted);
-  flex: 0 0 auto;
-  font-size: 14px;
-  font-weight: 800;
-  padding: 9px 12px;
-}
-
-.member-flow-tab:hover,
-.member-flow-tab-active {
-  background: var(--surface-muted);
-  border-color: var(--primary);
-  color: var(--text-strong);
 }
 
 .member-dashboard-container {
@@ -1653,21 +1594,6 @@ textarea {
   padding: 30px 0 18px;
 }
 
-.checkbox-field {
-  align-items: center;
-  color: var(--text-strong);
-  display: flex;
-  font-size: 14px;
-  font-weight: 800;
-  gap: 8px;
-}
-
-.checkbox-field input {
-  accent-color: var(--primary);
-  height: 18px;
-  width: 18px;
-}
-
 @keyframes ribbon-reveal {
   from {
     transform: rotate(var(--ribbon-rotate, 0deg)) scaleX(0);
@@ -1854,15 +1780,6 @@ textarea {
 }
 
 @media (max-width: 560px) {
-  .top-nav {
-    align-items: start;
-    flex-direction: column;
-  }
-
-  .nav-links {
-    width: 100%;
-  }
-
   .onboarding-ribbon {
     border-width: 2px;
     display: flex;

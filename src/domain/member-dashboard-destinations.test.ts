@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 
 import { memberDashboardDestinations } from './member-dashboard-destinations.ts';
@@ -31,5 +32,19 @@ describe('member dashboard destinations', () => {
       ),
       true,
     );
+  });
+
+  it('renders member branch navigation as WDS navigation links', () => {
+    const source = readFileSync(
+      new URL('../features/activities/member-category-page.tsx', import.meta.url),
+      'utf8',
+    );
+
+    assert.equal(source.includes('member-flow-tabs'), false);
+    assert.equal(source.includes('member-flow-tab'), false);
+    assert.equal(source.includes('<SegmentedControl'), false);
+    assert.equal(source.includes('<SegmentedControlItem'), false);
+    assert.equal(source.includes('as="nav"'), true);
+    assert.equal(source.includes('<TopNavigationButton'), true);
   });
 });

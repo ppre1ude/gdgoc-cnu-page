@@ -1,5 +1,6 @@
 'use client';
 
+import { FlexBox, TopNavigationButton } from '@wanteddev/wds';
 import Link from 'next/link';
 
 import type { Activity } from '@/domain/activity';
@@ -119,22 +120,43 @@ function MemberFlowTabs({
   activeId: MemberDashboardDestinationId;
 }) {
   return (
-    <nav aria-label="Member dashboard branches" className="member-flow-tabs">
+    <FlexBox
+      aria-label="Member dashboard branches"
+      as="nav"
+      gap="10px"
+      sx={{
+        marginTop: '24px',
+        maxWidth: '100%',
+        overflowX: 'auto',
+        paddingBottom: '4px',
+        scrollbarWidth: 'thin',
+      }}
+    >
       {memberDashboardDestinations.map((destination) => (
-        <Link
+        <TopNavigationButton
           aria-current={destination.id === activeId ? 'page' : undefined}
-          className={
-            destination.id === activeId
-              ? 'member-flow-tab member-flow-tab-active'
-              : 'member-flow-tab'
-          }
+          as={Link}
+          color={destination.id === activeId ? 'primary' : 'assistive'}
           href={destination.href}
           key={destination.id}
+          variant="text"
+          sx={{
+            borderRadius: 'var(--radius)',
+            flex: '0 0 auto',
+            fontWeight: 700,
+            letterSpacing: 0,
+            minWidth: 'max-content',
+            ...(destination.id === activeId
+              ? {
+                background: 'var(--surface-muted)',
+              }
+              : {}),
+          }}
         >
           {destination.label}
-        </Link>
+        </TopNavigationButton>
       ))}
-    </nav>
+    </FlexBox>
   );
 }
 

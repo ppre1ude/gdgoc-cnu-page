@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 
 import {
@@ -91,6 +92,51 @@ describe('primary navigation', () => {
         ],
       );
     }
+  });
+
+  it('renders the top navigation through WDS navigation primitives', () => {
+    const source = readFileSync(
+      new URL('../components/app-navigation.tsx', import.meta.url),
+      'utf8',
+    );
+
+    assert.equal(source.includes('className="top-nav"'), false);
+    assert.equal(source.includes('className="nav-links"'), false);
+    assert.equal(source.includes('nav-link'), false);
+    assert.equal(source.includes('<TopNavigation'), true);
+    assert.equal(source.includes('<TopNavigationButton'), true);
+  });
+
+  it('keeps primary menu links in the WDS top navigation toolbar', () => {
+    const source = readFileSync(
+      new URL('../components/app-navigation.tsx', import.meta.url),
+      'utf8',
+    );
+
+    assert.equal(source.includes('toolbar={'), true);
+    assert.equal(source.includes('as="nav"'), true);
+    assert.equal(
+      source.indexOf('toolbar={') < source.indexOf('navigationItems.map'),
+      true,
+    );
+  });
+
+  it('keeps the app shell on the Pretendard WDS font stack', () => {
+    const layoutSource = readFileSync(
+      new URL('../app/layout.tsx', import.meta.url),
+      'utf8',
+    );
+    const globalCss = readFileSync(
+      new URL('../app/globals.css', import.meta.url),
+      'utf8',
+    );
+
+    assert.equal(layoutSource.includes('@wanteddev/wds/global.css'), true);
+    assert.equal(layoutSource.includes('pretendard-jp-dynamic-subset'), true);
+    assert.equal(layoutSource.includes('pretendard-dynamic-subset'), true);
+    assert.equal(globalCss.includes('--font-sans'), true);
+    assert.equal(globalCss.includes('Pretendard JP'), true);
+    assert.equal(globalCss.includes('font-family: var(--font-sans)'), true);
   });
 });
 
