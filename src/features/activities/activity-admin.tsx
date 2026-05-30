@@ -378,8 +378,7 @@ export function ActivityAdmin() {
         />
 
         <WdsDashboardLayout offset="lg">
-          <WdsSurfaceCard as="section">
-            <form className="form" onSubmit={saveActivity}>
+          <WdsSurfaceCard as="form" className="form" onSubmit={saveActivity}>
               <WdsBadgeGroup>
                 <WdsBadge tone="blue">
                   {editingActivityId ? 'Activity 수정' : 'Activity 생성'}
@@ -517,7 +516,6 @@ export function ActivityAdmin() {
                 </WdsActionRow>
               ) : null}
               <p className="helper-text" aria-live="polite">{message}</p>
-            </form>
           </WdsSurfaceCard>
 
           <WdsStack as="aside">

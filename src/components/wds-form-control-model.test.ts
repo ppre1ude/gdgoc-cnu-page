@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 
 import {
@@ -70,5 +71,40 @@ describe('WDS form control model', () => {
     assert.equal(normalizeWdsSelectChangeValue('member'), 'member');
     assert.equal(normalizeWdsSelectChangeValue(null), undefined);
     assert.equal(normalizeWdsSelectChangeValue(undefined), undefined);
+  });
+
+  it('keeps notice admin pinned control on the WDS checkbox wrapper', () => {
+    const source = readFileSync(
+      new URL('../features/notices/notice-admin.tsx', import.meta.url),
+      'utf8',
+    );
+
+    assert.equal(source.includes('checkbox-field'), false);
+    assert.equal(source.includes('<input'), false);
+    assert.equal(source.includes('<WdsCheckbox'), true);
+  });
+
+  it('keeps operator authoring forms on WDS surface cards', () => {
+    const adminFiles = [
+      new URL('../features/activities/activity-admin.tsx', import.meta.url),
+      new URL('../features/notices/notice-admin.tsx', import.meta.url),
+      new URL('../features/records/record-admin.tsx', import.meta.url),
+      new URL('../features/showcases/showcase-admin.tsx', import.meta.url),
+    ];
+
+    for (const fileUrl of adminFiles) {
+      const source = readFileSync(fileUrl, 'utf8');
+
+      assert.equal(
+        source.includes('<form className="form"'),
+        false,
+        `legacy nested form remains in ${fileUrl.pathname}`,
+      );
+      assert.equal(
+        source.includes('<WdsSurfaceCard as="form"'),
+        true,
+        `WDS surface form missing in ${fileUrl.pathname}`,
+      );
+    }
   });
 });

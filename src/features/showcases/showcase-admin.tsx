@@ -130,8 +130,7 @@ export function ShowcaseAdmin() {
         />
 
         <WdsDashboardLayout offset="lg">
-          <WdsSurfaceCard as="section">
-            <form className="form" onSubmit={saveShowcase}>
+          <WdsSurfaceCard as="form" className="form" onSubmit={saveShowcase}>
               <WdsResponsiveGrid columns={2}>
                 <WdsField label="종류">
                   <WdsSelect
@@ -277,7 +276,6 @@ export function ShowcaseAdmin() {
                 </WdsButton>
               </WdsActionRow>
               <p className="helper-text">{message}</p>
-            </form>
           </WdsSurfaceCard>
 
           <WdsStack as="aside">

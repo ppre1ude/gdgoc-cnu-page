@@ -13,6 +13,7 @@ import { NoticeBoard } from '@/components/notice-board';
 import {
   WdsBadge,
   WdsButton,
+  WdsCheckbox,
   WdsField,
   WdsInput,
   WdsSelect,
@@ -164,8 +165,7 @@ export function NoticeAdmin() {
         />
 
         <WdsDashboardLayout offset="lg">
-          <WdsSurfaceCard as="section">
-            <form className="form" onSubmit={saveNotice}>
+          <WdsSurfaceCard as="form" className="form" onSubmit={saveNotice}>
               <WdsBadgeGroup>
                 <WdsBadge tone="blue">
                   {editingNoticeId ? '공지 수정' : '공지 생성'}
@@ -223,16 +223,14 @@ export function NoticeAdmin() {
                 </WdsField>
               </WdsResponsiveGrid>
 
-              <label className="checkbox-field">
-                <input
+              <WdsField label="상단 고정">
+                <WdsCheckbox
                   checked={draft.pinned}
-                  onChange={(event) =>
-                    setDraft((current) => ({ ...current, pinned: event.target.checked }))
+                  onCheckedChange={(pinned) =>
+                    setDraft((current) => ({ ...current, pinned }))
                   }
-                  type="checkbox"
                 />
-                <span>상단 고정</span>
-              </label>
+              </WdsField>
 
               <WdsActionRow>
                 <WdsButton tone="primary" type="submit">
@@ -249,7 +247,6 @@ export function NoticeAdmin() {
                 ) : null}
               </WdsActionRow>
               <p className="helper-text">{message}</p>
-            </form>
           </WdsSurfaceCard>
 
           <WdsStack as="aside">

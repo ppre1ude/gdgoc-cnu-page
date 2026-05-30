@@ -2,6 +2,7 @@
 
 import {
   Button,
+  Checkbox,
   ContentBadge,
   FallbackView,
   FallbackViewContent,
@@ -85,6 +86,7 @@ type WdsEmptyStateProps = {
   className?: string;
 };
 
+type WdsCheckboxProps = ComponentProps<typeof Checkbox>;
 type WdsInputProps = ComponentProps<typeof TextField>;
 type WdsTextAreaProps = ComponentProps<typeof TextArea>;
 
@@ -208,6 +210,13 @@ export function WdsEmptyState({ children, className }: WdsEmptyStateProps) {
       </FallbackViewContent>
     </FallbackView>
   );
+}
+
+export function WdsCheckbox({
+  size = 'medium',
+  ...props
+}: WdsCheckboxProps) {
+  return <Checkbox size={size} {...props} />;
 }
 
 export function WdsField({

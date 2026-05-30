@@ -149,8 +149,7 @@ export function RecordAdmin() {
         />
 
         <WdsDashboardLayout offset="lg">
-          <WdsSurfaceCard as="section">
-            <form className="form" onSubmit={submitRecord}>
+          <WdsSurfaceCard as="form" className="form" onSubmit={submitRecord}>
               <WdsResponsiveGrid columns={2}>
                 <WdsField label="기록 유형">
                   <WdsSelect
@@ -254,7 +253,6 @@ export function RecordAdmin() {
                 </WdsButton>
               </WdsActionRow>
               <p className="helper-text">{message}</p>
-            </form>
           </WdsSurfaceCard>
 
           <WdsStack as="aside">
