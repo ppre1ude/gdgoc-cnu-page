@@ -1,18 +1,35 @@
 # Demo Environment Remaining Checklist
 
-Firebase Web app, Google Auth provider, Firestore, rules deploy, demo data seed, public Activity CRUD loop, Gemini API response, and WDS foundation setup have already been verified. This checklist keeps only the remaining setup items.
+Last checked: 2026-05-30
 
-## Gemini Residual Checks
+Firebase Web app, Google Auth provider, Firestore, demo data seed, public Activity CRUD loop, Gemini API response, WDS foundation, Pretendard font stack, and WDS navigation/form migration have been verified in local development.
 
-- [ ] API key 제한을 걸 수 있으면 데모/개발 환경에 맞게 제한한다.
+## Latest Local Gate
+
+- [x] `npm run test`
+- [x] `npm run typecheck`
+- [x] `npm run build`
+- [x] `npm run test:rules:emulator`
+- [x] Browser smoke on `/`, `/calendar`, `/notices`, `/studies`, `/projects`, `/records`, `/admin/notices`, and `/login`
+
+## Deployment Blockers To Resolve
+
+- [ ] Decide how to handle `npm audit --audit-level=high` findings before production. Current audit reports high findings through `firebase-tools` transitive `tar`/`tmp` paths and moderate findings through `next`/`postcss`, `protobufjs`, `qs`, and `uuid`.
+- [ ] Upgrade the local Java runtime to JDK 21 or newer before adopting `firebase-tools@15`, because the emulator warns that Java versions below 21 will soon lose support.
+- [ ] Fix npm registry authentication for `@wanteddev/*` packages so dependency freshness checks can run without `npm outdated` failing against GitHub Packages.
 
 ## Firebase Residual Checks
 
-- [ ] 배포 도메인이 정해지면 Firebase Auth authorized domains에 Vercel production/preview 또는 커스텀 도메인을 추가한다.
-- [ ] 공개 배포 직전에 Firestore rules를 다시 점검한다.
-- [ ] 최초 운영자 `chapterUsers/{uid}` 문서가 `admin` role로 bootstrap되어 있는지 확인한다.
+- [ ] Add the final production/preview domain to Firebase Auth authorized domains after the deployment target is chosen.
+- [ ] Re-run Firestore rules verification immediately before public deployment.
+- [ ] Confirm the first operator `chapterUsers/{uid}` document is bootstrapped with the `admin` role in the target Firebase project.
 
-## Wanted Montage WDS
+## Gemini Residual Checks
 
-- [ ] 버튼, 입력, 카드, navigation 같은 공통 UI부터 WDS로 교체한다.
-- [ ] desktop/mobile visual QA를 통과한 뒤 WDS migration을 완료로 본다.
+- [ ] Restrict the Gemini API key to the expected environment and deployment target.
+- [ ] Confirm the deployed AI route fails safely when Gemini quota, network, or schema validation fails.
+
+## Visual QA Residual Checks
+
+- [ ] Run desktop and mobile QA on the preview URL, not only localhost.
+- [ ] Re-check WDS navigation, member branch links, admin access-gate screens, and form controls on the preview URL.
