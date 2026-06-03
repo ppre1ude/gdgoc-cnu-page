@@ -18,7 +18,7 @@
 - Modify: `src/features/notices/notice-admin.tsx`
 - Modify: `src/app/globals.css`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add a behavior guard to `src/components/wds-form-control-model.test.ts` that reads `notice-admin.tsx` and verifies the legacy native checkbox styling is gone:
 
@@ -37,13 +37,13 @@ it('keeps notice admin pinned control on the WDS checkbox wrapper', () => {
 
 The test file must import `readFileSync` from `node:fs`.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm run test -- src/components/wds-form-control-model.test.ts`
 
 Expected: FAIL because `notice-admin.tsx` still contains `checkbox-field` and `<input>`.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Update `src/components/wds-form-controls.tsx`:
 
@@ -84,7 +84,7 @@ Update `src/features/notices/notice-admin.tsx` imports and replace the native la
 
 Remove `.checkbox-field` CSS from `src/app/globals.css`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm run test -- src/components/wds-form-control-model.test.ts`
 
@@ -100,7 +100,7 @@ Expected: PASS.
 - Modify: `src/features/records/record-admin.tsx`
 - Modify: `src/features/showcases/showcase-admin.tsx`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add a source-level migration guard to `src/components/wds-form-control-model.test.ts`:
 
@@ -130,13 +130,13 @@ it('keeps operator authoring forms on WDS surface cards', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm run test -- src/components/wds-form-control-model.test.ts`
 
 Expected: FAIL because admin pages still render `<form className="form">` inside `WdsSurfaceCard`.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Update `WdsSurfaceCardProps` in `src/components/wds-layout-primitives.tsx` so it accepts the usual form attributes needed by authoring forms:
 
@@ -169,7 +169,7 @@ with:
 </WdsSurfaceCard>
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm run test -- src/components/wds-form-control-model.test.ts`
 
@@ -180,13 +180,13 @@ Expected: PASS.
 **Files:**
 - No planned source edits unless verification reveals a defect.
 
-- [ ] **Step 1: Run targeted tests**
+- [x] **Step 1: Run targeted tests**
 
 Run: `npm run test -- src/components/wds-form-control-model.test.ts`
 
 Expected: PASS.
 
-- [ ] **Step 2: Run full checks**
+- [x] **Step 2: Run full checks**
 
 Run:
 
@@ -198,7 +198,7 @@ npm run build
 
 Expected: all pass.
 
-- [ ] **Step 3: Inspect residual raw controls**
+- [x] **Step 3: Inspect residual raw controls**
 
 Run:
 
@@ -214,3 +214,5 @@ Expected: no ordinary admin controls remain as native `input/select/textarea/but
 - [x] Migrated member branch navigation to semantic `nav` links styled with WDS `TopNavigationButton`.
 - [x] Promoted Pretendard to the explicit `--font-sans` design-system stack and kept the WDS/Pretendard CDN imports guarded by tests.
 - [x] Verified the header, member branch navigation, and access-gated admin page in the browser at the available narrow viewport.
+- [x] Verification note: `npm run test -- src/components/wds-form-control-model.test.ts` passed by running the full `src` tests (199 passed); `npm run typecheck` and `npm run build` also passed.
+- [x] Residual raw-control note: `src/features/onboarding/yonsei-developer-banner.tsx` keeps its native `button` intentionally for the custom interactive onboarding doodle.
