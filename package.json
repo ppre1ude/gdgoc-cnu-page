@@ -13,6 +13,7 @@
     "test:rules:emulator": "firebase emulators:exec --project demo-gdgoc-cnu --only firestore \"npm run test:rules\"",
     "smoke:predeploy": "node --experimental-strip-types scripts/predeploy-smoke.ts",
     "smoke:predeploy:install": "playwright install chromium",
+    "check:deployment-env": "node --experimental-strip-types scripts/deployment-env-check.ts",
     "typecheck": "tsc --noEmit",
     "dev": "next dev",
     "build": "next build"

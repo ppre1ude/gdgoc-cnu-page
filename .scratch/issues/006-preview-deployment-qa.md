@@ -14,8 +14,12 @@ After a preview deployment exists, verify the deployed app from the user perspec
 - [ ] Member and operator role-gated behavior is verified with real or approved test accounts.
 - [ ] Desktop and mobile screenshots confirm WDS navigation and form surfaces do not overlap.
 
+## Available command
+
+- Run `PREDEPLOY_SMOKE_BASE_URL=<preview-url> npm run smoke:predeploy` after the preview URL exists.
+
 ## Blocked by
 
-- `.scratch/issues/003-resolve-dependency-audit.md`
 - `.scratch/issues/004-finalize-deployment-environment.md`
-- `.scratch/issues/005-automate-predeploy-smoke.md`
+- Preview deployment URL.
+- Real or approved test accounts for member/operator role checks.
